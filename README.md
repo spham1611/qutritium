@@ -1,4 +1,6 @@
 
+![qutrit](./project_images/qutrit.jpg)
+*[Image Reference](https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DVbiKCqy_mmg&psig=AOvVaw1S_GSos-28aYQVnZkevZp8&ust=1677162127754000&source=images&cd=vfe&ved=0CBEQjhxqFwoTCMinoPipqf0CFQAAAAAdAAAAABAE)* 
 # Qutrit Experiment
 
 <p>In this package, we provide currently standard qutrit process protocols and experiments which utilize such protocols. 
