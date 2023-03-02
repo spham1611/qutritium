@@ -1,4 +1,6 @@
 # Constants file
+from enum import Enum
 
-QUBIT = 0
-SCALE_FACTOR = 1e-7
+
+class QUBIT_PARA(Enum):
+    QUBIT = 0
