@@ -1,13 +1,16 @@
 import VM
-
 '''
 Simple example to test VM 
 '''
+qc = VM.Virtual_Machine(3, 0, None)
 
-qc = VM.Virtual_Machine(2, 0, None)
-instruction_1 = VM.instruction('x01', 0)
-instruction_2 = VM.instruction('x01', 1)
-
-qc.add_gate(instruction_1)
-qc.add_gate(instruction_2)
+qc.add_gate('WH', 0)
+qc.add_gate('measure', [])
 qc.draw()
+qc.run()
+print(qc.get_counts())
+qc.plot("histogram")
+# n_qutrit = 2
+# state = np.array([[0], [0], [1/np.sqrt(2)], [0], [0], [0], [0], [1/np.sqrt(2)], [0]])
+# print(state.shape)
+# VM_utility.print_statevector(state, n_qutrit)

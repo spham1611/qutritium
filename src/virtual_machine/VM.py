@@ -1,15 +1,28 @@
-from VM_utility import matrix_form
+import typing
+from typing import get_type_hints
 import numpy as np
-from instruction_structure import instruction
+import matplotlib.pyplot as plt
+from VM_utility import print_statevector
+from VM_utility import statevector_to_state
+from instruction_structure import Instruction
 
 
 class Virtual_Machine:
-    def __init__(self, n_qubits=int, n_classical=int, initial_state=[int]):
-        self.n_qubits = n_qubits
+    def __init__(self, n_qutrit=int, n_classical=int, initial_state=[int]):
+        """
+        :param n_qutrit: Number of qutrit
+        :param n_classical: Number of classical bits
+        :param initial_state: The initial state of the quantum circuit
+        """
+        self.measurement_result = None
+        self.measurement_flag = False
+        self.n_qutrit = n_qutrit
         self.n_classical = n_classical
         self.operation_set = []
+        self.state = []
+        self.qutrit_state = {}
         if initial_state is not None:
-            if initial_state.shape == (3 ** n_qubits, 3 ** n_qubits):
+            if initial_state.shape == (3 ** n_qutrit, 1):
                 self.initial_state = initial_state
                 self.state = initial_state
             else:
@@ -17,36 +30,106 @@ class Virtual_Machine:
                     "The initial state declared does not have correct dimension. The current shape is " + str(
                         initial_state.shape))
         else:
-            self.state = [0] * (3 ** n_qubits)
-            self.state[0] = 1
+            for i in range(n_qutrit):
+                self.qutrit_state["qutrit_" + str(i)] = np.array([[1], [0], [0]])
+            self.__final_state_calculation()
             self.initial_state = self.state
 
-    def add_gate(self, instruct=instruction):
-        gate_matrix = matrix_form(instruct.gate_type())
-        self.operation_set.append(instruct)
-        if self.n_qubits == 1:
-            self.state = self.state @ gate_matrix
-        else:
-            if instruct.first_qubit_index() == 0:
-                default_matrix = gate_matrix
+    def __final_state_calculation(self):
+        """
+        :return: Final state as tensor product of all qutrit states
+        """
+        for i in range(self.n_qutrit):
+            if i == 0:
+                self.state = self.qutrit_state["qutrit_0"]
             else:
-                default_matrix = np.eye(3)
-            for i in range(self.n_qubits - 1):
-                if i == (instruct.first_qubit_index() + 1):
-                    default_matrix = np.kron(default_matrix, gate_matrix)
-                else:
-                    default_matrix = np.kron(default_matrix, np.eye(3))
-            self.state = self.state @ default_matrix
+                self.state = np.kron(self.state, self.qutrit_state["qutrit_" + str(i)])
 
+    def add_gate(self, gate_type, first_qutrit_set, second_qutrit_set=None, parameter=None):
+        """
+        :param gate_type: quantum gate type as define in gate_set
+        :param first_qutrit_set: acting qubits
+        :param second_qutrit_set: control qubits
+        :param parameter: parameter of rotation gate (if needed)
+        :return:
+        """
+        if gate_type != 'measure':
+            ins = Instruction(gate_type, self.n_qutrit, self.qutrit_state, first_qutrit_set, second_qutrit_set,
+                              parameter)
+            self.operation_set.append(ins)
+            self.qutrit_state = ins.return_effect()
+            self.__final_state_calculation()
+        else:
+            self.measurement_flag = True
+            self.operation_set.append("measurement")
+
+    def run(self, num_shots=1024):
+        """
+        :param num_shots: Number of shots
+        Performs the defined amount of shots.
+        """
+        if self.measurement_flag:
+            state_coeff, state_construction = statevector_to_state(self.state, self.n_qutrit)
+            probs = [np.abs(i) ** 2 for i in state_coeff]
+            self.measurement_result = []
+            # print("Current state :" + str(self.state))
+            # print("Probabilites: " + str(probs))
+            # print("State_coeff: " + str(state_coeff))
+            # print("State: " + str(range(len(state_construction))))
+            for i in range(num_shots):
+                measure = np.random.choice(range(len(state_construction)), p=probs)
+                self.measurement_result.append(state_construction[measure])
+        else:
+            raise Exception("Your circuit does not contains measurement.")
+
+    def get_counts(self):
+        """
+        :return: count of each state
+        """
+        if self.measurement_result is not None:
+            return dict((x, self.measurement_result.count(x)) for x in set(self.measurement_result))
+        else:
+            raise Exception("You have not make measurement yet.")
+
+    def plot(self, type):
+        """
+        :param type: Type of plotting
+        Draw graph
+        """
+        result_dict = self.get_counts()
+        if type == "histogram":
+            plt.bar(result_dict.keys(), result_dict.values())
+        elif type == "line":
+            plt.plot(result_dict.keys(), result_dict.values())
+        elif type == "dot":
+            plt.scatter(result_dict.keys(), result_dict.values())
+        plt.show()
     def return_final_state(self):
+        """
+        :return: Final state of the quantum circuit
+        """
         return self.state
 
-    def return_operation_set(self):
-        return self.operation_set
+    def result(self):
+        """
+        :return: Measurement result
+        """
+        if self.measurement_result is not None:
+            return self.measurement_result
+        else:
+            raise Exception("You have not make measurement yet.")
 
     def draw(self):
-        print("Initial state of the circuit: " + str(self.initial_state))
-        print("Final state of the circuit: " + str(self.state))
+        """
+        Representation of the quantum circuit
+        """
+        print("Initial state of the circuit: ")
+        print_statevector(self.initial_state, self.n_qutrit)
+        print("Final state of the circuit: ")
+        print_statevector(self.state, self.n_qutrit)
         print("Set of gate on the circuits: ")
         for i in self.operation_set:
-            i.print()
+            if type(i) == Instruction:
+                i.print()
+            else:
+                print(i)
