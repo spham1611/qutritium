@@ -1,8 +1,11 @@
-from VM_utility import matrix_form
+import numpy as np
+from VM_utility import single_matrix_form
+from VM_utility import multi_matrix_form
 
 gate_set = ['x+',
             'S',
             'T',
+            'CNOT',
             'x01',
             'x12',
             'y01',
@@ -20,35 +23,65 @@ gate_set = ['x+',
 
 
 class Instruction:
-    def __init__(self, gate_type, n_qutrit, qutrit_state, first_qutrit_set, second_qutrit_set=None, parameter=None):
+    def __init__(self, gate_type, n_qutrit, state, first_qutrit_set, second_qutrit_set=None, parameter=None):
         self.type = gate_type
         self.verify_gate()
         self.n_qutrit = n_qutrit
-        self.qutrit_state = qutrit_state
-        if parameter is not None:
-            self.parameter = parameter
+        self.parameter = parameter
         self.first_qutrit = first_qutrit_set
         self.second_qutrit = second_qutrit_set
-        self.gate_matrix = matrix_form(self.type)
+        self.state = state
+        self.is_two_qutrit_gate = False
+        if second_qutrit_set is not None:
+            self.is_two_qutrit_gate = True
+            self.gate_matrix = multi_matrix_form(self.type, self.first_qutrit, self.second_qutrit)
+            print(self.gate_matrix)
+        else:
+            self.is_two_qutrit_gate = False
+            self.gate_matrix = single_matrix_form(self.type)
         self.__effect()
 
     def __effect(self):
-        for i in range(self.n_qutrit):
-            if i == self.first_qutrit:
-                self.qutrit_state["qutrit_" + str(i)] = self.gate_matrix @ self.qutrit_state["qutrit_" + str(i)]
+        """
+        Perform the gate on the quantum state
+        """
+        if not self.is_two_qutrit_gate:
+            if self.n_qutrit == 1:
+                self.state = self.gate_matrix @ self.state
+            else:
+                if self.first_qutrit == 0:
+                    default_matrix = self.gate_matrix
+                else:
+                    default_matrix = np.eye(3)
+                for i in range(self.n_qutrit - 1):
+                    if i == (self.first_qutrit - 1):
+                        default_matrix = np.kron(default_matrix, self.gate_matrix)
+                    else:
+                        default_matrix = np.kron(default_matrix, np.eye(3))
+                self.state = default_matrix @ self.state
+        else:
+            left = min((self.first_qutrit, self.second_qutrit))
+            right = max((self.first_qutrit, self.second_qutrit))
+            if left == 0:
+                default_matrix = self.gate_matrix
+            else:
+                default_matrix = np.eye(3)
+            for i in range(self.n_qutrit-1):
+                if i == (left-1):
+                    default_matrix = np.kron(default_matrix, self.gate_matrix)
+                if i+1 < left or i+1 > right:
+                    default_matrix = np.kron(default_matrix, np.eye(3))
+            self.state = default_matrix @ self.state
 
     def verify_gate(self):
         if self.type not in gate_set:
             raise Exception("This gate is not defined in set of gate")
 
-    def first_qutrit_index(self):
-        return self.first_qutrit
-
     def matrix(self):
         return self.gate_matrix
 
     def return_effect(self):
-        return self.qutrit_state
+        return self.state
 
     def print(self):
         if self.second_qutrit is None:

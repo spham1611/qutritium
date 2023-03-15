@@ -20,7 +20,6 @@ class Virtual_Machine:
         self.n_classical = n_classical
         self.operation_set = []
         self.state = []
-        self.qutrit_state = {}
         if initial_state is not None:
             if initial_state.shape == (3 ** n_qutrit, 1):
                 self.initial_state = initial_state
@@ -30,20 +29,20 @@ class Virtual_Machine:
                     "The initial state declared does not have correct dimension. The current shape is " + str(
                         initial_state.shape))
         else:
-            for i in range(n_qutrit):
-                self.qutrit_state["qutrit_" + str(i)] = np.array([[1], [0], [0]])
-            self.__final_state_calculation()
-            self.initial_state = self.state
+            self.initial_state = np.array([[1], [0], [0]])
+            for i in range(self.n_qutrit-1):
+                self.initial_state = np.kron(self.initial_state, np.array([[1], [0], [0]]))
+            self.state = self.initial_state
 
-    def __final_state_calculation(self):
-        """
-        :return: Final state as tensor product of all qutrit states
-        """
-        for i in range(self.n_qutrit):
-            if i == 0:
-                self.state = self.qutrit_state["qutrit_0"]
-            else:
-                self.state = np.kron(self.state, self.qutrit_state["qutrit_" + str(i)])
+    # def __final_state_calculation(self):
+    #     """
+    #     :return: Final state as tensor product of all qutrit states
+    #     """
+    #     for i in range(self.qutrit_state.keys()):
+    #         if i == 0:
+    #             self.state = self.qutrit_state["qutrit_0"]
+    #         else:
+    #             self.state = np.kron(self.state, self.qutrit_state["qutrit_" + str(i)])
 
     def add_gate(self, gate_type, first_qutrit_set, second_qutrit_set=None, parameter=None):
         """
@@ -54,11 +53,10 @@ class Virtual_Machine:
         :return:
         """
         if gate_type != 'measure':
-            ins = Instruction(gate_type, self.n_qutrit, self.qutrit_state, first_qutrit_set, second_qutrit_set,
+            ins = Instruction(gate_type, self.n_qutrit, self.state, first_qutrit_set, second_qutrit_set,
                               parameter)
             self.operation_set.append(ins)
-            self.qutrit_state = ins.return_effect()
-            self.__final_state_calculation()
+            self.state = ins.return_effect()
         else:
             self.measurement_flag = True
             self.operation_set.append("measurement")
@@ -104,6 +102,7 @@ class Virtual_Machine:
         elif type == "dot":
             plt.scatter(result_dict.keys(), result_dict.values())
         plt.show()
+
     def return_final_state(self):
         """
         :return: Final state of the quantum circuit

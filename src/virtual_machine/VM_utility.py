@@ -4,9 +4,12 @@ Support function for constructing VM
 import numpy as np
 
 pi = np.pi
+state_0 = [[1], [0], [0]]
+state_1 = [[0], [1], [0]]
+state_2 = [[0], [0], [1]]
 
 
-def matrix_form(gate_type, parameter=None, omega=np.exp(1j * 2 * pi / 3)):
+def single_matrix_form(gate_type, parameter=None, omega=np.exp(1j * 2 * pi / 3)):
     """
     :param gate_type: quantum gate type as define in gate_set
     :param parameter: parameter of rotation gate (if needed)
@@ -50,8 +53,45 @@ def matrix_form(gate_type, parameter=None, omega=np.exp(1j * 2 * pi / 3)):
         return np.array([[1, 0, 0],
                          [0, np.power(omega, 1 / 3), 0],
                          [0, 0, np.power(omega, -1 / 3)]])
+    elif gate_type == 'CNOT':
+        return None
     else:
         raise Exception("This gate is not implemented yet.")
+
+
+def multi_matrix_form(gate_type, first_index, second_index, parameter=None, omega=np.exp(1j * 2 * pi / 3)):
+    """
+    :param gate_type: quantum gate type as define in gate_set
+    :param first_index: acting qubit
+    :param second_index: control qubit
+    :param parameter:
+    :param omega:
+    :return: matrix form of the control-qutrit gate
+    """
+    if gate_type == 'CNOT':
+        if second_index == first_index:
+            raise Exception("Control qutrit and acting qutrit can not be the same")
+        else:
+            spacing = np.eye(3)
+            space = np.abs(first_index - second_index)-1
+            if space == 0:
+                spacing = 1
+            else:
+                for i in range(space-1):
+                    spacing = np.kron(spacing, np.eye(3))
+            if second_index < first_index:
+                matrix = np.kron(np.kron(state_0 @ np.transpose(state_0), spacing), np.eye(3)) + \
+                         np.kron(np.kron(state_1 @ np.transpose(state_1), spacing),
+                                 single_matrix_form('x01') @ single_matrix_form('x12')) + \
+                         np.kron(np.kron(state_2 @ np.transpose(state_2), spacing),
+                                 single_matrix_form('x12') @ single_matrix_form('x01'))
+            else:
+                matrix = np.kron(np.kron(np.eye(3), spacing), state_0 @ np.transpose(state_0)) + \
+                         np.kron(np.kron(single_matrix_form('x01') @ single_matrix_form('x12'), spacing),
+                                 state_1 @ np.transpose(state_1)) + \
+                         np.kron(np.kron(single_matrix_form('x12') @ single_matrix_form('x01'), spacing),
+                                 state_2 @ np.transpose(state_2))
+            return matrix
 
 
 def statevector_to_state(state, n_qutrit=int):
