@@ -1,45 +1,32 @@
-"""Calibration Helpful functions"""
-from src.calibration import backend
-from src.constant import QUBIT_PARA
-from src.calibration import QUBIT_VAL, ANHAR
-import qiskit.pulse as pulse
+"""Calibration utility functions for gate operation"""
+from qiskit.pulse.schedule import ScheduleBlock
+from src.calibration import backend, QUBIT_VAL
+from qiskit import pulse
 
 
-def g01(amp, phi, **kwargs) -> pulse:
-    """
+class Gate_Schedule:
+    """Static class"""
 
-    :param amp:
-    :param phi:
-    :param kwargs: contains: pulse duration, beta and drive_freq of the backend
-    :return:
-    """
-    if len(kwargs) != 3:
-        raise Exception
+    @staticmethod
+    def single_gate_schedule(drive_freq,
+                             drive_phase,
+                             drive_duration,
+                             drive_amp,
+                             drive_beta, /) -> ScheduleBlock:
+        """
 
-    with pulse.build(backend=backend) as g01_pulse:
-        pulse.set_frequency(kwargs["drive_freq"], pulse.drive_channel(QUBIT_PARA.QUBIT.value))
-        with pulse.phase_offset(phi, pulse.drive_channel(QUBIT_PARA.QUBIT.value)):
-            pulse.play(pulse.Drag(kwargs['dur'], amp, kwargs['dur'] / 4, kwargs['beta'],
-                                  '$\mathcal{G}^{01}$' + f'({round(amp, 2)}, {round(phi, 2)})'),
-                       pulse.drive_channel(QUBIT_PARA.QUBIT.value))
-    return g01_pulse
+        :param drive_freq:
+        :param drive_phase:
+        :param drive_duration:
+        :param drive_amp:
+        :param drive_beta:
+        :return:
+        """
+        drive_sigma = drive_duration / 4
+        with pulse.build(backend=backend) as drive_schedule:
+            drive_chan = pulse.drive_channel(QUBIT_VAL)
+            pulse.set_frequency(drive_freq, drive_chan)
+            with pulse.phase_offset(drive_phase):
+                pulse.play(pulse.Drag(drive_duration, drive_amp, drive_sigma, drive_beta), drive_chan)
 
-
-def g12(amp, phi, **kwargs) -> pulse:
-    """
-
-    :param amp:
-    :param phi:
-    :param kwargs: contains: pulse duration, beta and drive_freq of the backend
-    :return:
-    """
-    if len(kwargs) != 3:
-        raise Exception
-
-    with pulse.build(backend=backend) as g12_pulse:
-        pulse.set_frequency(kwargs["drive_freq"] + ANHAR, pulse.drive_channel(QUBIT_PARA.QUBIT.value))
-        with pulse.phase_offset(phi, pulse.drive_channel(QUBIT_VAL)):
-            pulse.play(pulse.Drag(kwargs['dur'], amp, kwargs['dur'] / 4, kwargs['beta'],
-                                  r'$\mathcal{G}^{12}$' + f'({round(amp, 2)})'),
-                       pulse.drive_channel(QUBIT_VAL))
-    return g12_pulse
+        return drive_schedule
