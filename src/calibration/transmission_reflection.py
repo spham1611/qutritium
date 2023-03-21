@@ -1,179 +1,221 @@
 """Transmission and reflection techniques for 0-1 and 1-2
-In here TR or tr stands for transmission and reflection
+In here TR stands for transmission and reflection
 """
+from qiskit.circuit import Parameter, Gate, QuantumCircuit
+from typing import List, Optional, Union
+from src.calibration import (
+    backend,
+    QUBIT_VAL,
+    DEFAULT_F01,
+    DEFAULT_F12
+)
+from src.pulse import Pulse01, Pulse12
+from src.analyzer import DataAnalysis
+from src.constant import QUBIT_PARA
+from src.calibration.calibration_utility import Gate_Schedule
 from abc import ABC, abstractmethod
 from numpy import linspace
-from src.calibration import backend
-from src.calibration import QUBIT_VAL, ANHAR
-from qiskit.circuit import Parameter, Gate, QuantumCircuit
-import qiskit.pulse as pulse
+from src.utility import fit_function
 import numpy as np
 
 
 class TR(ABC):
     """
     The class act as provider + regulator for transmission and reflection techniques
+    TR Process flow: set up pulse and gates -> submit job to IBM -> Analyze the resulted pulse
+    (return Pulse model)
     """
-    def __init__(self, duration=0) -> None:
+
+    def __init__(self, pulse_model: Pulse01, num_shots=20000) -> None:
         """
-        Some parameters are restricted for design and read-only
-        :param duration: in seconds
+        Must have duration!
+        :param pulse_model: input pulse which can be  01 or 12
         """
-        self._duration = duration
-        self._freq = 0
-        self._sweep_schedule = None
-        self._freq_probe = None
-        self._exp_circuits = None
-        self.tr_create_pulse()
-        self.tr_create_gate()
+        if pulse_model.duration != 0:
+            self.pulse_model = pulse_model
+        else:
+            raise ValueError("Can not establish process without duration parameter!")
+        self.num_shots = num_shots
+        self.frequency = None
+        self.submitted_job = None
+        self.freq_sweeping_range: Optional[List] = None
+        self.package: Optional[List] = None
+
+        # INTERNAL DESIGN ONLY
+        self._lambda_list = [0, 0, 0, 0]
+
+    @property
+    def lambda_list(self) -> List[float]:
+        return self._lambda_list
+
+    @lambda_list.setter
+    def lambda_list(self, val_list: list) -> None:
+        if len(val_list) != 4:
+            raise ValueError("Lambda list does not have sufficient elements")
+        self._lambda_list = val_list
+
+    def run(self) -> None:
+        """
+        Run standard TR protocol. Devs can change the oder if needed
+        :return:
+        """
+        self.set_up()
+        self.tr_create_circuit()
         self.run_monitor()
-
-    @property
-    def duration(self):
-        return self._duration
-
-    @property
-    def freq(self):
-        return self._freq
+        self.modify_pulse_model()
 
     @abstractmethod
-    def tr_create_pulse(self):
+    def set_up(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def tr_create_circuit(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def modify_pulse_model(self) -> None:
+        raise NotImplementedError
+
+    def run_monitor(self) -> None:
         """
 
         :return:
         """
-        raise NotImplementedError
+        self.submitted_job = backend.run(self.package,
+                                         meas_level=1,
+                                         meas_return='avg',
+                                         shots=self.num_shots)
 
-    @abstractmethod
-    def tr_create_gate(self):
+    def analyze(self) -> Union[int, float]:
         """
 
         :return:
         """
-        raise NotImplementedError
+        analyzer = DataAnalysis(experiment=self.submitted_job, num_shots=self.num_shots)
+        analyzer.retrieve_data(average=True)
 
-    @abstractmethod
-    def run_monitor(self):
-        """
+        fit_params, _ = fit_function(self.freq_sweeping_range, analyzer.IQ_data,
+                                     lambda x, q_freq, c1, c2, c3:
+                                     (c1 / np.pi) * (c2 / ((x - q_freq) ** 2 + c2 ** 2)) + c3,
+                                     self.lambda_list)
 
-        :return:
-        """
-        raise NotImplementedError
+        freq = fit_params[1] * QUBIT_PARA.GHZ.value
+        return freq
 
 
 class TR_01(TR):
     """"""
-    def __init__(self, duration) -> None:
+
+    def __init__(self, pulse_model: Pulse01) -> None:
         """
 
-        :param duration:
+        :param pulse_model:
         """
-        super().__init__(duration)
+        self.lambda_list = [10, 4.9, 1, -2]
+        self.frequency = Parameter('transition_freq_01')
+        super().__init__(pulse_model=pulse_model)
 
-    @property
-    def sweep_schedule(self):
-        return self._sweep_schedule
+    def run(self) -> None:
+        super().run()
 
-    def tr_create_pulse(self):
-        """
-
-        :return:
-        """
-        est_freq = backend.configuration().hamiltonian['vars'][f'wq{QUBIT_VAL}']/(2*np.pi)
-        max_freq, min_freq = est_freq + 30 * 1e6, est_freq - 30 * 1e6
-        self._freq_probe = linspace(min_freq, max_freq, 100)
-        self._freq = Parameter("freq")
-
-        # Setting up pulse properties for 01
-        with pulse.build(backend=backend) as sweep_schedule:
-            drive_chan = pulse.drive_channel(qubit=QUBIT_VAL)
-            pulse.delay(48, drive_chan)
-            pulse.set_frequency(self._freq, drive_chan)
-            pulse.play(pulse.Gaussian(
-                duration=self.duration,   # input
-                amp=0.2,
-                sigma=self.duration / 4,
-            ), drive_chan)
-            self._sweep_schedule = sweep_schedule
-
-        # If the system does not respond -> TimeoutError occurs
-        if not self._sweep_schedule:
-            raise TimeoutError
-
-    def tr_create_gate(self):
+    def set_up(self) -> None:
         """
 
         :return:
         """
-        g01 = Gate("g01", 1, self.freq)
-        qc = QuantumCircuit(1, 1)
-        qc.append(g01, [0])
-        qc.measure(0, 0)
-        qc.add_calibration(g01, (0, ), self._sweep_schedule, [self.freq])
+        mhz_unit = QUBIT_PARA.MHZ.value
+        max_freq, min_freq = DEFAULT_F01 + 36 * mhz_unit, DEFAULT_F01 - 36 * mhz_unit
+        self.freq_sweeping_range = linspace(min_freq, max_freq, 100) / QUBIT_PARA.GHZ.value
+
+    def tr_create_circuit(self) -> None:
+        """
+
+        :return:
+        """
+        freq01_probe = Gate('Unitary', 1, [self.frequency])
+        qc_spect01 = QuantumCircuit(7, 1)
+        qc_spect01.append(freq01_probe, [QUBIT_VAL])
+        qc_spect01.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
+        qc_spect01.add_calibration(freq01_probe, [QUBIT_VAL],
+                                   Gate_Schedule.single_gate_schedule(self.frequency, 0,
+                                                                      self.pulse_model.duration, 0.2,
+                                                                      0),
+                                   [self.frequency])
 
         # Get the circuits from assigned frequencies
-        self._exp_circuits = [qc.assign_parameters({self._freq: f}, inplace=False) for f in self._freq_probe]
+        self.package = [qc_spect01.assign_parameters({self.frequency: f}, inplace=False)
+                        for f in self.freq_sweeping_range]
 
-    def run_monitor(self):
-        pass
+    def modify_pulse_model(self):
+        """
+
+        :return:
+        """
+
+        # Add frequency to pulse01
+        f01 = self.analyze()
+        self.pulse_model.frequency = f01
 
 
 class TR_12(TR):
     """"""
-    def __init__(self, duration) -> None:
+
+    def __init__(self, pulse_model: Pulse01) -> None:
         """
-
-        :param duration:
+        In this process, we create a new pulse12 -> Users don't need to create pulse12 from pulse12 class as there
+        might be conflict in pulse01 and 12 parameters
+        :param pulse_model:
         """
-        self._tr_01 = TR_01(duration=duration)
-        self._pulse01_freq = self._tr_01.freq
-        self._pulse01_schedule = self._tr_01.sweep_schedule
-        super().__init__(duration)
+        self.lambda_list = [-10, 4.8, 1, -2]
+        self.frequency = Parameter('transition_freq_12')
+        self.pulse01_schedule = None
+        super().__init__(pulse_model=pulse_model)
 
-    def tr_create_pulse(self):
-        """
-
-        :return:
-        """
-        est_freq = self._pulse01_freq + 1 * ANHAR
-        max_freq, min_freq = est_freq + 30 * 1e6, est_freq - 30 * 1e6
-        self._freq_probe = linspace(min_freq, max_freq, 100)
-        self._freq = Parameter("freq")
-
-        # Setting up pulse properties for 12
-        with pulse.build(backend=backend) as sweep_schedule:
-            drive_chan = pulse.drive_channel(qubit=QUBIT_VAL)
-            pulse.delay(48, drive_chan)
-            pulse.set_frequency(self.freq, drive_chan)
-            pulse.play(pulse.Gaussian(
-                duration=self.duration,  # input
-                amp=0.2,
-                sigma=self.duration / 4,
-            ), drive_chan)
-            self._sweep_schedule = sweep_schedule
-
-        # If the system does not respond -> TimeoutError occurs
-        if not self._sweep_schedule:
-            raise TimeoutError
-
-    def tr_create_gate(self):
+    def set_up(self) -> None:
         """
 
         :return:
         """
-        g01 = Gate("g01", 1, [])
-        g12 = Gate("g12", 1, [self.freq])
-        qc = QuantumCircuit(1, 1)
-        qc.append(g01, [0])
-        qc.append(g12, [0])
-        qc.measure(0, 0)
-        qc.add_calibration(g01, (0,), self._pulse01_schedule, [self.freq])
-        qc.add_calibration(g12, (0,), self._sweep_schedule, [self.freq])
+        self.pulse01_schedule = Gate_Schedule.single_gate_schedule(
+            self.pulse_model.frequency, 0,
+            self.pulse_model.duration, self.pulse_model.x_amp,
+            0
+        )
+        mhz_unit = QUBIT_PARA.MHZ.value
+        max_freq, min_freq = DEFAULT_F12 + 36 * mhz_unit, DEFAULT_F12 - 36 * mhz_unit
+        self.freq_sweeping_range = np.linspace(min_freq, max_freq, 100) / QUBIT_PARA.GHZ.value
 
-        # Get the circuits from assigned frequencies
-        self._exp_circuits = [qc.assign_parameters({self.freq: f}, inplace=False) for f in self._freq_probe]
+    def tr_create_circuit(self) -> None:
+        """
 
-    def run_monitor(self):
-        """"""
-        pass
+        :return:
+        """
+        freq12_probe = Gate('Unit', 1, [self.frequency])
+        x01_pi_gate = Gate(r'$X^{01}_\pi$', 1, [])
+        qc_spect12 = QuantumCircuit(7, 1)
+        qc_spect12.append(x01_pi_gate, [QUBIT_VAL])
+        qc_spect12.append(freq12_probe, [QUBIT_VAL])
+        qc_spect12.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
+        qc_spect12.add_calibration(x01_pi_gate, [QUBIT_VAL], self.pulse01_schedule)
+        qc_spect12.add_calibration(freq12_probe, [QUBIT_VAL],
+                                   Gate_Schedule.single_gate_schedule(self.frequency, 0,
+                                                                      self.pulse_model.duration, 0.2,
+                                                                      0),
+                                   [self.frequency])
+        self.package = [qc_spect12.assign_parameters({self.frequency: f}, inplace=False)
+                        for f in self.freq_sweeping_range]
 
+    def modify_pulse_model(self) -> None:
+        """
+
+        :return:
+        """
+
+        # Create new pulse 12
+        f12 = self.analyze()
+        pulse12 = Pulse12(duration=self.pulse_model.duration,
+                          frequency=f12)
+
+        # Point address pulse01 and 12 to each other
+        self.pulse_model.pulse12 = pulse12
+        self.pulse_model.pulse12.pulse01 = self.pulse_model
