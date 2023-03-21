@@ -1,110 +1,167 @@
 """Rough rabi techniques"""
-from qiskit.tools import job_monitor
-
-from src.calibration.calibration_utility import g01, g12
-from abc import ABC, abstractmethod
-from qiskit.circuit import Gate, QuantumCircuit
-from qiskit import schedule
-from src.calibration import backend
-import numpy as np
+from qiskit.circuit import QuantumCircuit, Parameter, Gate
+from src.utility import fit_function
+from src.calibration import (
+    backend,
+    QUBIT_VAL
+)
+from src.calibration.calibration_utility import Gate_Schedule
+from src.pulse import Pulse01, Pulse12
+from src.analyzer import DataAnalysis
 from src.constant import QUBIT_PARA
+from abc import ABC, abstractmethod
+from typing import Optional, List, Any, Union
+import numpy as np
 
 
-class Rough_Rabi:
+class Rough_Rabi(ABC):
     """
     The class act as provider + regulator for Rough Rabi techniques
     """
-    def __init__(self) -> None:
+
+    def __init__(self, pulse_model: Union[Pulse01, Pulse12], num_shots=20000) -> None:
         """
 
+        :param pulse_model: Incomplete pulse: duration + freq
         """
-        self._package = list()
-        self.amps = np.linspace(-0.75, 0.75, 100)
-        self._job_id = 0
-        # Standard flow of protocol
-        self.rr_circuit()
-        self.rr_job_monitor()
+        self.pulse_model = pulse_model
+        self.num_shots = num_shots
+        self.x_amp_sweeping_range = np.linspace(-1, 1, 100)
+        self.x_amp = None
+        self.submitted_job = None
+        self.package: Optional[List] = None
+
+        # Internal use
+        self._lambda_list: Optional[List] = None
 
     @property
-    def job_id(self):
-        return self._job_id
+    def lambda_list(self) -> List[float]:
+        return self._lambda_list
+
+    @lambda_list.setter
+    def lambda_list(self, val_list: list) -> None:
+        if len(val_list) != 4:
+            raise ValueError("Lambda list does not have sufficient elements")
+        self._lambda_list = val_list
+
+    def run(self) -> None:
+        """
+        Standard RR01 protocol
+        :return:
+        """
+        self.rr_create_circuit()
+        self.rr_job_monitor()
+        self.modify_pulse_model()
 
     @abstractmethod
-    def rr_circuit(self):
+    def rr_create_circuit(self) -> None:
         raise NotImplementedError
 
-    @abstractmethod
-    def rr_job_monitor(self):
+    def modify_pulse_model(self) -> None:
         raise NotImplementedError
-
-
-class Rough_Rabi01(Rough_Rabi):
-    """
-
-    """
-    def __init__(self) -> None:
-        """
-
-        """
-        super().__init__()
-
-    def rr_circuit(self):
-        """
-
-        :return:
-        """
-        right_theta_01 = Gate(r'$\theta_x^{01}$', 1, [])
-        for a in self.amps:
-            amp01 = QuantumCircuit(1, 1)
-            amp01.append(right_theta_01, [0])
-            amp01.measure(0, 0)
-            amp01.add_calibration(right_theta_01, (0,), g01(a, 0), [])
-            self._package.append(amp01)
-
-    def rr_job_monitor(self):
-        """
-
-        :return:
-        """
-        schedule(self._package[99], backend=backend).draw(backend=backend)
-        amp01_job = backend.run(self._package, meas_level=1, meas_return='avg', shots=2048)
-        self._job_id = amp01_job.job_id()
-        job_monitor(amp01_job)
-
-
-class Rough_Rabi12(Rough_Rabi):
-    """
-
-    """
-    def __init__(self) -> None:
-        """
-
-        """
-        super().__init__()
-
-    def rr_circuit(self) -> None:
-        """
-
-        :return:
-        """
-        theta_12_x = Gate(r'$\theta_x^{(12)}$', 1, [])
-        pi_01_x = Gate(r'$\pi_x^{(01)}$', 1, [])
-
-        for a in self.amps:
-            amp12 = QuantumCircuit(1, 1)
-            amp12.append(pi_01_x, [0])
-            amp12.append(theta_12_x, [0])
-            amp12.measure(0, 0)
-            amp12.add_calibration(pi_01_x, (0,), g01(QUBIT_PARA.PI.value, 0), [])
-            amp12.add_calibration(theta_12_x, (0,), g12(a, 0), [])
-            self._package.append(amp12)
 
     def rr_job_monitor(self) -> None:
         """
 
         :return:
         """
-        schedule(self._package[0], backend=backend).draw()
-        amp12_job = backend.run(self._package, meas_level=1, meas_return='avg', shots=2 ** 14)
-        self._job_id = amp12_job.job_id()
-        job_monitor(amp12_job)
+        self.submitted_job = backend.run(self.package,
+                                         meas_level=1,
+                                         meas_return='avg',
+                                         shots=self.num_shots)
+
+    def analyze(self) -> Any:
+        """
+
+        :return:
+        """
+        analyzer = DataAnalysis(experiment=self.submitted_job, num_shots=self.num_shots)
+        analyzer.retrieve_data(average=True)
+        fit_params, _ = fit_function(self.x_amp_sweeping_range, analyzer.IQ_data,
+                                     lambda x, drive_period, phi, c1, c2:
+                                     (c1 * np.cos(2 * np.pi * x / drive_period - phi) + c2),
+                                     [5, 0, 0.5, 0])
+        x_amp = (fit_params[2] / 2)
+        return x_amp
+
+
+class Rough_Rabi01(Rough_Rabi):
+    """
+
+    """
+
+    def __init__(self, pulse_model: Pulse01) -> None:
+        """
+
+        """
+        self.lambda_list = [5, 0, 0.5, 0]
+        self.x_amp = Parameter('x01_amp')
+        super().__init__(pulse_model=pulse_model)
+
+    def run(self) -> None:
+        """
+
+        :return:
+        """
+        super().run()
+
+    def rr_create_circuit(self) -> None:
+        """
+
+        :return:
+        """
+        x01_gate = Gate('Unitary', 1, [self.x_amp])
+        qc_rabi01 = QuantumCircuit(7, 1)
+        qc_rabi01.append(x01_gate, [QUBIT_VAL])
+        qc_rabi01.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
+        qc_rabi01.add_calibration(x01_gate, [QUBIT_VAL],
+                                  Gate_Schedule.single_gate_schedule(self.pulse_model.frequency, 0,
+                                                                     self.pulse_model.duration, self.x_amp,
+                                                                     0),
+                                  [self.x_amp])
+        self.package = [qc_rabi01.assign_parameters({self.x_amp: a}, inplace=False)
+                        for a in self.x_amp_sweeping_range]
+
+    def modify_pulse_model(self) -> None:
+        """
+
+        :return:
+        """
+        x_amp_01 = self.analyze()
+        self.pulse_model.x_amp = x_amp_01
+
+
+class Rough_Rabi12(Rough_Rabi):
+    """
+
+    """
+
+    def __init__(self, pulse_model: Pulse12) -> None:
+        """
+        Assume we have amp_x in our pulse model
+        :param pulse_model:
+        """
+        self.lambda_list = []
+        self.x_amp = Parameter('x12_amp')
+        super().__init__(pulse_model=pulse_model)
+
+    def run(self) -> None:
+        """
+
+        :return:
+        """
+        super().run()
+
+    def rr_create_circuit(self) -> None:
+        """
+
+        :return:
+        """
+        pass
+
+    def modify_pulse_model(self) -> None:
+        """
+
+        :return:
+        """
+        pass
