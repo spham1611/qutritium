@@ -1,6 +1,5 @@
 """ Unitary gate + conventional geometric variables that are used throughout notebooks
 """
-from src.constant import QUBIT_PARA
 import numpy as np
 
 
@@ -144,7 +143,7 @@ def ry12(theta: float) -> np.ndarray:
 # PRR 2021: Fischer
 # An arbitrary unitary in the subspace (0-1) would implement
 
-def g01(theta: float, phi: float, var_phi: float):
+def g01(theta: float, phi: float):
     """r01 _summary_
 
     _extended_summary_
@@ -160,16 +159,13 @@ def g01(theta: float, phi: float, var_phi: float):
     return z12(varphi) @ Rz01(phi) * Rx01(theta) * Rz01(-phi)
 
 
-def g12(theta: float, phi_left: float, phi_right: float, var_phi: float):
+def g12(theta: float):
     """r12 _summary_
 
     _extended_summary_
 
     Args:
         theta (float): angle in radians
-        phi_left (float): angle in radians
-        phi_right (float): angle in radians
-        var_phi (float): angle in radians
 
     Returns:
         _type_: _description_
