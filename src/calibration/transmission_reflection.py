@@ -2,6 +2,7 @@
 In here TR stands for transmission and reflection
 """
 from qiskit.circuit import Parameter, Gate, QuantumCircuit
+from qiskit.tools.monitor import job_monitor
 from typing import List, Optional, Union
 from src.calibration import (
     backend,
@@ -85,6 +86,7 @@ class TR(ABC):
                                          meas_level=1,
                                          meas_return='avg',
                                          shots=self.num_shots)
+        job_monitor(self.submitted_job)
 
     def analyze(self) -> Union[int, float]:
         """

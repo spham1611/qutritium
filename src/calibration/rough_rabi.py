@@ -1,5 +1,6 @@
 """Rough rabi techniques"""
 from qiskit.circuit import QuantumCircuit, Parameter, Gate
+from qiskit.tools.monitor import job_monitor
 from src.utility import fit_function
 from src.calibration import (
     backend,
@@ -69,6 +70,7 @@ class Rough_Rabi(ABC):
                                          meas_level=1,
                                          meas_return='avg',
                                          shots=self.num_shots)
+        job_monitor(self.submitted_job)
 
     def analyze(self) -> Any:
         """
