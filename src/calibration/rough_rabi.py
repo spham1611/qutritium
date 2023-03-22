@@ -94,8 +94,8 @@ class Rough_Rabi01(Rough_Rabi):
         """
 
         """
-        self.lambda_list = [5, 0, 0.5, 0]
-        self.x_amp = Parameter('x01_amp')
+        super().lambda_list = [5, 0, 0.5, 0]
+        super().x_amp = Parameter('x01_amp')
         super().__init__(pulse_model=pulse_model)
 
     def run(self) -> None:
@@ -110,25 +110,25 @@ class Rough_Rabi01(Rough_Rabi):
 
         :return:
         """
-        x01_gate = Gate('Unitary', 1, [self.x_amp])
+        x01_gate = Gate('Unitary', 1, [super().x_amp])
         qc_rabi01 = QuantumCircuit(7, 1)
         qc_rabi01.append(x01_gate, [QUBIT_VAL])
         qc_rabi01.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_rabi01.add_calibration(x01_gate, [QUBIT_VAL],
-                                  Gate_Schedule.single_gate_schedule(self.pulse_model.frequency, 0,
-                                                                     self.pulse_model.duration, self.x_amp,
+                                  Gate_Schedule.single_gate_schedule(super().pulse_model.frequency, 0,
+                                                                     super().pulse_model.duration, super().x_amp,
                                                                      0),
-                                  [self.x_amp])
-        self.package = [qc_rabi01.assign_parameters({self.x_amp: a}, inplace=False)
-                        for a in self.x_amp_sweeping_range]
+                                  [super().x_amp])
+        super().package = [qc_rabi01.assign_parameters({super().x_amp: a}, inplace=False)
+                           for a in super().x_amp_sweeping_range]
 
     def modify_pulse_model(self) -> None:
         """
 
         :return:
         """
-        x_amp_01 = self.analyze()
-        self.pulse_model.x_amp = x_amp_01
+        x_amp_01 = super().analyze()
+        super().pulse_model.x_amp = x_amp_01
 
 
 class Rough_Rabi12(Rough_Rabi):
@@ -141,8 +141,8 @@ class Rough_Rabi12(Rough_Rabi):
         Assume we have amp_x in our pulse model
         :param pulse_model:
         """
-        self.lambda_list = []
-        self.x_amp = Parameter('x12_amp')
+        super().lambda_list = []
+        super().x_amp = Parameter('x12_amp')
         super().__init__(pulse_model=pulse_model)
 
     def run(self) -> None:

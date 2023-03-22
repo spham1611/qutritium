@@ -111,8 +111,8 @@ class TR_01(TR):
 
         :param pulse_model:
         """
-        self.lambda_list = [10, 4.9, 1, -2]
-        self.frequency = Parameter('transition_freq_01')
+        super().lambda_list = [10, 4.9, 1, -2]
+        super().frequency = Parameter('transition_freq_01')
         super().__init__(pulse_model=pulse_model)
 
     def run(self) -> None:
@@ -125,26 +125,26 @@ class TR_01(TR):
         """
         mhz_unit = QUBIT_PARA.MHZ.value
         max_freq, min_freq = DEFAULT_F01 + 36 * mhz_unit, DEFAULT_F01 - 36 * mhz_unit
-        self.freq_sweeping_range = linspace(min_freq, max_freq, 100) / QUBIT_PARA.GHZ.value
+        super().freq_sweeping_range = linspace(min_freq, max_freq, 100) / QUBIT_PARA.GHZ.value
 
     def tr_create_circuit(self) -> None:
         """
 
         :return:
         """
-        freq01_probe = Gate('Unitary', 1, [self.frequency])
+        freq01_probe = Gate('Unitary', 1, [super().frequency])
         qc_spect01 = QuantumCircuit(7, 1)
         qc_spect01.append(freq01_probe, [QUBIT_VAL])
         qc_spect01.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_spect01.add_calibration(freq01_probe, [QUBIT_VAL],
-                                   Gate_Schedule.single_gate_schedule(self.frequency, 0,
-                                                                      self.pulse_model.duration, 0.2,
+                                   Gate_Schedule.single_gate_schedule(super().frequency, 0,
+                                                                      super().pulse_model.duration, 0.2,
                                                                       0),
-                                   [self.frequency])
+                                   [super().frequency])
 
         # Get the circuits from assigned frequencies
-        self.package = [qc_spect01.assign_parameters({self.frequency: f}, inplace=False)
-                        for f in self.freq_sweeping_range]
+        super().package = [qc_spect01.assign_parameters({super().frequency: f}, inplace=False)
+                           for f in super().freq_sweeping_range]
 
     def modify_pulse_model(self):
         """
@@ -153,8 +153,8 @@ class TR_01(TR):
         """
 
         # Add frequency to pulse01
-        f01 = self.analyze()
-        self.pulse_model.frequency = f01
+        f01 = super().analyze()
+        super().pulse_model.frequency = f01
 
 
 class TR_12(TR):
@@ -166,8 +166,8 @@ class TR_12(TR):
         might be conflict in pulse01 and 12 parameters
         :param pulse_model:
         """
-        self.lambda_list = [-10, 4.8, 1, -2]
-        self.frequency = Parameter('transition_freq_12')
+        super().lambda_list = [-10, 4.8, 1, -2]
+        super().frequency = Parameter('transition_freq_12')
         self.pulse01_schedule = None
         super().__init__(pulse_model=pulse_model)
 
@@ -177,20 +177,20 @@ class TR_12(TR):
         :return:
         """
         self.pulse01_schedule = Gate_Schedule.single_gate_schedule(
-            self.pulse_model.frequency, 0,
-            self.pulse_model.duration, self.pulse_model.x_amp,
+            super().pulse_model.frequency, 0,
+            super().pulse_model.duration, super().pulse_model.x_amp,
             0
         )
         mhz_unit = QUBIT_PARA.MHZ.value
         max_freq, min_freq = DEFAULT_F12 + 36 * mhz_unit, DEFAULT_F12 - 36 * mhz_unit
-        self.freq_sweeping_range = np.linspace(min_freq, max_freq, 100) / QUBIT_PARA.GHZ.value
+        super().freq_sweeping_range = np.linspace(min_freq, max_freq, 100) / QUBIT_PARA.GHZ.value
 
     def tr_create_circuit(self) -> None:
         """
 
         :return:
         """
-        freq12_probe = Gate('Unit', 1, [self.frequency])
+        freq12_probe = Gate('Unit', 1, [super().frequency])
         x01_pi_gate = Gate(r'$X^{01}_\pi$', 1, [])
         qc_spect12 = QuantumCircuit(7, 1)
         qc_spect12.append(x01_pi_gate, [QUBIT_VAL])
@@ -198,12 +198,12 @@ class TR_12(TR):
         qc_spect12.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_spect12.add_calibration(x01_pi_gate, [QUBIT_VAL], self.pulse01_schedule)
         qc_spect12.add_calibration(freq12_probe, [QUBIT_VAL],
-                                   Gate_Schedule.single_gate_schedule(self.frequency, 0,
-                                                                      self.pulse_model.duration, 0.2,
+                                   Gate_Schedule.single_gate_schedule(super().frequency, 0,
+                                                                      super().pulse_model.duration, 0.2,
                                                                       0),
-                                   [self.frequency])
-        self.package = [qc_spect12.assign_parameters({self.frequency: f}, inplace=False)
-                        for f in self.freq_sweeping_range]
+                                   [super().frequency])
+        super().package = [qc_spect12.assign_parameters({super().frequency: f}, inplace=False)
+                           for f in super().freq_sweeping_range]
 
     def modify_pulse_model(self) -> None:
         """
@@ -212,10 +212,10 @@ class TR_12(TR):
         """
 
         # Create new pulse 12
-        f12 = self.analyze()
+        f12 = super().analyze()
         pulse12 = Pulse12(duration=self.pulse_model.duration,
                           frequency=f12)
 
         # Point address pulse01 and 12 to each other
-        self.pulse_model.pulse12 = pulse12
-        self.pulse_model.pulse12.pulse01 = self.pulse_model
+        super().pulse_model.pulse12 = pulse12
+        super().pulse_model.pulse12.pulse01 = super().pulse_model
