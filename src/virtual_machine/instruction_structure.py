@@ -2,7 +2,9 @@ import numpy as np
 from VM_utility import single_matrix_form
 from VM_utility import multi_matrix_form
 
-gate_set = ['x+',
+gate_set = ['I',
+            'x+',
+            'x-',
             'S',
             'T',
             'CNOT',
@@ -34,11 +36,10 @@ class Instruction:
         self.is_two_qutrit_gate = False
         if second_qutrit_set is not None:
             self.is_two_qutrit_gate = True
-            self.gate_matrix = multi_matrix_form(self.type, self.first_qutrit, self.second_qutrit)
-            print(self.gate_matrix)
+            self.gate_matrix = multi_matrix_form(self.type, self.first_qutrit, self.second_qutrit, self.parameter)
         else:
             self.is_two_qutrit_gate = False
-            self.gate_matrix = single_matrix_form(self.type)
+            self.gate_matrix = single_matrix_form(self.type, self.parameter)
         self.__effect()
 
     def __effect(self):
