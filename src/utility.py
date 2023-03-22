@@ -15,7 +15,7 @@ def fit_function(x_values, y_values: List, function: Callable, init_params: List
     :param init_params:
     :return:
     """
-    *fit_parameters, conv = curve_fit(function, x_values, y_values, init_params)
+    fit_parameters, *_ = curve_fit(function, x_values, y_values, init_params)
     y_fit = function(x_values, *fit_parameters)
 
     return fit_parameters, y_fit
