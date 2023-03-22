@@ -50,9 +50,9 @@ class DataAnalysis:
         self.IQ_data = []
         for i in range(len(experiment_results.results)):
             if average:
-                self.IQ_data.append(np.real(experiment_results.get_memory(i)[QUBIT] * SCALE_FACTOR))
+                self.IQ_data.append(np.real(experiment_results.get_memory(i)[0] * SCALE_FACTOR))
             else:
-                self.IQ_data.append(experiment_results.get_memory(i)[:, QUBIT] * SCALE_FACTOR)
+                self.IQ_data.append(experiment_results.get_memory(i)[:, 0] * SCALE_FACTOR)
 
         self.gfs = [self.IQ_data[0], self.IQ_data[1], self.IQ_data[2]]
 

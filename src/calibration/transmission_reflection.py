@@ -40,6 +40,7 @@ class TR(ABC):
         self.frequency = None
         self.submitted_job = None
         self.freq_sweeping_range: Optional[List] = None
+        self.freq_sweeping_range_ghz: Optional[List] = None
         self.package: Optional[List] = None
 
         # INTERNAL DESIGN ONLY
@@ -133,7 +134,8 @@ class TR_01(TR):
         """
         mhz_unit = QUBIT_PARA.MHZ.value
         max_freq, min_freq = DEFAULT_F01 + 36 * mhz_unit, DEFAULT_F01 - 36 * mhz_unit
-        self.freq_sweeping_range = linspace(min_freq, max_freq, 100) / QUBIT_PARA.GHZ.value
+        self.freq_sweeping_range = linspace(min_freq, max_freq, 100)
+        self.freq_sweeping_range_ghz = self.freq_sweeping_range / QUBIT_PARA.GHZ.value
 
     def tr_create_circuit(self) -> None:
         """
@@ -191,7 +193,8 @@ class TR_12(TR):
         )
         mhz_unit = QUBIT_PARA.MHZ.value
         max_freq, min_freq = DEFAULT_F12 + 36 * mhz_unit, DEFAULT_F12 - 36 * mhz_unit
-        self.freq_sweeping_range = np.linspace(min_freq, max_freq, 100) / QUBIT_PARA.GHZ.value
+        self.freq_sweeping_range = np.linspace(min_freq, max_freq, 100)
+        self.freq_sweeping_range_ghz = self.freq_sweeping_range / QUBIT_PARA.GHZ.value
 
     def tr_create_circuit(self) -> None:
         """
