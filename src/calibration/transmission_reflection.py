@@ -91,7 +91,7 @@ class TR(ABC):
     def analyze(self, job_id: str = "6419c486296d62d4f3c740df") -> Union[int, float]:
         """
 
-        :param job_id: Change if we want to use other job
+        :param job_id: Change if we want to use other job. Default = old job_d
         :return:
         """
         if job_id is None:
