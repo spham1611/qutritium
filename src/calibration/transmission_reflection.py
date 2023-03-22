@@ -88,12 +88,18 @@ class TR(ABC):
                                          shots=self.num_shots)
         job_monitor(self.submitted_job)
 
-    def analyze(self) -> Union[int, float]:
+    def analyze(self, job_id: str = "6419c486296d62d4f3c740df") -> Union[int, float]:
         """
 
+        :param job_id: Change if we want to use other job
         :return:
         """
-        analyzer = DataAnalysis(experiment=self.submitted_job, num_shots=self.num_shots)
+        if job_id is None:
+            analyzer = DataAnalysis(experiment=self.submitted_job, num_shots=self.num_shots)
+        else:
+            experiment = backend.retrieve_job(job_id)
+            analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
+
         analyzer.retrieve_data(average=True)
 
         fit_params, _ = fit_function(self.freq_sweeping_range, analyzer.IQ_data,
