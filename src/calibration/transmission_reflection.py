@@ -103,7 +103,7 @@ class TR(ABC):
         analyzer.retrieve_data(average=True)
 
         fit_params, _ = fit_function(self.freq_sweeping_range, analyzer.IQ_data,
-                                     lambda x, q_freq, c1, c2, c3:
+                                     lambda x, c1, q_freq, c2, c3:
                                      (c1 / np.pi) * (c2 / ((x - q_freq) ** 2 + c2 ** 2)) + c3,
                                      self.lambda_list)
 

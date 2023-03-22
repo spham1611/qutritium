@@ -72,15 +72,20 @@ class Rough_Rabi(ABC):
                                          shots=self.num_shots)
         job_monitor(self.submitted_job)
 
-    def analyze(self) -> Any:
+    def analyze(self, job_id: str = "") -> Any:
         """
 
         :return:
         """
-        analyzer = DataAnalysis(experiment=self.submitted_job, num_shots=self.num_shots)
+        if job_id is None:
+            analyzer = DataAnalysis(experiment=self.submitted_job, num_shots=self.num_shots)
+        else:
+            experiment = backend.retrieve_job(job_id)
+            analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
+
         analyzer.retrieve_data(average=True)
         fit_params, _ = fit_function(self.x_amp_sweeping_range, analyzer.IQ_data,
-                                     lambda x, drive_period, phi, c1, c2:
+                                     lambda x, c1, c2, drive_period, phi:
                                      (c1 * np.cos(2 * np.pi * x / drive_period - phi) + c2),
                                      [5, 0, 0.5, 0])
         x_amp = (fit_params[2] / 2)
