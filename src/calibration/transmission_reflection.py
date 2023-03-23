@@ -133,6 +133,7 @@ class TR_01(TR):
 
         :return:
         """
+
         mhz_unit = QUBIT_PARA.MHZ.value
         max_freq, min_freq = DEFAULT_F01 + 36 * mhz_unit, DEFAULT_F01 - 36 * mhz_unit
         self.freq_sweeping_range = linspace(min_freq, max_freq, 100)
@@ -143,14 +144,15 @@ class TR_01(TR):
 
         :return:
         """
+        self.pulse_model: Pulse01
         freq01_probe = Gate('Unitary', 1, [self.frequency])
         qc_spect01 = QuantumCircuit(7, 1)
         qc_spect01.append(freq01_probe, [QUBIT_VAL])
         qc_spect01.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_spect01.add_calibration(freq01_probe, [QUBIT_VAL],
-                                   Gate_Schedule.single_gate_schedule(self.frequency, 0,
-                                                                      self.pulse_model.duration, 0.2,
-                                                                      0),
+                                   Gate_Schedule.single_gate_schedule(self.frequency,
+                                                                      self.pulse_model.duration,
+                                                                      self.pulse_model.x_amp),
                                    [self.frequency])
 
         # Get the circuits from assigned frequencies
@@ -187,6 +189,7 @@ class TR_12(TR):
 
         :return:
         """
+        self.pulse_model: Pulse01
         self.pulse01_schedule = Gate_Schedule.single_gate_schedule(
             self.pulse_model.frequency,
             self.pulse_model.duration,
@@ -210,9 +213,9 @@ class TR_12(TR):
         qc_spect12.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_spect12.add_calibration(x01_pi_gate, [QUBIT_VAL], self.pulse01_schedule)
         qc_spect12.add_calibration(freq12_probe, [QUBIT_VAL],
-                                   Gate_Schedule.single_gate_schedule(self.frequency, 0,
-                                                                      self.pulse_model.duration, 0.2,
-                                                                      0),
+                                   Gate_Schedule.single_gate_schedule(self.frequency,
+                                                                      self.pulse_model.duration,
+                                                                      self.pulse_model.x_amp),
                                    [self.frequency])
         self.package = [qc_spect12.assign_parameters({self.frequency: f}, inplace=False)
                         for f in self.freq_sweeping_range]

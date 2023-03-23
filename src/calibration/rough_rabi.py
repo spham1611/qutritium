@@ -11,7 +11,7 @@ from src.pulse import Pulse01, Pulse12
 from src.analyzer import DataAnalysis
 from src.constant import QUBIT_PARA
 from abc import ABC, abstractmethod
-from typing import Optional, List, Any, Union
+from typing import Optional, List, Union
 import numpy as np
 
 
