@@ -27,7 +27,7 @@ class TR(ABC):
     (return Pulse model)
     """
 
-    def __init__(self, pulse_model: Pulse01, num_shots=20000) -> None:
+    def __init__(self, pulse_model: Pulse01, num_shots: int) -> None:
         """
         Must have duration!
         :param pulse_model: input pulse which can be  01 or 12
@@ -65,6 +65,7 @@ class TR(ABC):
         self.tr_create_circuit()
         self.run_monitor()
         self.modify_pulse_model()
+        print("Process run successfully!")
 
     @abstractmethod
     def set_up(self) -> None:
@@ -89,7 +90,7 @@ class TR(ABC):
                                          shots=self.num_shots)
         job_monitor(self.submitted_job)
 
-    def analyze(self, job_id: str = "6419c486296d62d4f3c740df") -> Union[int, float]:
+    def analyze(self, job_id: str = "") -> float:
         """
 
         :param job_id: Change if we want to use other job. Default = old job_d
@@ -115,12 +116,12 @@ class TR(ABC):
 class TR_01(TR):
     """"""
 
-    def __init__(self, pulse_model: Pulse01) -> None:
+    def __init__(self, pulse_model: Pulse01, num_shots: int = 20000) -> None:
         """
 
         :param pulse_model:
         """
-        super().__init__(pulse_model=pulse_model)
+        super().__init__(pulse_model=pulse_model, num_shots=num_shots)
         self.lambda_list = [10, 4.9, 1, -2]
         self.frequency = Parameter('transition_freq_01')
 
@@ -170,16 +171,16 @@ class TR_01(TR):
 class TR_12(TR):
     """"""
 
-    def __init__(self, pulse_model: Pulse01) -> None:
+    def __init__(self, pulse_model: Pulse01, num_shots: int = 20000) -> None:
         """
         In this process, we create a new pulse12 -> Users don't need to create pulse12 from pulse12 class as there
-        might be conflict in pulse01 and 12 parameters
+        might be conflicts in pulse01 and 12 parameters
         :param pulse_model:
         """
+        super().__init__(pulse_model=pulse_model, num_shots=num_shots)
         self.lambda_list = [-10, 4.8, 1, -2]
         self.frequency = Parameter('transition_freq_12')
         self.pulse01_schedule = None
-        super().__init__(pulse_model=pulse_model)
 
     def set_up(self) -> None:
         """
@@ -187,9 +188,9 @@ class TR_12(TR):
         :return:
         """
         self.pulse01_schedule = Gate_Schedule.single_gate_schedule(
-            self.pulse_model.frequency, 0,
-            self.pulse_model.duration, self.pulse_model.x_amp,
-            0
+            self.pulse_model.frequency,
+            self.pulse_model.duration,
+            self.pulse_model.x_amp,
         )
         mhz_unit = QUBIT_PARA.MHZ.value
         max_freq, min_freq = DEFAULT_F12 + 36 * mhz_unit, DEFAULT_F12 - 36 * mhz_unit

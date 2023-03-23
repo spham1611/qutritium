@@ -17,23 +17,25 @@ import numpy as np
 
 class Rough_Rabi(ABC):
     """
-    The class act as provider + regulator for Rough Rabi techniques
+    The class act as provider + regulator for Rough Rabi techniques.
+    Rough Rabi flow: Set up -> create circuit -> submit job to IBM -> get the result
     """
 
-    def __init__(self, pulse_model: Union[Pulse01, Pulse12], num_shots=20000) -> None:
+    def __init__(self, pulse_model: Union[Pulse01, Pulse12], num_shots: int) -> None:
         """
 
         :param pulse_model: Incomplete pulse: duration + freq
         """
         self.pulse_model = pulse_model
         self.num_shots = num_shots
-        self.x_amp_sweeping_range = np.linspace(-1, 1, 100)
+
         self.x_amp = None
         self.submitted_job = None
         self.package: Optional[List] = None
 
-        # Internal use
+        # INTERNAL DESIGN ONLY
         self._lambda_list: Optional[List] = None
+        self._x_amp_sweeping_range = np.linspace(-1, 1, 100)
 
     @property
     def lambda_list(self) -> List[float]:
@@ -53,6 +55,7 @@ class Rough_Rabi(ABC):
         self.rr_create_circuit()
         self.rr_job_monitor()
         self.modify_pulse_model()
+        print("Process run successfully!")
 
     @abstractmethod
     def rr_create_circuit(self) -> None:
@@ -72,7 +75,7 @@ class Rough_Rabi(ABC):
                                          shots=self.num_shots)
         job_monitor(self.submitted_job)
 
-    def analyze(self, job_id: str = "") -> Any:
+    def analyze(self, job_id: str = "") -> float:
         """
 
         :return:
@@ -84,7 +87,7 @@ class Rough_Rabi(ABC):
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
 
         analyzer.retrieve_data(average=True)
-        fit_params, _ = fit_function(self.x_amp_sweeping_range, analyzer.IQ_data,
+        fit_params, _ = fit_function(self._x_amp_sweeping_range, analyzer.IQ_data,
                                      lambda x, c1, c2, drive_period, phi:
                                      (c1 * np.cos(2 * np.pi * x / drive_period - phi) + c2),
                                      [5, 0, 0.5, 0])
@@ -97,11 +100,11 @@ class Rough_Rabi01(Rough_Rabi):
 
     """
 
-    def __init__(self, pulse_model: Pulse01) -> None:
+    def __init__(self, pulse_model: Pulse01, num_shots: int = 20000) -> None:
         """
 
         """
-        super().__init__(pulse_model=pulse_model)
+        super().__init__(pulse_model=pulse_model, num_shots=num_shots)
         self.lambda_list = [5, 0, 0.5, 0]
         self.x_amp = Parameter('x01_amp')
 
@@ -122,20 +125,20 @@ class Rough_Rabi01(Rough_Rabi):
         qc_rabi01.append(x01_gate, [QUBIT_VAL])
         qc_rabi01.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_rabi01.add_calibration(x01_gate, [QUBIT_VAL],
-                                  Gate_Schedule.single_gate_schedule(self.pulse_model.frequency, 0,
-                                                                     self.pulse_model.duration, self.x_amp,
-                                                                     0),
+                                  Gate_Schedule.single_gate_schedule(self.pulse_model.frequency,
+                                                                     self.pulse_model.duration,
+                                                                     self.x_amp,
+                                                                     ),
                                   [self.x_amp])
         self.package = [qc_rabi01.assign_parameters({self.x_amp: a}, inplace=False)
-                        for a in self.x_amp_sweeping_range]
+                        for a in self._x_amp_sweeping_range]
 
     def modify_pulse_model(self) -> None:
         """
 
         :return:
         """
-        x_amp_01 = self.analyze()
-        self.pulse_model.x_amp = x_amp_01
+        self.pulse_model.x_amp = self.analyze()
 
 
 class Rough_Rabi12(Rough_Rabi):
@@ -143,14 +146,14 @@ class Rough_Rabi12(Rough_Rabi):
 
     """
 
-    def __init__(self, pulse_model: Pulse12) -> None:
+    def __init__(self, pulse_model: Pulse12, num_shots: int = 20000) -> None:
         """
         Assume we have amp_x in our pulse model
         :param pulse_model:
         """
+        super().__init__(pulse_model=pulse_model, num_shots=num_shots)
         self.lambda_list = []
         self.x_amp = Parameter('x12_amp')
-        super().__init__(pulse_model=pulse_model)
 
     def run(self) -> None:
         """
@@ -171,4 +174,6 @@ class Rough_Rabi12(Rough_Rabi):
 
         :return:
         """
-        pass
+        self.pulse_model: Pulse12
+        self.pulse_model.x_amp = self.analyze()
+

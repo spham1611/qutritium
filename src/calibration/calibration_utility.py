@@ -1,4 +1,4 @@
-"""Calibration utility functions for gate operation"""
+"""Calibration utility functions for gate operations and other"""
 from qiskit.pulse.schedule import ScheduleBlock
 from src.calibration import backend, QUBIT_VAL
 from qiskit import pulse
@@ -9,10 +9,10 @@ class Gate_Schedule:
 
     @staticmethod
     def single_gate_schedule(drive_freq,
-                             drive_phase,
                              drive_duration,
                              drive_amp,
-                             drive_beta, /) -> ScheduleBlock:
+                             drive_phase: int = 0,
+                             drive_beta: float = 0., /) -> ScheduleBlock:
         """
 
         :param drive_freq:
