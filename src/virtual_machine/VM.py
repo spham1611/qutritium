@@ -20,6 +20,8 @@ class Virtual_Machine:
         self.n_classical = n_classical
         self.operation_set = []
         self.state = []
+        self.SPAM_error = False
+        self.error_meas = None
         if initial_state is not None:
             if initial_state.shape == (3 ** n_qutrit, 1):
                 self.initial_state = initial_state
@@ -30,7 +32,7 @@ class Virtual_Machine:
                         initial_state.shape))
         else:
             self.initial_state = np.array([[1], [0], [0]])
-            for i in range(self.n_qutrit-1):
+            for i in range(self.n_qutrit - 1):
                 self.initial_state = np.kron(self.initial_state, np.array([[1], [0], [0]]))
             self.state = self.initial_state
 
@@ -67,13 +69,14 @@ class Virtual_Machine:
         Performs the defined amount of shots.
         """
         if self.measurement_flag:
+            if self.SPAM_error:
+                probs_prep = [self.error_meas[i][1] for i in range(len(self.error_meas))]
+                for i in range(self.n_qutrit):
+                    choice = np.random.choice(range(len(self.error_meas)), p=probs_prep)
+                    self.add_gate(self.error_meas[choice][0], i)
             state_coeff, state_construction = statevector_to_state(self.state, self.n_qutrit)
             probs = [np.abs(i) ** 2 for i in state_coeff]
             self.measurement_result = []
-            # print("Current state :" + str(self.state))
-            # print("Probabilites: " + str(probs))
-            # print("State_coeff: " + str(state_coeff))
-            # print("State: " + str(range(len(state_construction))))
             for i in range(num_shots):
                 measure = np.random.choice(range(len(state_construction)), p=probs)
                 self.measurement_result.append(state_construction[measure])
@@ -117,6 +120,28 @@ class Virtual_Machine:
             return self.measurement_result
         else:
             raise Exception("You have not make measurement yet.")
+
+    def density_matrix(self):
+        """
+        :return: Density matrix of the current state of the quantum circuit
+        """
+        return self.state@np.transpose(self.state)
+
+    def add_SPAM_noise(self, p_prep, p_meas, error_type = 'Pauli_error'):
+        if error_type == 'Pauli_error':
+            self.error_meas = [('x+', p_meas/2), ('x-', p_meas/2), ('I', 1-p_meas)]
+            error_prep = [('x+', p_prep/2), ('x-', p_prep/2), ('I', 1-p_prep)]
+            """
+            Adding preparation error
+            """
+            probs_prep = [error_prep[i][1] for i in range(len(error_prep))]
+            for i in range(self.n_qutrit):
+                choice = np.random.choice(range(len(error_prep)), p=probs_prep)
+                self.add_gate(error_prep[choice][0], i)
+            """
+            Adding measurement error
+            """
+            self.SPAM_error = True
 
     def draw(self):
         """

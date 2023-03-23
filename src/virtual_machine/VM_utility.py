@@ -20,27 +20,60 @@ def single_matrix_form(gate_type, parameter=None, omega=np.exp(1j * 2 * pi / 3))
         return np.array([[0, 1, 0],
                          [1, 0, 0],
                          [0, 0, 1]])
+    elif gate_type == 'rx01':
+        return np.array([[np.cos(parameter / 2), -1j * np.sin(parameter / 2), 0],
+                         [-1j * np.sin(parameter / 2), np.cos(parameter / 2), 0],
+                         [0, 0, 1]])
     elif gate_type == 'x12':
         return np.array([[1, 0, 0],
                          [0, 0, 1],
                          [0, 1, 0]])
+    elif gate_type == 'rx12':
+        return np.array([[1, 0, 0],
+                         [0, np.cos(parameter / 2), -1j * np.sin(parameter / 2)],
+                         [0, -1j * np.sin(parameter / 2), np.cos(parameter / 2)]])
+    elif gate_type == 'I':
+        return np.eye(3)
+    elif gate_type == 'x+':
+        return np.array([[0, 0, 1],
+                         [1, 0, 0],
+                         [0, 1, 0]])
+    elif gate_type == 'x-':
+        return np.array([[0, 1, 0],
+                         [0, 0, 1],
+                         [1, 0, 0]])
     elif gate_type == 'z01':
         return np.array([[1, 0, 0],
                          [0, -1, 0],
+                         [0, 0, 1]])
+    elif gate_type == 'rz01':
+        return np.array([[np.exp(-1j * parameter / 2), 0, 0],
+                         [0, np.exp(1j * parameter / 2), 0],
                          [0, 0, 1]])
     elif gate_type == 'z12':
         return np.array([[1, 0, 0],
                          [0, 1, 0],
                          [0, 0, -1]])
+    elif gate_type == 'rz12':
+        return np.array([[1, 0, 0],
+                         [0, np.exp(-1j * parameter / 2), 0],
+                         [0, 0, np.exp(1j * parameter / 2)]])
     elif gate_type == 'y01':
         return np.array([[0, -1j, 0],
                          [1j, 0, 0],
                          [0, 0, 1]])
-
+    elif gate_type == 'ry01':
+        return np.array([[np.cos(parameter / 2), -np.sin(parameter / 2), 0],
+                         [np.sin(parameter / 2), np.cos(parameter / 2), 0],
+                         [0, 0, 1]])
     elif gate_type == 'y12':
         return np.array([[1, 0, 0],
                          [0, 0, -1j],
                          [0, 1j, 0]])
+    elif gate_type == 'ry12':
+        return np.array([[1, 0, 0],
+                         [0, np.cos(parameter / 2), -np.sin(parameter / 2)],
+                         [0, np.sin(parameter / 2), np.cos(parameter / 2)]])
     elif gate_type == 'WH':
         return (1 / np.sqrt(3)) * np.array([[1, 1, 1],
                                             [1, omega, np.conj(omega)],
@@ -53,8 +86,6 @@ def single_matrix_form(gate_type, parameter=None, omega=np.exp(1j * 2 * pi / 3))
         return np.array([[1, 0, 0],
                          [0, np.power(omega, 1 / 3), 0],
                          [0, 0, np.power(omega, -1 / 3)]])
-    elif gate_type == 'CNOT':
-        return None
     else:
         raise Exception("This gate is not implemented yet.")
 
@@ -73,11 +104,11 @@ def multi_matrix_form(gate_type, first_index, second_index, parameter=None, omeg
             raise Exception("Control qutrit and acting qutrit can not be the same")
         else:
             spacing = np.eye(3)
-            space = np.abs(first_index - second_index)-1
+            space = np.abs(first_index - second_index) - 1
             if space == 0:
                 spacing = 1
             else:
-                for i in range(space-1):
+                for i in range(space - 1):
                     spacing = np.kron(spacing, np.eye(3))
             if second_index < first_index:
                 matrix = np.kron(np.kron(state_0 @ np.transpose(state_0), spacing), np.eye(3)) + \
@@ -132,3 +163,8 @@ def print_statevector(state, n_qutrit=int):
             print(str(state_coeff[i]) + " |" + str(state_cons[i]) + ">")
         else:
             print(str(state_coeff[i]) + " |" + str(state_cons[i]) + "> + ")
+
+
+def decomposition_single_qutrit(matrix_form, opt="cos-sin"):
+    if opt == "cos-sin":
+        return None
