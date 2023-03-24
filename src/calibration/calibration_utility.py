@@ -30,3 +30,22 @@ class Gate_Schedule:
                 pulse.play(pulse.Drag(drive_duration, drive_amp, drive_sigma, drive_beta), drive_chan)
 
         return drive_schedule
+
+    @staticmethod
+    def single_gate_schedule_gaussian(drive_freq,
+                                      drive_duration,
+                                      drive_amp, /
+                                      ) -> ScheduleBlock:
+        """
+
+        :param drive_freq:
+        :param drive_duration:
+        :param drive_amp:
+        :return:
+        """
+        with pulse.build(backend=backend) as drive_schedule:
+            drive_chan = pulse.drive_channel(QUBIT_VAL)
+            pulse.set_frequency(drive_freq, pulse.drive_channel(QUBIT_VAL))
+            pulse.play(pulse.Gaussian(duration=drive_duration, amp=drive_amp, sigma=drive_duration / 4,
+                                      name='$X^{01}$'), drive_chan)
+        return drive_schedule
