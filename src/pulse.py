@@ -155,9 +155,9 @@ class Pulse01(Pulse):
 class Pulse12(Pulse):
     """Pulse of 1 -> 2 state"""
 
-    def __init__(self, frequency=0, x_amp=0, sx_amp=0,
+    def __init__(self, pulse01: Pulse01, frequency=0, x_amp=0, sx_amp=0,
                  beta_dephase: int = 0, beta_leakage: int = 0, duration: int = 0,
-                 pulse01: Pulse01 = None) -> None:
+                 ) -> None:
         """
 
         :param frequency:
@@ -168,9 +168,8 @@ class Pulse12(Pulse):
         :param duration:
         :param pulse01: Not allowed to be None
         """
-        if pulse01 is None:
-            raise ValueError("Pulse 12 must have its related 01 state")
         self.pulse01 = pulse01
+        self.pulse01.pulse12 = self
         super().__init__(frequency=frequency, x_amp=x_amp, sx_amp=sx_amp,
                          beta_dephase=beta_dephase, beta_leakage=beta_leakage, duration=duration)
 
