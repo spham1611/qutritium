@@ -27,7 +27,7 @@ class TR(ABC):
     (return Pulse model)
     """
 
-    def __init__(self, pulse_model: Pulse01, num_shots: int) -> None:
+    def __init__(self, pulse_model: Union[Pulse01, Pulse12], num_shots: int) -> None:
         """
         Must have duration!
         :param pulse_model: input pulse which can be  01 or 12
@@ -38,7 +38,7 @@ class TR(ABC):
             raise ValueError("Can not establish process without duration parameter!")
         self.num_shots = num_shots
         self.frequency = None
-        self.submitted_job = None
+        self.submitted_job_id = None
         self.freq_sweeping_range: Optional[List] = None
         self.freq_sweeping_range_ghz: Optional[List] = None
         self.package: Optional[List] = None
@@ -76,7 +76,7 @@ class TR(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def modify_pulse_model(self) -> None:
+    def modify_pulse_model(self, job_id: str = "") -> None:
         raise NotImplementedError
 
     def run_monitor(self) -> None:
@@ -84,11 +84,12 @@ class TR(ABC):
 
         :return:
         """
-        self.submitted_job = backend.run(self.package,
-                                         meas_level=1,
-                                         meas_return='avg',
-                                         shots=self.num_shots)
-        job_monitor(self.submitted_job)
+        submitted_job = backend.run(self.package,
+                                    meas_level=1,
+                                    meas_return='avg',
+                                    shots=self.num_shots)
+        self.submitted_job_id = submitted_job.job_id()
+        job_monitor(submitted_job)
 
     def analyze(self, job_id: str = "") -> float:
         """
@@ -97,13 +98,14 @@ class TR(ABC):
         :return:
         """
         if job_id is None:
-            analyzer = DataAnalysis(experiment=self.submitted_job, num_shots=self.num_shots)
+            experiment = backend.retrieve_job(self.submitted_job_id)
+            analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
         else:
             experiment = backend.retrieve_job(job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
 
         analyzer.retrieve_data(average=True)
-
+        # print(analyzer.IQ_data)
         fit_params, _ = fit_function(self.freq_sweeping_range, analyzer.IQ_data,
                                      lambda x, c1, q_freq, c2, c3:
                                      (c1 / np.pi) * (c2 / ((x - q_freq) ** 2 + c2 ** 2)) + c3,
@@ -133,7 +135,6 @@ class TR_01(TR):
 
         :return:
         """
-
         mhz_unit = QUBIT_PARA.MHZ.value
         max_freq, min_freq = DEFAULT_F01 + 36 * mhz_unit, DEFAULT_F01 - 36 * mhz_unit
         self.freq_sweeping_range = linspace(min_freq, max_freq, 100)
@@ -159,21 +160,21 @@ class TR_01(TR):
         self.package = [qc_spect01.assign_parameters({self.frequency: f}, inplace=False)
                         for f in self.freq_sweeping_range]
 
-    def modify_pulse_model(self):
+    def modify_pulse_model(self, job_id: str = ""):
         """
 
         :return:
         """
-
+        self.pulse_model: Pulse01
         # Add frequency to pulse01
-        f01 = self.analyze()
+        f01 = self.analyze(job_id=job_id)
         self.pulse_model.frequency = f01
 
 
 class TR_12(TR):
     """"""
 
-    def __init__(self, pulse_model: Pulse01, num_shots: int = 20000) -> None:
+    def __init__(self, pulse_model: Pulse12, num_shots: int = 20000) -> None:
         """
         In this process, we create a new pulse12 -> Users don't need to create pulse12 from pulse12 class as there
         might be conflicts in pulse01 and 12 parameters
@@ -189,11 +190,11 @@ class TR_12(TR):
 
         :return:
         """
-        self.pulse_model: Pulse01
+        self.pulse_model: Pulse12
         self.pulse01_schedule = Gate_Schedule.single_gate_schedule(
-            self.pulse_model.frequency,
-            self.pulse_model.duration,
-            self.pulse_model.x_amp,
+            self.pulse_model.pulse01.frequency,
+            self.pulse_model.pulse01.duration,
+            self.pulse_model.pulse01.x_amp,
         )
         mhz_unit = QUBIT_PARA.MHZ.value
         max_freq, min_freq = DEFAULT_F12 + 36 * mhz_unit, DEFAULT_F12 - 36 * mhz_unit
@@ -205,6 +206,7 @@ class TR_12(TR):
 
         :return:
         """
+        self.pulse_model: Pulse12
         freq12_probe = Gate('Unit', 1, [self.frequency])
         x01_pi_gate = Gate(r'$X^{01}_\pi$', 1, [])
         qc_spect12 = QuantumCircuit(7, 1)
@@ -214,23 +216,18 @@ class TR_12(TR):
         qc_spect12.add_calibration(x01_pi_gate, [QUBIT_VAL], self.pulse01_schedule)
         qc_spect12.add_calibration(freq12_probe, [QUBIT_VAL],
                                    Gate_Schedule.single_gate_schedule(self.frequency,
-                                                                      self.pulse_model.duration,
-                                                                      self.pulse_model.x_amp),
+                                                                      self.pulse_model.pulse01.duration,
+                                                                      self.pulse_model.pulse01.x_amp),
                                    [self.frequency])
         self.package = [qc_spect12.assign_parameters({self.frequency: f}, inplace=False)
                         for f in self.freq_sweeping_range]
 
-    def modify_pulse_model(self) -> None:
+    def modify_pulse_model(self, job_id: str = "") -> None:
         """
 
         :return:
         """
-
+        self.pulse_model: Pulse12
         # Create new pulse 12
-        f12 = self.analyze()
-        pulse12 = Pulse12(duration=self.pulse_model.duration,
-                          frequency=f12)
-
-        # Point address pulse01 and 12 to each other
-        self.pulse_model.pulse12 = pulse12
-        self.pulse_model.pulse12.pulse01 = self.pulse_model
+        f12 = self.analyze(job_id=job_id)
+        self.pulse_model.frequency = f12

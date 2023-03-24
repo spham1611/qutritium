@@ -30,7 +30,7 @@ class Rough_Rabi(ABC):
         self.num_shots = num_shots
 
         self.x_amp = None
-        self.submitted_job = None
+        self.submitted_job_id = None
         self.package: Optional[List] = None
 
         # INTERNAL DESIGN ONLY
@@ -61,7 +61,7 @@ class Rough_Rabi(ABC):
     def rr_create_circuit(self) -> None:
         raise NotImplementedError
 
-    def modify_pulse_model(self) -> None:
+    def modify_pulse_model(self, job_id: str = "") -> None:
         raise NotImplementedError
 
     def rr_job_monitor(self) -> None:
@@ -69,11 +69,12 @@ class Rough_Rabi(ABC):
 
         :return:
         """
-        self.submitted_job = backend.run(self.package,
-                                         meas_level=1,
-                                         meas_return='avg',
-                                         shots=self.num_shots)
-        job_monitor(self.submitted_job)
+        submitted_job = backend.run(self.package,
+                                    meas_level=1,
+                                    meas_return='avg',
+                                    shots=self.num_shots)
+        self.submitted_job_id = submitted_job.job_id()
+        job_monitor(submitted_job)
 
     def analyze(self, job_id: str = "") -> float:
         """
@@ -81,7 +82,8 @@ class Rough_Rabi(ABC):
         :return:
         """
         if job_id is None:
-            analyzer = DataAnalysis(experiment=self.submitted_job, num_shots=self.num_shots)
+            experiment = backend.retrieve_job(self.submitted_job_id)
+            analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
         else:
             experiment = backend.retrieve_job(job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
@@ -120,6 +122,7 @@ class Rough_Rabi01(Rough_Rabi):
 
         :return:
         """
+        self.pulse_model: Pulse01
         x01_gate = Gate('Unitary', 1, [self.x_amp])
         qc_rabi01 = QuantumCircuit(7, 1)
         qc_rabi01.append(x01_gate, [QUBIT_VAL])
@@ -133,12 +136,13 @@ class Rough_Rabi01(Rough_Rabi):
         self.package = [qc_rabi01.assign_parameters({self.x_amp: a}, inplace=False)
                         for a in self._x_amp_sweeping_range]
 
-    def modify_pulse_model(self) -> None:
+    def modify_pulse_model(self, job_id: str = "") -> None:
         """
 
         :return:
         """
-        self.pulse_model.x_amp = self.analyze()
+        self.pulse_model: Pulse01
+        self.pulse_model.x_amp = self.analyze(job_id=job_id)
 
 
 class Rough_Rabi12(Rough_Rabi):
@@ -152,8 +156,8 @@ class Rough_Rabi12(Rough_Rabi):
         :param pulse_model:
         """
         super().__init__(pulse_model=pulse_model, num_shots=num_shots)
-        self.lambda_list = []
-        self.x_amp = Parameter('x12_amp')
+        self.lambda_list = [5, 0, 0.4, 0]
+        self.x_amp = Parameter('x01_amp')
 
     def run(self) -> None:
         """
@@ -167,13 +171,32 @@ class Rough_Rabi12(Rough_Rabi):
 
         :return:
         """
-        pass
+        self.pulse_model: Pulse12
+        x01_pi = Gate(r'$X^{01}_\pi$', 1, [])
+        x12_gate = Gate('Unitary', 1, [self.x_amp])
+        qc_rabi12 = QuantumCircuit(7, 1)
+        qc_rabi12.append(x01_pi, [QUBIT_VAL])
+        qc_rabi12.append(x12_gate, [QUBIT_VAL])
+        qc_rabi12.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
+        qc_rabi12.add_calibration(x01_pi, [QUBIT_VAL],
+                                  Gate_Schedule.single_gate_schedule(self.pulse_model.pulse01.frequency,
+                                                                     self.pulse_model.pulse01.duration,
+                                                                     self.pulse_model.pulse01.x_amp,
+                                                                     ),
+                                  [self.x_amp])
+        qc_rabi12.add_calibration(x12_gate, [QUBIT_VAL],
+                                  Gate_Schedule.single_gate_schedule(self.pulse_model.frequency,
+                                                                     self.pulse_model.duration,
+                                                                     self.x_amp,
+                                                                     ),
+                                  [self.x_amp])
+        self.package = [qc_rabi12.assign_parameters({self.x_amp: a}, inplace=False)
+                        for a in self._x_amp_sweeping_range]
 
-    def modify_pulse_model(self) -> None:
+    def modify_pulse_model(self, job_id: str = "") -> None:
         """
 
         :return:
         """
         self.pulse_model: Pulse12
-        self.pulse_model.x_amp = self.analyze()
-
+        self.pulse_model.x_amp = self.analyze(job_id=job_id)
