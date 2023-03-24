@@ -28,7 +28,7 @@ class DragLK(ABC):
         """
         self.pulse_model = pulse_model
         self.num_shots = num_shots
-        self.submitted_job = None
+        self.submitted_job_id = None
         self.package: Optional[List[QuantumCircuit]] = None
         self.x01_gate: Optional[Gate] = None
         self.x12_gate: Optional[Gate] = None
@@ -97,7 +97,8 @@ class DragLK(ABC):
         :return:
         """
         if job_id is None:
-            analyzer = DataAnalysis(experiment=self.submitted_job, num_shots=self.num_shots)
+            experiment = backend.retrieve_job(self.submitted_job_id)
+            analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
         else:
             experiment = backend.retrieve_job(job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
@@ -145,11 +146,12 @@ class DragLK(ABC):
 
         :return:
         """
-        self.submitted_job = backend.run(self.package,
-                                         meas_level=1,
-                                         meas_return='single',
-                                         shots=self.num_shots)
-        job_monitor(self.submitted_job)
+        submitted_job = backend.run(self.package,
+                                    meas_level=1,
+                                    meas_return='single',
+                                    shots=self.num_shots)
+        self.submitted_job_id = submitted_job.job_id()
+        job_monitor(submitted_job)
 
 
 class DragLK01(DragLK):
@@ -176,7 +178,7 @@ class DragLK01(DragLK):
             self.pulse_model.duration,
             self.pulse_model.x_amp,
             0,
-            self.pulse_model.beta_dephase
+            self.drive_beta
         )
         return x01_sch
 
@@ -227,19 +229,20 @@ class DragLK01(DragLK):
         self.xx_schedule = xx_schedule
         self.xx_gate = Gate("$X_\pi X_{-\pi}$", 1, [self.drive_beta])
 
-    def modify_pulse_model(self) -> None:
+    def modify_pulse_model(self, job_id: str = "") -> None:
         """
         Add beta leakage to pulse model 01
         :return:
         """
         self.pulse_model: Pulse01
-        self.pulse_model.beta_leakage = self.analyze()
+        self.pulse_model.beta_leakage = self.analyze(job_id=job_id)
 
 
 class DragLK12(DragLK):
     """
 
     """
+
     def __init__(self, pulse_model: Pulse12, num_shots=20000) -> None:
         """
         Pulse12 must have its pulse01
@@ -259,7 +262,7 @@ class DragLK12(DragLK):
             self.pulse_model.pulse01.duration,
             self.pulse_model.pulse01.x_amp,
             0,
-            self.pulse_model.pulse01.beta_dephase
+            self.drive_beta
         )
         return x01_sch
 
@@ -312,10 +315,10 @@ class DragLK12(DragLK):
         self.xx_schedule = xx_schedule
         self.xx_gate = Gate("$X_\pi X_{-\pi}$", 1, [self.drive_beta])
 
-    def modify_pulse_model(self) -> None:
+    def modify_pulse_model(self, job_id: str = "") -> None:
         """
 
         :return:
         """
         self.pulse_model: Pulse12
-        self.pulse_model.beta_leakage = self.analyze()
+        self.pulse_model.beta_leakage = self.analyze(job_id=job_id, index_taken=1)
