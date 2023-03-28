@@ -7,6 +7,7 @@ from typing import Dict, Optional
 import os
 import json
 import pandas as pd
+import uuid
 
 
 class Pulse_List(list["Pulse"]):
@@ -14,7 +15,8 @@ class Pulse_List(list["Pulse"]):
 
     def pulse_dictionary(self) -> Dict:
         """Convert list of pulse to dictionary"""
-        dict_pulses = {'mode': [],
+        dict_pulses = {'pulse id': [],
+                       'mode': [],
                        'duration': [],
                        'frequency': [],
                        'x_amp': [],
@@ -22,14 +24,21 @@ class Pulse_List(list["Pulse"]):
                        'beta_dephase': [],
                        'beta_leakage': [],
                        'sigma': [],
+                       'pulse_pointer': [],
                        }
         for pulse in self:
+            dict_pulses['pulse id'].append(pulse.id)
             if isinstance(pulse, Pulse01):
+                pulse: Pulse01
                 dict_pulses['mode'].append("01")
+                dict_pulses['pulse_pointer'].append(pulse.pulse12.id if pulse.pulse12 else 0)
             elif isinstance(pulse, Pulse12):
+                pulse: Pulse12
                 dict_pulses['mode'].append("12")
+                dict_pulses['pulse_pointer'].append(pulse.pulse01.id)
             else:
-                raise ValueError("Invalid pulse state!")
+                dict_pulses['mode'].append("00")
+                dict_pulses['pulse_pointer'].append(0)
             dict_pulses['duration'].append(pulse.duration)
             dict_pulses['frequency'].append(pulse.frequency)
             dict_pulses['x_amp'].append(pulse.x_amp)
@@ -40,7 +49,7 @@ class Pulse_List(list["Pulse"]):
 
         return dict_pulses
 
-    def save_files(self, saved_type: str, file_path: str = "Pulses") -> None:
+    def save_pulses(self, saved_type: str, file_path: str = "Pulses") -> Optional[str]:
         """
         Save list of pulses in csv using panda.DataFrame
         :param saved_type:
@@ -48,21 +57,20 @@ class Pulse_List(list["Pulse"]):
         :return:
         """
         dict_pulses = self.pulse_dictionary()
+        full_path = None
         if saved_type == 'csv':
             # Save CSV
             save_pulses_df = pd.DataFrame(dict_pulses)
             full_path = os.path.join(file_path, ".csv")
             save_pulses_df.to_csv(full_path, index=False)
-            if os.path.isfile(full_path):
-                print("Save the csv in output folder successfully!")
-            else:
-                print("There is a problem with saving the file!")
+            return full_path
         elif saved_type == "json":
             # Save JSON
             json_pulse = json.dumps(dict_pulses, indent=4)
             full_path = os.path.join(file_path, ".json")
             with open(full_path, "w") as outfile:
                 outfile.write(json_pulse)
+            return full_path
         else:
             raise IOError("Unsupported type!")
 
@@ -75,7 +83,7 @@ class Pulse(ABC):
     pulse_list = Pulse_List()
 
     def __init__(self, frequency=0, x_amp=0, sx_amp=0,
-                 beta_dephase: int = 0, beta_leakage: int = 0, duration=0) -> None:
+                 beta_dephase: float = 0, beta_leakage: float = 0, duration=0) -> None:
         """
 
         :param frequency:
@@ -92,6 +100,7 @@ class Pulse(ABC):
         self.beta_dephase = beta_dephase
         self.duration = duration
         self.sigma = duration / 4 if duration else 0
+        self.id = uuid.uuid4()
         Pulse.pulse_list.append(self)
 
     @staticmethod
@@ -104,7 +113,7 @@ class Pulse01(Pulse):
     """Pulse of 0 -> 1 state"""
 
     def __init__(self, frequency=0, x_amp=0, sx_amp=0,
-                 beta_dephase: int = 0, beta_leakage: int = 0, duration=0,
+                 beta_dephase: float = 0, beta_leakage: float = 0, duration=0,
                  pulse12: Pulse12 = None) -> None:
         """
 
@@ -122,14 +131,16 @@ class Pulse01(Pulse):
 
     def __str__(self) -> str:
         return (
-            f"Pulse01: frequency={self.frequency}, x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
+            f"Pulse01: id={self.id}, frequency={self.frequency}, "
+            f"x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
             f"beta_dephase={self.beta_dephase}, beta_leakage={self.beta_leakage}, "
             f"duration={self.duration}, sigma={self.sigma}"
         )
 
     def __repr__(self) -> str:
         return (
-            f"Pulse01: frequency={self.frequency}, x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
+            f"Pulse01: id={self.id}, frequency={self.frequency}, "
+            f"x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
             f"beta_dephase={self.beta_dephase}, beta_leakage={self.beta_leakage}, "
             f"duration={self.duration}, sigma={self.sigma}"
         )
@@ -156,7 +167,7 @@ class Pulse12(Pulse):
     """Pulse of 1 -> 2 state"""
 
     def __init__(self, pulse01: Pulse01, frequency=0, x_amp=0, sx_amp=0,
-                 beta_dephase: int = 0, beta_leakage: int = 0, duration: int = 0,
+                 beta_dephase: float = 0, beta_leakage: float = 0, duration: int = 0,
                  ) -> None:
         """
 
@@ -175,14 +186,16 @@ class Pulse12(Pulse):
 
     def __str__(self) -> str:
         return (
-            f"Pulse12: frequency={self.frequency}, x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
+            f"Pulse12: id={self.id}, frequency={self.frequency}, "
+            f"x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
             f"beta_dephase={self.beta_dephase}, beta_leakage={self.beta_leakage}, "
             f"duration={self.duration}, sigma={self.sigma}"
         )
 
     def __repr__(self) -> str:
         return (
-            f"Pulse12: frequency={self.frequency}, x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
+            f"Pulse12: id={self.id}, frequency={self.frequency},"
+            f" x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
             f"beta_dephase={self.beta_dephase}, beta_leakage={self.beta_leakage}, "
             f"duration={self.duration}, sigma={self.sigma}"
         )
@@ -195,6 +208,7 @@ class Pulse12(Pulse):
                 and self.beta_leakage == other.beta_leakage
                 and self.beta_dephase == other.beta_dephase
                 and self.duration == other.duration
+                and self.pulse01 == other.pulse01
         )
 
     def is_pulse01_there(self) -> bool:
