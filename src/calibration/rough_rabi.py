@@ -10,6 +10,7 @@ from src.calibration.calibration_utility import Gate_Schedule
 from src.pulse import Pulse01, Pulse12
 from src.analyzer import DataAnalysis
 from src.constant import QUBIT_PARA
+from src.exceptions.pulse_exception import MissingDurationPulse, MissingFrequencyPulse
 from abc import ABC, abstractmethod
 from typing import Optional, List, Union
 import numpy as np
@@ -24,8 +25,15 @@ class Rough_Rabi(ABC):
     def __init__(self, pulse_model: Union[Pulse01, Pulse12], num_shots: int) -> None:
         """
 
-        :param pulse_model: Incomplete pulse: duration + freq
+        :param pulse_model: Incomplete pulse: Must have duration + freq
+        :param num_shots:
         """
+
+        if pulse_model.duration == 0:
+            raise MissingDurationPulse
+        if pulse_model.frequency == 0:
+            raise MissingFrequencyPulse
+
         self.pulse_model = pulse_model
         self.num_shots = num_shots
 
@@ -61,7 +69,7 @@ class Rough_Rabi(ABC):
     def rr_create_circuit(self) -> None:
         raise NotImplementedError
 
-    def modify_pulse_model(self, job_id: str = "") -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         raise NotImplementedError
 
     def rr_job_monitor(self) -> None:
@@ -76,7 +84,7 @@ class Rough_Rabi(ABC):
         self.submitted_job_id = submitted_job.job_id()
         job_monitor(submitted_job)
 
-    def analyze(self, job_id: str = "") -> float:
+    def analyze(self, job_id: str) -> float:
         """
 
         :return:
@@ -136,7 +144,7 @@ class Rough_Rabi01(Rough_Rabi):
         self.package = [qc_rabi01.assign_parameters({self.x_amp: a}, inplace=False)
                         for a in self._x_amp_sweeping_range]
 
-    def modify_pulse_model(self, job_id: str = "") -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         """
 
         :return:
@@ -193,7 +201,7 @@ class Rough_Rabi12(Rough_Rabi):
         self.package = [qc_rabi12.assign_parameters({self.x_amp: a}, inplace=False)
                         for a in self._x_amp_sweeping_range]
 
-    def modify_pulse_model(self, job_id: str = "") -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         """
 
         :return:

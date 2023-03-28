@@ -6,9 +6,10 @@ from src.analyzer import DataAnalysis
 from src.pulse import Pulse01, Pulse12
 from src.calibration import backend, QUBIT_VAL
 from src.calibration.calibration_utility import Gate_Schedule
+from src.exceptions.pulse_exception import MissingDurationPulse, MissingFrequencyPulse, MissingAmplitudePulse
+# from src.utility import fit_function
 from abc import ABC, abstractmethod
 from typing import List, Union, Optional
-from src.utility import fit_function
 import qiskit.pulse as pulse
 import numpy as np
 
@@ -26,6 +27,14 @@ class DragLK(ABC):
         :param num_shots:
         :return:
         """
+
+        if pulse_model.duration == 0:
+            raise MissingDurationPulse
+        if pulse_model.frequency == 0:
+            raise MissingFrequencyPulse
+        if pulse_model.x_amp == 0:
+            raise MissingAmplitudePulse
+
         self.pulse_model = pulse_model
         self.num_shots = num_shots
         self.submitted_job_id = None
@@ -89,7 +98,7 @@ class DragLK(ABC):
 
         return [ground_state, first_excited_state, second_excited_state]
 
-    def analyze(self, job_id: str = "", index_taken: int = 0) -> float:
+    def analyze(self, job_id: str, index_taken: int = 0) -> float:
         """
 
         :param job_id:
@@ -128,7 +137,7 @@ class DragLK(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def modify_pulse_model(self) -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         raise NotImplementedError
 
     def dl_create_circuit(self) -> None:
@@ -177,8 +186,6 @@ class DragLK01(DragLK):
             self.pulse_model.frequency,
             self.pulse_model.duration,
             self.pulse_model.x_amp,
-            0,
-            self.drive_beta
         )
         return x01_sch
 
@@ -229,7 +236,7 @@ class DragLK01(DragLK):
         self.xx_schedule = xx_schedule
         self.xx_gate = Gate("$X_\pi X_{-\pi}$", 1, [self.drive_beta])
 
-    def modify_pulse_model(self, job_id: str = "") -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         """
         Add beta leakage to pulse model 01
         :return:
@@ -261,8 +268,6 @@ class DragLK12(DragLK):
             self.pulse_model.pulse01.frequency,
             self.pulse_model.pulse01.duration,
             self.pulse_model.pulse01.x_amp,
-            0,
-            self.drive_beta
         )
         return x01_sch
 
@@ -315,7 +320,7 @@ class DragLK12(DragLK):
         self.xx_schedule = xx_schedule
         self.xx_gate = Gate("$X_\pi X_{-\pi}$", 1, [self.drive_beta])
 
-    def modify_pulse_model(self, job_id: str = "") -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         """
 
         :return:

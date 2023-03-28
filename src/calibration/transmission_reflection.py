@@ -14,9 +14,11 @@ from src.pulse import Pulse01, Pulse12
 from src.analyzer import DataAnalysis
 from src.constant import QUBIT_PARA
 from src.calibration.calibration_utility import Gate_Schedule
+from src.utility import fit_function
+from src.exceptions.pulse_exception import MissingDurationPulse
 from abc import ABC, abstractmethod
 from numpy import linspace
-from src.utility import fit_function
+import asyncio
 import numpy as np
 
 
@@ -35,7 +37,7 @@ class TR(ABC):
         if pulse_model.duration != 0:
             self.pulse_model = pulse_model
         else:
-            raise ValueError("Can not establish process without duration parameter!")
+            raise MissingDurationPulse
         self.num_shots = num_shots
         self.frequency = None
         self.submitted_job_id = None
@@ -64,6 +66,7 @@ class TR(ABC):
         self.set_up()
         self.tr_create_circuit()
         self.run_monitor()
+        # self.get_submitted_job()
         self.modify_pulse_model()
         print("Process run successfully!")
 
@@ -76,7 +79,7 @@ class TR(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def modify_pulse_model(self, job_id: str = "") -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         raise NotImplementedError
 
     def run_monitor(self) -> None:
@@ -91,7 +94,7 @@ class TR(ABC):
         self.submitted_job_id = submitted_job.job_id()
         job_monitor(submitted_job)
 
-    def analyze(self, job_id: str = "") -> float:
+    def analyze(self, job_id: str) -> float:
         """
 
         :param job_id: Change if we want to use other job. Default = old job_d
@@ -160,7 +163,7 @@ class TR_01(TR):
         self.package = [qc_spect01.assign_parameters({self.frequency: f}, inplace=False)
                         for f in self.freq_sweeping_range]
 
-    def modify_pulse_model(self, job_id: str = ""):
+    def modify_pulse_model(self, job_id: str = None) -> None:
         """
 
         :return:
@@ -222,7 +225,7 @@ class TR_12(TR):
         self.package = [qc_spect12.assign_parameters({self.frequency: f}, inplace=False)
                         for f in self.freq_sweeping_range]
 
-    def modify_pulse_model(self, job_id: str = "") -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         """
 
         :return:

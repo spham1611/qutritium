@@ -6,9 +6,10 @@ from src.analyzer import DataAnalysis
 from src.pulse import Pulse01, Pulse12
 from src.calibration import backend
 from src.calibration.calibration_utility import Gate_Schedule
+from src.utility import fit_function
+from src.exceptions.pulse_exception import MissingDurationPulse, MissingFrequencyPulse, MissingAmplitudePulse
 from abc import ABC, abstractmethod
 from typing import List, Union, Optional
-from src.utility import fit_function
 import qiskit.pulse as pulse
 import numpy as np
 
@@ -25,6 +26,14 @@ class DragDP(ABC):
         :param pulse_model:
         :param num_shots:
         """
+
+        if pulse_model.duration == 0:
+            raise MissingDurationPulse
+        if pulse_model.frequency == 0:
+            raise MissingFrequencyPulse
+        if pulse_model.x_amp == 0:
+            raise MissingAmplitudePulse
+
         self.pulse_model = pulse_model
         self.num_shots = num_shots
         self.submitted_job_id = None
@@ -93,7 +102,7 @@ class DragDP(ABC):
 
         return [ground_state, first_excited_state, second_excited_state]
 
-    def analyze(self, job_id: str = "", index_taken: int = 0) -> float:
+    def analyze(self, job_id: str, index_taken: int = 0) -> float:
         """
 
         :return:
@@ -152,7 +161,7 @@ class DragDP(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def modify_pulse_model(self) -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         raise NotImplementedError
 
     def run_monitor(self) -> None:
@@ -283,7 +292,7 @@ class DragDP01(DragDP):
 
         self.package = self.establish_discriminator() + drag_circuit_x + drag_circuit_yp + drag_circuit_ym
 
-    def modify_pulse_model(self, job_id: str = "") -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         """
         Add beta to pulse_model (01)
         :return:
@@ -405,7 +414,7 @@ class DragDP12(DragDP):
 
         self.package = self.establish_discriminator() + drag_circ_x + drag_circ_yp + drag_circ_ym
 
-    def modify_pulse_model(self, job_id: str = "") -> None:
+    def modify_pulse_model(self, job_id: str = None) -> None:
         """
 
         :return:
