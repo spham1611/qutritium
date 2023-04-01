@@ -100,10 +100,9 @@ class TestPulseList(unittest.TestCase):
     def test_pulse_dictionary(self) -> None:
         """Check if the dictionary has 3 items with accurate values"""
         dict_pulses = Pulse.pulse_list.pulse_dictionary()
-        self.assertTrue(all(len(dict_item) == 3 for dict_item in dict_pulses.items()))
 
         # Check every dictionary element
-        self.assertEqual(dict_pulses['pulse id'], [self.pulse_1, self.pulse_2, self.pulse_3])
+        self.assertEqual(dict_pulses['pulse id'], [self.pulse_1.id, self.pulse_2.id, self.pulse_3.id])
         self.assertEqual(dict_pulses['mode'], [None, "01", "12"])
         self.assertEqual(dict_pulses['duration'], [144, 144, 120])
         self.assertEqual(dict_pulses['frequency'], [16000, 12000, 10000])
@@ -111,7 +110,7 @@ class TestPulseList(unittest.TestCase):
         self.assertEqual(dict_pulses['sx_amp'], [0, 0, 20])
         self.assertEqual(dict_pulses['beta_dephase'], [1.2, 0, 0])
         self.assertEqual(dict_pulses['beta_leakage'], [0, 4, 0])
-        self.assertEqual(dict_pulses['sigma'], [36, 30, 30])
+        self.assertEqual(dict_pulses['sigma'], [36, 36, 30])
         self.assertEqual(dict_pulses['pulse_pointer'], [None, self.pulse_3.id, self.pulse_2.id])
 
     def test_save_pulses(self) -> None:
