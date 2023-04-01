@@ -27,18 +27,19 @@ class Pulse_List(list["Pulse"]):
                        'pulse_pointer': [],
                        }
         for pulse in self:
+            pulse: Pulse
             dict_pulses['pulse id'].append(pulse.id)
             if isinstance(pulse, Pulse01):
                 pulse: Pulse01
                 dict_pulses['mode'].append("01")
-                dict_pulses['pulse_pointer'].append(pulse.pulse12.id if pulse.pulse12 else 0)
+                dict_pulses['pulse_pointer'].append(pulse.pulse12.id if pulse.pulse12 else None)
             elif isinstance(pulse, Pulse12):
                 pulse: Pulse12
                 dict_pulses['mode'].append("12")
                 dict_pulses['pulse_pointer'].append(pulse.pulse01.id)
             else:
-                dict_pulses['mode'].append("00")
-                dict_pulses['pulse_pointer'].append(0)
+                dict_pulses['mode'].append(None)
+                dict_pulses['pulse_pointer'].append(None)
             dict_pulses['duration'].append(pulse.duration)
             dict_pulses['frequency'].append(pulse.frequency)
             dict_pulses['x_amp'].append(pulse.x_amp)
@@ -49,28 +50,32 @@ class Pulse_List(list["Pulse"]):
 
         return dict_pulses
 
-    def save_pulses(self, saved_type: str, file_path: str = "Pulses") -> Optional[str]:
+    def save_pulses(self, saved_type: str, file_name: str = "pulses"):
         """
-        Save list of pulses in csv using panda.DataFrame
+        Save list of pulses in csv using panda.DataFrame and json using python standard library
+        Save file in output path which is in qutrit/output
         :param saved_type:
-        :param file_path:
+        :param file_name:
         :return:
         """
         dict_pulses = self.pulse_dictionary()
-        full_path = None
+        # Get the current directory of the script
+        file_path = os.path.abspath(__file__).split("\\")[:-2]
+        file_path = "\\".join(file_path)
+        file_path = os.path.join(file_path, "output")
         if saved_type == 'csv':
             # Save CSV
             save_pulses_df = pd.DataFrame(dict_pulses)
-            full_path = os.path.join(file_path, ".csv")
-            save_pulses_df.to_csv(full_path, index=False)
-            return full_path
+            save_pulses_df['mode'] = save_pulses_df['mode'].apply('="{}"'.format)
+            print(save_pulses_df['mode'])
+            full_path = file_path + f"\\{file_name}" + ".csv"
+            save_pulses_df.to_csv(full_path, index=False, )
         elif saved_type == "json":
             # Save JSON
             json_pulse = json.dumps(dict_pulses, indent=4)
-            full_path = os.path.join(file_path, ".json")
+            full_path = file_path + f"\\{file_name}" + ".json"
             with open(full_path, "w") as outfile:
                 outfile.write(json_pulse)
-            return full_path
         else:
             raise IOError("Unsupported type!")
 
@@ -217,3 +222,11 @@ class Pulse12(Pulse):
         :return:
         """
         return self.pulse01 is not None
+
+
+# Run demo on save_pulses
+pulse1 = Pulse01(duration=144, frequency=15000, x_amp=40, sx_amp=50, beta_dephase=5)
+pulse2 = Pulse01(duration=120, frequency=4000, x_amp=50, sx_amp=4, beta_leakage=10)
+pulse3 = Pulse12(pulse01=pulse2, duration=150, frequency=5000, beta_dephase=5)
+
+Pulse.pulse_list.save_pulses(saved_type='csv')
