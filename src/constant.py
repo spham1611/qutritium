@@ -8,9 +8,12 @@ class QUBIT_PARA(Enum):
     MHZ = 1.0e6
     GHZ = 1.0e9
 
+    # th-Qubit used for running
+    NUM_QUBIT_TYPE1 = 0
+    NUM_QUBIT_TYPE2 = 6
+
     # Other constants
     CBIT = 0
-    QUBIT = 6
     ACQUIRE_ALIGNMENT = 16
     PULSE_ALIGNMENT = 16
     GRANULARITY = 16

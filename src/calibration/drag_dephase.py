@@ -4,7 +4,7 @@ from qiskit.tools.monitor import job_monitor
 from qiskit.pulse.schedule import ScheduleBlock
 from src.analyzer import DataAnalysis
 from src.pulse import Pulse01, Pulse12
-from src.calibration import backend
+from src.calibration import backend, QUBIT_VAL
 from src.calibration.calibration_utility import Gate_Schedule
 from src.utility import fit_function
 from src.exceptions.pulse_exception import MissingDurationPulse, MissingFrequencyPulse, MissingAmplitudePulse
