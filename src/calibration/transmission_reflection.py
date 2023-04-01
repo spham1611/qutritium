@@ -231,6 +231,5 @@ class TR_12(TR):
         :return:
         """
         self.pulse_model: Pulse12
-        # Create new pulse 12
         f12 = self.analyze(job_id=job_id)
         self.pulse_model.frequency = f12
