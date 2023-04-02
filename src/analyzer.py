@@ -166,7 +166,6 @@ class DataAnalysis:
         plt.ylabel('I [a.u.]', fontsize=15)
         plt.xlabel('Q [a.u.]', fontsize=15)
         plt.title("0-1-2 discrimination", fontsize=15)
-        plt.savefig('output/iq_plane_plot.svg')
 
     def baseline_remove(self) -> None:
         """
