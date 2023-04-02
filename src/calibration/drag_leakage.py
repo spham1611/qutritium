@@ -81,15 +81,15 @@ class DragLK(ABC):
         self.x01_gate = Gate(r'X^{01}', 1, [])
         self.x12_gate = Gate(r'X^{12}', 1, [])
 
-        ground_state = QuantumCircuit(7, 1)
+        ground_state = QuantumCircuit(QUBIT_VAL + 1, 1)
         ground_state.measure(QUBIT_VAL, 0)
 
-        first_excited_state = QuantumCircuit(7, 1)
+        first_excited_state = QuantumCircuit(QUBIT_VAL + 1, 1)
         first_excited_state.append(self.x01_gate, [QUBIT_VAL])
         first_excited_state.measure(QUBIT_VAL, 0)
         first_excited_state.add_calibration(self.x01_gate, (QUBIT_VAL,), self.x01_schedule(), [])
 
-        second_excited_state = QuantumCircuit(7, 1)
+        second_excited_state = QuantumCircuit(QUBIT_VAL + 1, 1)
         second_excited_state.append(self.x01_gate, [QUBIT_VAL])
         second_excited_state.append(self.x12_gate, [QUBIT_VAL])
         second_excited_state.measure(QUBIT_VAL, 0)
@@ -208,7 +208,7 @@ class DragLK01(DragLK):
         :param number_append:
         :return:
         """
-        qc_drag = QuantumCircuit(7, 1)
+        qc_drag = QuantumCircuit(QUBIT_VAL + 1, 1)
         for _ in range(number_append):
             qc_drag.append(self.xx_gate, [QUBIT_VAL])
         qc_drag.measure(QUBIT_VAL, 0)
@@ -290,7 +290,7 @@ class DragLK12(DragLK):
         :param number_append:
         :return:
         """
-        qc_drag = QuantumCircuit(7, 1)
+        qc_drag = QuantumCircuit(QUBIT_VAL + 1, 1)
         qc_drag.append(self.x01_gate, [QUBIT_VAL])
         for _ in range(number_append):
             qc_drag.append(self.xx_gate, [QUBIT_VAL])

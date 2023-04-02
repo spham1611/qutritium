@@ -2,7 +2,7 @@
 from qiskit import *
 from qiskit.providers.ibmq import IBMQBackend
 from typing import DefaultDict, Tuple
-from constant import QUBIT_PARA
+from src.constant import QUBIT_PARA
 
 
 class BackEndList(DefaultDict[str, int]):

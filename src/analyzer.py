@@ -5,12 +5,11 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import train_test_split
 from src.constant import QUBIT_PARA
 from src.utility import data_mitigatory, reshape_complex_vec, fit_function
-from typing import List, Tuple, Callable, Any
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 
-QUBIT = QUBIT_PARA.QUBIT.value
+# QUBIT = QUBIT_PARA..value
 SCALE_FACTOR = QUBIT_PARA.SCALE_FACTOR.value
 
 

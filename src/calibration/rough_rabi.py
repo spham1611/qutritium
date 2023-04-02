@@ -132,7 +132,7 @@ class Rough_Rabi01(Rough_Rabi):
         """
         self.pulse_model: Pulse01
         x01_gate = Gate('Unitary', 1, [self.x_amp])
-        qc_rabi01 = QuantumCircuit(7, 1)
+        qc_rabi01 = QuantumCircuit(QUBIT_VAL + 1, 1)
         qc_rabi01.append(x01_gate, [QUBIT_VAL])
         qc_rabi01.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_rabi01.add_calibration(x01_gate, [QUBIT_VAL],
@@ -182,7 +182,7 @@ class Rough_Rabi12(Rough_Rabi):
         self.pulse_model: Pulse12
         x01_pi = Gate(r'$X^{01}_\pi$', 1, [])
         x12_gate = Gate('Unitary', 1, [self.x_amp])
-        qc_rabi12 = QuantumCircuit(7, 1)
+        qc_rabi12 = QuantumCircuit(QUBIT_VAL + 1, 1)
         qc_rabi12.append(x01_pi, [QUBIT_VAL])
         qc_rabi12.append(x12_gate, [QUBIT_VAL])
         qc_rabi12.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)

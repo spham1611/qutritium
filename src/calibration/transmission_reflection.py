@@ -3,7 +3,7 @@ In here TR stands for transmission and reflection
 """
 from qiskit.circuit import Parameter, Gate, QuantumCircuit
 from qiskit.tools.monitor import job_monitor
-from typing import List, Optional, Union
+from typing import List, Union, Optional
 from src.calibration import (
     backend,
     QUBIT_VAL,
@@ -17,8 +17,7 @@ from src.calibration.calibration_utility import Gate_Schedule
 from src.utility import fit_function
 from src.exceptions.pulse_exception import MissingDurationPulse
 from abc import ABC, abstractmethod
-from numpy import linspace
-import asyncio
+from numpy import linspace, ndarray
 import numpy as np
 
 
@@ -41,8 +40,8 @@ class TR(ABC):
         self.num_shots = num_shots
         self.frequency = None
         self.submitted_job_id = None
-        self.freq_sweeping_range: Optional[List] = None
-        self.freq_sweeping_range_ghz: Optional[List] = None
+        self.freq_sweeping_range: Optional[ndarray] = None
+        self.freq_sweeping_range_ghz: Optional[ndarray] = None
         self.package: Optional[List] = None
 
         # INTERNAL DESIGN ONLY
@@ -150,7 +149,7 @@ class TR_01(TR):
         """
         self.pulse_model: Pulse01
         freq01_probe = Gate('Unitary', 1, [self.frequency])
-        qc_spect01 = QuantumCircuit(7, 1)
+        qc_spect01 = QuantumCircuit(QUBIT_VAL + 1, 1)
         qc_spect01.append(freq01_probe, [QUBIT_VAL])
         qc_spect01.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_spect01.add_calibration(freq01_probe, [QUBIT_VAL],
@@ -212,7 +211,7 @@ class TR_12(TR):
         self.pulse_model: Pulse12
         freq12_probe = Gate('Unit', 1, [self.frequency])
         x01_pi_gate = Gate(r'$X^{01}_\pi$', 1, [])
-        qc_spect12 = QuantumCircuit(7, 1)
+        qc_spect12 = QuantumCircuit(QUBIT_VAL + 1, 1)
         qc_spect12.append(x01_pi_gate, [QUBIT_VAL])
         qc_spect12.append(freq12_probe, [QUBIT_VAL])
         qc_spect12.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)

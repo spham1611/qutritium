@@ -27,17 +27,18 @@ class DragDP(ABC):
         :param num_shots:
         """
 
-        if pulse_model.duration == 0:
-            raise MissingDurationPulse
-        if pulse_model.frequency == 0:
-            raise MissingFrequencyPulse
-        if pulse_model.x_amp == 0:
-            raise MissingAmplitudePulse
+        # if pulse_model.duration == 0:
+        #     raise MissingDurationPulse
+        # if pulse_model.frequency == 0:
+        #     raise MissingFrequencyPulse
+        # if pulse_model.x_amp == 0:
+        #     raise MissingAmplitudePulse
+        # Missing pulse12 check
 
         self.pulse_model = pulse_model
         self.num_shots = num_shots
         self.submitted_job_id = None
-        self.package: Optional[List[QuantumCircuit]] = None
+        self.package: list[QuantumCircuit] = []
         self.x01_gate: Optional[Gate] = None
         self.x12_gate: Optional[Gate] = None
         self.drag_inst_x: Optional[ScheduleBlock] = None
@@ -83,17 +84,17 @@ class DragDP(ABC):
         self.x01_gate = Gate(r'X^{01}', 1, [])
         self.x12_gate = Gate(r'X^{12}', 1, [])
 
-        ground_state = QuantumCircuit(7, 1)
+        ground_state = QuantumCircuit(QUBIT_VAL + 1, 1)
         ground_state.measure(QUBIT_VAL, 0)
 
         # Circuit for first excited state
-        first_excited_state = QuantumCircuit(7, 1)
+        first_excited_state = QuantumCircuit(QUBIT_VAL + 1, 1)
         first_excited_state.append(self.x01_gate, [QUBIT_VAL])
         first_excited_state.measure(QUBIT_VAL, 0)
         first_excited_state.add_calibration(self.x01_gate, (QUBIT_VAL,), self.x01_schedule(), [])
 
         # Circuit for second excited state
-        second_excited_state = QuantumCircuit(7, 1)
+        second_excited_state = QuantumCircuit(QUBIT_VAL + 1, 1)
         second_excited_state.append(self.x01_gate, [QUBIT_VAL])
         second_excited_state.append(self.x12_gate, [QUBIT_VAL])
         second_excited_state.measure(QUBIT_VAL, 0)
@@ -199,9 +200,10 @@ class DragDP01(DragDP):
         """
         self.pulse_model: Pulse01
         x01_sch = Gate_Schedule.single_gate_schedule_gaussian(
-            self.pulse_model.frequency,
-            self.pulse_model.duration,
-            self.pulse_model.x_amp
+            drive_freq=self.pulse_model.frequency,
+            drive_duration=self.pulse_model.duration,
+            drive_amp=self.pulse_model.x_amp,
+            mode=1,
         )
         return x01_sch
 
@@ -212,9 +214,10 @@ class DragDP01(DragDP):
         """
         self.pulse_model: Pulse01
         x12_sch = Gate_Schedule.single_gate_schedule_gaussian(
-            self.pulse_model.frequency,
-            self.pulse_model.duration,
-            self.pulse_model.x_amp
+            drive_freq=self.pulse_model.pulse12.frequency,
+            drive_duration=self.pulse_model.pulse12.duration,
+            drive_amp=self.pulse_model.pulse12.x_amp,
+            mode=2
         )
         return x12_sch
 
@@ -267,7 +270,7 @@ class DragDP01(DragDP):
         """
         self.pulse_model: Pulse01
         drag_gate_x = Gate(r'$\pi/2_x\cdot\pi_x$', 1, [self.drive_beta])
-        drag_circ = QuantumCircuit(7, 1)
+        drag_circ = QuantumCircuit(QUBIT_VAL + 1, 1)
         drag_circ.append(drag_gate_x, [QUBIT_VAL])
         drag_circ.measure(QUBIT_VAL, 0)
         drag_circ.add_calibration(drag_gate_x, (QUBIT_VAL,), self.drag_inst_x, [self.drive_beta])
@@ -275,7 +278,7 @@ class DragDP01(DragDP):
                           for b in self.drive_betas]
 
         drag_gate_yp = Gate(r'$\pi/2_x\cdot\pi_y$', 1, [self.drive_beta])
-        drag_circ = QuantumCircuit(7, 1)
+        drag_circ = QuantumCircuit(QUBIT_VAL + 1, 1)
         drag_circ.append(drag_gate_yp, [QUBIT_VAL])
         drag_circ.measure(QUBIT_VAL, 0)
         drag_circ.add_calibration(drag_gate_yp, (QUBIT_VAL,), self.drag_inst_yp, [self.drive_beta])
@@ -283,7 +286,7 @@ class DragDP01(DragDP):
                            for b in self.drive_betas]
 
         drag_gate_ym = Gate(r'$\pi/2_x\cdot -\pi_y$', 1, [self.drive_beta])
-        drag_circ = QuantumCircuit(7, 1)
+        drag_circ = QuantumCircuit(QUBIT_VAL + 1, 1)
         drag_circ.append(drag_gate_ym, [QUBIT_VAL])
         drag_circ.measure(QUBIT_VAL, 0)
         drag_circ.add_calibration(drag_gate_ym, (QUBIT_VAL,), self.drag_inst_ym, [self.drive_beta])
@@ -386,7 +389,7 @@ class DragDP12(DragDP):
         :return:
         """
         drag_gate_x = Gate(r'$\pi/2_x\cdot\pi_x$', 1, [self.drive_beta])
-        drag_circ = QuantumCircuit(7, 1)
+        drag_circ = QuantumCircuit(QUBIT_VAL + 1, 1)
         drag_circ.append(self.x01_gate, [QUBIT_VAL])
         drag_circ.append(drag_gate_x, [QUBIT_VAL])
         drag_circ.measure(QUBIT_VAL, 0)
@@ -395,7 +398,7 @@ class DragDP12(DragDP):
         drag_circ_x = [drag_circ.assign_parameters({self.drive_beta: b}, inplace=False) for b in self.drive_betas]
 
         drag_gate_yp = Gate(r'$\pi/2_x\cdot\pi_y$', 1, [self.drive_beta])
-        drag_circ = QuantumCircuit(7, 1)
+        drag_circ = QuantumCircuit(QUBIT_VAL + 1, 1)
         drag_circ.append(self.x01_gate, [QUBIT_VAL])
         drag_circ.append(drag_gate_yp, [QUBIT_VAL])
         drag_circ.measure(QUBIT_VAL, 0)
@@ -404,7 +407,7 @@ class DragDP12(DragDP):
         drag_circ_yp = [drag_circ.assign_parameters({self.drive_beta: b}, inplace=False) for b in self.drive_betas]
 
         drag_gate_ym = Gate(r'$\pi/2_x\cdot -\pi_y$', 1, [self.drive_beta])
-        drag_circ = QuantumCircuit(7, 1)
+        drag_circ = QuantumCircuit(QUBIT_VAL + 1, 1)
         drag_circ.append(self.x01_gate, [QUBIT_VAL])
         drag_circ.append(drag_gate_ym, [QUBIT_VAL])
         drag_circ.measure(QUBIT_VAL, 0)

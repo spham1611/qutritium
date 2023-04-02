@@ -225,8 +225,8 @@ class Pulse12(Pulse):
 
 
 # Run demo on save_pulses
-pulse1 = Pulse01(duration=144, frequency=15000, x_amp=40, sx_amp=50, beta_dephase=5)
-pulse2 = Pulse01(duration=120, frequency=4000, x_amp=50, sx_amp=4, beta_leakage=10)
-pulse3 = Pulse12(pulse01=pulse2, duration=150, frequency=5000, beta_dephase=5)
-
-Pulse.pulse_list.save_pulses(saved_type='csv')
+# pulse1 = Pulse01(duration=144, frequency=15000, x_amp=40, sx_amp=50, beta_dephase=5)
+# pulse2 = Pulse01(duration=120, frequency=4000, x_amp=50, sx_amp=4, beta_leakage=10)
+# pulse3 = Pulse12(pulse01=pulse2, duration=150, frequency=5000, beta_dephase=5)
+#
+# Pulse.pulse_list.save_pulses(saved_type='csv')
