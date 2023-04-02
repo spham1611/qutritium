@@ -82,19 +82,19 @@ class DragLK(ABC):
         self.x12_gate = Gate(r'X^{12}', 1, [])
 
         ground_state = QuantumCircuit(7, 1)
-        ground_state.measure(0, 0)
+        ground_state.measure(QUBIT_VAL, 0)
 
         first_excited_state = QuantumCircuit(7, 1)
-        first_excited_state.append(self.x01_gate, [0])
-        first_excited_state.measure(0, 0)
-        first_excited_state.add_calibration(self.x01_gate, (0,), self.x01_schedule(), [])
+        first_excited_state.append(self.x01_gate, [QUBIT_VAL])
+        first_excited_state.measure(QUBIT_VAL, 0)
+        first_excited_state.add_calibration(self.x01_gate, (QUBIT_VAL,), self.x01_schedule(), [])
 
         second_excited_state = QuantumCircuit(7, 1)
-        second_excited_state.append(self.x01_gate, [0])
-        second_excited_state.append(self.x12_gate, [0])
-        second_excited_state.measure(0, 0)
-        second_excited_state.add_calibration(self.x01_gate, (0,), self.x01_schedule(), [])
-        second_excited_state.add_calibration(self.x12_gate, (0,), self.x12_schedule(), [])
+        second_excited_state.append(self.x01_gate, [QUBIT_VAL])
+        second_excited_state.append(self.x12_gate, [QUBIT_VAL])
+        second_excited_state.measure(QUBIT_VAL, 0)
+        second_excited_state.add_calibration(self.x01_gate, (QUBIT_VAL,), self.x01_schedule(), [])
+        second_excited_state.add_calibration(self.x12_gate, (QUBIT_VAL,), self.x12_schedule(), [])
 
         return [ground_state, first_excited_state, second_excited_state]
 
@@ -210,9 +210,9 @@ class DragLK01(DragLK):
         """
         qc_drag = QuantumCircuit(7, 1)
         for _ in range(number_append):
-            qc_drag.append(self.xx_gate, [0])
-        qc_drag.measure(0, 0)
-        qc_drag.add_calibration(self.xx_gate, (0,), self.xx_schedule, [self.drive_beta])
+            qc_drag.append(self.xx_gate, [QUBIT_VAL])
+        qc_drag.measure(QUBIT_VAL, 0)
+        qc_drag.add_calibration(self.xx_gate, (QUBIT_VAL,), self.xx_schedule, [self.drive_beta])
         return [qc_drag.assign_parameters({self.drive_beta: b}, inplace=False) for b in self.drive_betas]
 
     def set_up(self) -> None:
@@ -223,7 +223,7 @@ class DragLK01(DragLK):
         self.pulse_model: Pulse01
         with pulse.build(backend=backend) as xx_schedule:
             drive_chan = pulse.drive_channel(QUBIT_VAL)
-            pulse.set_frequency(self.pulse_model.frequency, pulse.drive_channel(0))
+            pulse.set_frequency(self.pulse_model.frequency, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(duration=self.pulse_model.duration,
                                   amp=self.pulse_model.pulse12.x_amp,
                                   sigma=self.pulse_model.duration / 4,
@@ -291,13 +291,13 @@ class DragLK12(DragLK):
         :return:
         """
         qc_drag = QuantumCircuit(7, 1)
-        qc_drag.append(self.x01_gate, [0])
+        qc_drag.append(self.x01_gate, [QUBIT_VAL])
         for _ in range(number_append):
-            qc_drag.append(self.xx_gate, [0])
+            qc_drag.append(self.xx_gate, [QUBIT_VAL])
 
-        qc_drag.measure(0, 0)
-        qc_drag.add_calibration(self.x01_gate, (0,), self.x01_schedule(), [])
-        qc_drag.add_calibration(self.xx_gate, (0,), self.xx_schedule, [self.drive_beta])
+        qc_drag.measure(QUBIT_VAL, 0)
+        qc_drag.add_calibration(self.x01_gate, (QUBIT_VAL,), self.x01_schedule(), [])
+        qc_drag.add_calibration(self.xx_gate, (QUBIT_VAL,), self.xx_schedule, [self.drive_beta])
         return [qc_drag.assign_parameters({self.drive_beta: b}, inplace=False) for b in self.drive_betas]
 
     def set_up(self) -> None:
@@ -308,7 +308,7 @@ class DragLK12(DragLK):
         self.pulse_model: Pulse12
         with pulse.build(backend=backend) as xx_schedule:
             drive_chan = pulse.drive_channel(QUBIT_VAL)
-            pulse.set_frequency(self.pulse_model.frequency, pulse.drive_channel(0))
+            pulse.set_frequency(self.pulse_model.frequency, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(duration=self.pulse_model.duration,
                                   amp=self.pulse_model.x_amp,
                                   sigma=self.pulse_model.duration / 4,
