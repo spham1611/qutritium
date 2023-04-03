@@ -13,6 +13,7 @@ class Gate_Schedule:
                              drive_amp: float,
                              drive_phase: int = 0,
                              drive_beta: float = 0.0,
+                             name: str = '$X^{01}$'
                              ) -> ScheduleBlock:
         """
 
@@ -21,8 +22,11 @@ class Gate_Schedule:
         :param drive_duration:
         :param drive_amp:
         :param drive_beta:
+        :param name:
         :return:
         """
+        if name != '$X^{01}$' and name != '$X^{12}$':
+            raise ValueError
         drive_sigma = drive_duration / 4
         with pulse.build(backend=backend) as drive_schedule:
             drive_chan = pulse.drive_channel(QUBIT_VAL)
@@ -36,17 +40,18 @@ class Gate_Schedule:
     def single_gate_schedule_gaussian(drive_freq: float,
                                       drive_duration: int,
                                       drive_amp: float,
-                                      mode: int = 1,
+                                      name: str = '$X^{01}$',
                                       ) -> ScheduleBlock:
         """
 
-        :param mode:
         :param drive_freq:
         :param drive_duration:
         :param drive_amp:
+        :param name:
         :return:
         """
-        name = '$X^{01}$' if mode == 1 else '$X^{12}$'
+        if name != '$X^{01}$' and name != '$X^{12}$':
+            raise ValueError
         with pulse.build(backend=backend) as drive_schedule:
             drive_chan = pulse.drive_channel(QUBIT_VAL)
             pulse.set_frequency(drive_freq, pulse.drive_channel(QUBIT_VAL))

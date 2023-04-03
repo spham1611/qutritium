@@ -43,6 +43,7 @@ class DragLK(ABC):
         self.x12_gate: Optional[Gate] = None
         self.xx_gate: Optional[Gate] = None
         self.xx_schedule: Optional[ScheduleBlock] = None
+        self.discriminator: list[QuantumCircuit] = []
 
         # INTERNAL DESIGN ONLY
         self.drive_betas = np.linspace(-5, 5, 32)
@@ -73,7 +74,7 @@ class DragLK(ABC):
         """
         raise NotImplementedError
 
-    def establish_discriminator(self) -> List[QuantumCircuit]:
+    def establish_discriminator(self) -> None:
         """
 
         :return:
@@ -96,7 +97,7 @@ class DragLK(ABC):
         second_excited_state.add_calibration(self.x01_gate, (QUBIT_VAL,), self.x01_schedule(), [])
         second_excited_state.add_calibration(self.x12_gate, (QUBIT_VAL,), self.x12_schedule(), [])
 
-        return [ground_state, first_excited_state, second_excited_state]
+        self.discriminator += [ground_state, first_excited_state, second_excited_state]
 
     def analyze(self, job_id: str, index_taken: int = 0) -> float:
         """
@@ -126,6 +127,7 @@ class DragLK(ABC):
 
         :return:
         """
+        self.establish_discriminator()
         self.set_up()
         self.dl_create_circuit()
         self.run_monitor()
@@ -148,7 +150,7 @@ class DragLK(ABC):
         exp_drag_circuit = self.append_circuit(number_append=3) \
                            + self.append_circuit(number_append=5) \
                            + self.append_circuit(number_append=7)
-        self.package = self.establish_discriminator() + exp_drag_circuit
+        self.package = self.discriminator + exp_drag_circuit
 
     def run_monitor(self) -> None:
         """
@@ -183,9 +185,10 @@ class DragLK01(DragLK):
         """
         self.pulse_model: Pulse01
         x01_sch = Gate_Schedule.single_gate_schedule(
-            self.pulse_model.frequency,
-            self.pulse_model.duration,
-            self.pulse_model.x_amp,
+            drive_freq=self.pulse_model.frequency,
+            drive_duration=self.pulse_model.duration,
+            drive_amp=self.pulse_model.x_amp,
+            drive_beta=self.pulse_model.beta_dephase
         )
         return x01_sch
 
@@ -196,9 +199,10 @@ class DragLK01(DragLK):
         """
         self.pulse_model: Pulse01
         x12_sch = Gate_Schedule.single_gate_schedule(
-            self.pulse_model.pulse12.frequency,
-            self.pulse_model.pulse12.duration,
-            self.pulse_model.pulse12.x_amp
+            drive_freq=self.pulse_model.pulse12.frequency,
+            drive_duration=self.pulse_model.pulse12.duration,
+            drive_amp=self.pulse_model.pulse12.x_amp,
+            name='$X^{12}$'
         )
         return x12_sch
 
@@ -234,7 +238,7 @@ class DragLK01(DragLK):
                                   beta=self.drive_beta), drive_chan)
 
         self.xx_schedule = xx_schedule
-        self.xx_gate = Gate("$X_\pi X_{-\pi}$", 1, [self.drive_beta])
+        self.xx_gate = Gate(r"$X_\pi X_{-\pi}$", 1, [self.drive_beta])
 
     def modify_pulse_model(self, job_id: str = None) -> None:
         """
@@ -265,9 +269,10 @@ class DragLK12(DragLK):
         """
         self.pulse_model: Pulse12
         x01_sch = Gate_Schedule.single_gate_schedule(
-            self.pulse_model.pulse01.frequency,
-            self.pulse_model.pulse01.duration,
-            self.pulse_model.pulse01.x_amp,
+            drive_freq=self.pulse_model.pulse01.frequency,
+            drive_duration=self.pulse_model.pulse01.duration,
+            drive_amp=self.pulse_model.pulse01.x_amp,
+            drive_beta=self.pulse_model.pulse01.beta_leakage
         )
         return x01_sch
 
@@ -278,9 +283,10 @@ class DragLK12(DragLK):
         """
         self.pulse_model: Pulse12
         x12_sch = Gate_Schedule.single_gate_schedule(
-            self.pulse_model.frequency,
-            self.pulse_model.duration,
-            self.pulse_model
+            drive_freq=self.pulse_model.frequency,
+            drive_duration=self.pulse_model.duration,
+            drive_amp=self.pulse_model.x_amp,
+            name='$X^{12}$'
         )
         return x12_sch
 
@@ -318,7 +324,7 @@ class DragLK12(DragLK):
                                   sigma=self.pulse_model.duration / 4,
                                   beta=self.drive_beta), drive_chan)
         self.xx_schedule = xx_schedule
-        self.xx_gate = Gate("$X_\pi X_{-\pi}$", 1, [self.drive_beta])
+        self.xx_gate = Gate(r"$X_\pi X_{-\pi}$", 1, [self.drive_beta])
 
     def modify_pulse_model(self, job_id: str = None) -> None:
         """

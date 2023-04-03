@@ -44,6 +44,7 @@ class DragDP(ABC):
         self.drag_inst_x: Optional[ScheduleBlock] = None
         self.drag_inst_yp: Optional[ScheduleBlock] = None
         self.drag_inst_ym: Optional[ScheduleBlock] = None
+        self.discriminator: list[QuantumCircuit] = []
 
         # Internal design only
         self.drive_beta = Parameter('drive_beta')
@@ -76,7 +77,7 @@ class DragDP(ABC):
         """
         raise NotImplementedError
 
-    def establish_discriminator(self) -> List[QuantumCircuit]:
+    def establish_discriminator(self) -> None:
         """
         Create excited circuit -> add to final circuit
         :return:
@@ -101,7 +102,7 @@ class DragDP(ABC):
         second_excited_state.add_calibration(self.x01_gate, (QUBIT_VAL,), self.x01_schedule(), [])
         second_excited_state.add_calibration(self.x12_gate, (QUBIT_VAL,), self.x12_schedule(), [])
 
-        return [ground_state, first_excited_state, second_excited_state]
+        self.discriminator += [ground_state, first_excited_state, second_excited_state]
 
     def analyze(self, job_id: str, index_taken: int = 0) -> float:
         """
@@ -147,6 +148,7 @@ class DragDP(ABC):
 
         :return:
         """
+        self.establish_discriminator()
         self.set_up()
         self.dp_create_circuit()
         self.run_monitor()
@@ -203,7 +205,6 @@ class DragDP01(DragDP):
             drive_freq=self.pulse_model.frequency,
             drive_duration=self.pulse_model.duration,
             drive_amp=self.pulse_model.x_amp,
-            mode=1,
         )
         return x01_sch
 
@@ -217,7 +218,7 @@ class DragDP01(DragDP):
             drive_freq=self.pulse_model.pulse12.frequency,
             drive_duration=self.pulse_model.pulse12.duration,
             drive_amp=self.pulse_model.pulse12.x_amp,
-            mode=2
+            name='$X^{12}$'
         )
         return x12_sch
 
@@ -232,10 +233,10 @@ class DragDP01(DragDP):
         with pulse.build(backend=backend) as drag_inst_x:
             pulse.set_frequency(self.pulse_model.frequency, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.duration, self.pulse_model.x_amp / 2,
-                                  self.pulse_model.duration / 4, self.drive_beta, r'$\pi/2_x$'),
+                                  self.pulse_model.duration / 4, self.drive_beta, name=r'$\pi/2_x$'),
                        pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.duration, self.pulse_model.x_amp,
-                                  self.pulse_model.duration / 4, self.drive_beta, r'$\pi_x$'),
+                                  self.pulse_model.duration / 4, self.drive_beta, name=r'$\pi_x$'),
                        pulse.drive_channel(QUBIT_VAL))
         self.drag_inst_x = drag_inst_x
 
@@ -243,11 +244,11 @@ class DragDP01(DragDP):
         with pulse.build(backend=backend) as drag_inst_yp:
             pulse.set_frequency(self.pulse_model.frequency, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.duration, self.pulse_model.x_amp / 2,
-                                  self.pulse_model.duration / 4, self.drive_beta, r'$\pi/2_x$'),
+                                  self.pulse_model.duration / 4, self.drive_beta, name=r'$\pi/2_x$'),
                        pulse.drive_channel(QUBIT_VAL))
             pulse.shift_phase(-np.pi / 2, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.duration, self.pulse_model.x_amp,
-                                  self.pulse_model.duration / 4, self.drive_beta, r'$\pi_y$'),
+                                  self.pulse_model.duration / 4, self.drive_beta, name=r'$\pi_x$'),
                        pulse.drive_channel(QUBIT_VAL))
         self.drag_inst_yp = drag_inst_yp
 
@@ -255,11 +256,11 @@ class DragDP01(DragDP):
         with pulse.build(backend=backend) as drag_inst_ym:
             pulse.set_frequency(self.pulse_model.frequency, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.duration, self.pulse_model.x_amp / 2,
-                                  self.pulse_model.duration / 4, self.drive_beta, r'$\pi/2_x$'),
+                                  self.pulse_model.duration / 4, self.drive_beta, name=r'$\pi/2_x$'),
                        pulse.drive_channel(QUBIT_VAL))
             pulse.shift_phase(-np.pi / 2, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.duration, -self.pulse_model.x_amp,
-                                  self.pulse_model.duration / 4, self.drive_beta, r'$-\pi_y$'),
+                                  self.pulse_model.duration / 4, self.drive_beta, name=r'$-\pi_y$'),
                        pulse.drive_channel(QUBIT_VAL))
         self.drag_inst_ym = drag_inst_ym
 
@@ -293,7 +294,7 @@ class DragDP01(DragDP):
         drag_circuit_ym = [drag_circ.assign_parameters({self.drive_beta: b}, inplace=False)
                            for b in self.drive_betas]
 
-        self.package = self.establish_discriminator() + drag_circuit_x + drag_circuit_yp + drag_circuit_ym
+        self.package = self.discriminator + drag_circuit_x + drag_circuit_yp + drag_circuit_ym
 
     def modify_pulse_model(self, job_id: str = None) -> None:
         """
@@ -325,10 +326,10 @@ class DragDP12(DragDP):
         :return:
         """
         self.pulse_model: Pulse12
-        x01_sch = Gate_Schedule.single_gate_schedule(
-            self.pulse_model.pulse01.frequency,
-            self.pulse_model.pulse01.duration,
-            self.pulse_model.x_amp
+        x01_sch = Gate_Schedule.single_gate_schedule_gaussian(
+            drive_freq=self.pulse_model.pulse01.frequency,
+            drive_duration=self.pulse_model.pulse01.duration,
+            drive_amp=self.pulse_model.x_amp,
         )
         return x01_sch
 
@@ -338,10 +339,11 @@ class DragDP12(DragDP):
         :return:
         """
         self.pulse_model: Pulse12
-        x12_sch = Gate_Schedule.single_gate_schedule(
-            self.pulse_model.frequency,
-            self.pulse_model.duration,
-            self.pulse_model.x_amp
+        x12_sch = Gate_Schedule.single_gate_schedule_gaussian(
+            drive_freq=self.pulse_model.frequency,
+            drive_duration=self.pulse_model.duration,
+            drive_amp=self.pulse_model.x_amp,
+            name='$X^{12}$'
         )
         return x12_sch
 
@@ -354,32 +356,32 @@ class DragDP12(DragDP):
         with pulse.build(backend=backend) as drag_inst_x:
             pulse.set_frequency(self.pulse_model.pulse01.frequency, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.pulse01.duration, self.pulse_model.pulse01.x_amp / 2,
-                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, r'$\pi/2_x$'),
+                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, name=r'$\pi/2_x$'),
                        pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.pulse01.duration, self.pulse_model.pulse01.x_amp,
-                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, r'$\pi_x$'),
+                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, name=r'$\pi_x$'),
                        pulse.drive_channel(QUBIT_VAL))
         self.drag_inst_x = drag_inst_x
 
         with pulse.build(backend=backend) as drag_inst_yp:
             pulse.set_frequency(self.pulse_model.pulse01.frequency, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.pulse01.duration, self.pulse_model.pulse01.x_amp / 2,
-                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, r'$\pi/2_x$'),
+                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, name=r'$\pi/2_x$'),
                        pulse.drive_channel(QUBIT_VAL))
             pulse.shift_phase(-np.pi / 2, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.pulse01.duration, self.pulse_model.pulse01.x_amp,
-                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, r'$\pi_y$'),
+                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, name=r'$\pi_y$'),
                        pulse.drive_channel(QUBIT_VAL))
         self.drag_inst_yp = drag_inst_yp
 
         with pulse.build(backend=backend) as drag_inst_ym:
             pulse.set_frequency(self.pulse_model.pulse01.frequency, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.pulse01.duration, self.pulse_model.pulse01.x_amp / 2,
-                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, r'$\pi/2_x$'),
+                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, name=r'$\pi/2_x$'),
                        pulse.drive_channel(QUBIT_VAL))
             pulse.shift_phase(-np.pi / 2, pulse.drive_channel(QUBIT_VAL))
             pulse.play(pulse.Drag(self.pulse_model.pulse01.duration, -self.pulse_model.pulse01.x_amp,
-                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, r'$-\pi_y$'),
+                                  self.pulse_model.pulse01.duration / 4, self.drive_beta, name=r'$-\pi_y$'),
                        pulse.drive_channel(QUBIT_VAL))
         self.drag_inst_ym = drag_inst_ym
 
@@ -403,7 +405,7 @@ class DragDP12(DragDP):
         drag_circ.append(drag_gate_yp, [QUBIT_VAL])
         drag_circ.measure(QUBIT_VAL, 0)
         drag_circ.add_calibration(self.x01_gate, (QUBIT_VAL,), self.x01_schedule(), [])
-        drag_circ.add_calibration(drag_gate_yp, (QUBIT_VAL,), drag_gate_yp, [self.drive_beta])
+        drag_circ.add_calibration(drag_gate_yp, (QUBIT_VAL,), self.drag_inst_yp, [self.drive_beta])
         drag_circ_yp = [drag_circ.assign_parameters({self.drive_beta: b}, inplace=False) for b in self.drive_betas]
 
         drag_gate_ym = Gate(r'$\pi/2_x\cdot -\pi_y$', 1, [self.drive_beta])
@@ -415,7 +417,7 @@ class DragDP12(DragDP):
         drag_circ.add_calibration(drag_gate_ym, (QUBIT_VAL,), self.drag_inst_ym, [self.drive_beta])
         drag_circ_ym = [drag_circ.assign_parameters({self.drive_beta: b}, inplace=False) for b in self.drive_betas]
 
-        self.package = self.establish_discriminator() + drag_circ_x + drag_circ_yp + drag_circ_ym
+        self.package = self.discriminator + drag_circ_x + drag_circ_yp + drag_circ_ym
 
     def modify_pulse_model(self, job_id: str = None) -> None:
         """
