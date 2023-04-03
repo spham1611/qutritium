@@ -37,6 +37,7 @@ class TR(ABC):
             self.pulse_model = pulse_model
         else:
             raise MissingDurationPulse
+
         self.num_shots = num_shots
         self.frequency = None
         self.submitted_job_id = None
@@ -153,9 +154,9 @@ class TR_01(TR):
         qc_spect01.append(freq01_probe, [QUBIT_VAL])
         qc_spect01.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_spect01.add_calibration(freq01_probe, [QUBIT_VAL],
-                                   Gate_Schedule.single_gate_schedule(self.frequency,
-                                                                      self.pulse_model.duration,
-                                                                      self.pulse_model.x_amp),
+                                   Gate_Schedule.single_gate_schedule(drive_freq=self.frequency,
+                                                                      drive_duration=self.pulse_model.duration,
+                                                                      drive_amp=self.pulse_model.x_amp),
                                    [self.frequency])
 
         # Get the circuits from assigned frequencies
@@ -217,9 +218,9 @@ class TR_12(TR):
         qc_spect12.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_spect12.add_calibration(x01_pi_gate, [QUBIT_VAL], self.pulse01_schedule)
         qc_spect12.add_calibration(freq12_probe, [QUBIT_VAL],
-                                   Gate_Schedule.single_gate_schedule(self.frequency,
-                                                                      self.pulse_model.pulse01.duration,
-                                                                      self.pulse_model.pulse01.x_amp),
+                                   Gate_Schedule.single_gate_schedule(drive_freq=self.frequency,
+                                                                      drive_duration=self.pulse_model.pulse01.duration,
+                                                                      drive_amp=self.pulse_model.pulse01.x_amp),
                                    [self.frequency])
         self.package = [qc_spect12.assign_parameters({self.frequency: f}, inplace=False)
                         for f in self.freq_sweeping_range]

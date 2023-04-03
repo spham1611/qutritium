@@ -1,16 +1,18 @@
 """Calibration utility functions for gate operations and other"""
 from qiskit.pulse.schedule import ScheduleBlock
-from src.calibration import backend, QUBIT_VAL
 from qiskit import pulse
+from qiskit.circuit import Parameter
+from src.calibration import backend, QUBIT_VAL
+from typing import Union
 
 
 class Gate_Schedule:
     """Static class"""
 
     @staticmethod
-    def single_gate_schedule(drive_freq: float,
+    def single_gate_schedule(drive_freq: Union[float, Parameter],
+                             drive_amp: Union[float, Parameter],
                              drive_duration: int,
-                             drive_amp: float,
                              drive_phase: int = 0,
                              drive_beta: float = 0.0,
                              name: str = '$X^{01}$'
