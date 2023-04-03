@@ -136,9 +136,9 @@ class Rough_Rabi01(Rough_Rabi):
         qc_rabi01.append(x01_gate, [QUBIT_VAL])
         qc_rabi01.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_rabi01.add_calibration(x01_gate, [QUBIT_VAL],
-                                  Gate_Schedule.single_gate_schedule(self.pulse_model.frequency,
-                                                                     self.pulse_model.duration,
-                                                                     self.x_amp,
+                                  Gate_Schedule.single_gate_schedule(drive_freq=self.pulse_model.frequency,
+                                                                     drive_duration=self.pulse_model.duration,
+                                                                     drive_amp=self.x_amp,
                                                                      ),
                                   [self.x_amp])
         self.package = [qc_rabi01.assign_parameters({self.x_amp: a}, inplace=False)
@@ -187,15 +187,15 @@ class Rough_Rabi12(Rough_Rabi):
         qc_rabi12.append(x12_gate, [QUBIT_VAL])
         qc_rabi12.measure(QUBIT_VAL, QUBIT_PARA.CBIT.value)
         qc_rabi12.add_calibration(x01_pi, [QUBIT_VAL],
-                                  Gate_Schedule.single_gate_schedule(self.pulse_model.pulse01.frequency,
-                                                                     self.pulse_model.pulse01.duration,
-                                                                     self.pulse_model.pulse01.x_amp,
+                                  Gate_Schedule.single_gate_schedule(drive_freq=self.pulse_model.pulse01.frequency,
+                                                                     drive_duration=self.pulse_model.pulse01.duration,
+                                                                     drive_amp=self.pulse_model.pulse01.x_amp,
                                                                      ),
                                   [self.x_amp])
         qc_rabi12.add_calibration(x12_gate, [QUBIT_VAL],
-                                  Gate_Schedule.single_gate_schedule(self.pulse_model.frequency,
-                                                                     self.pulse_model.duration,
-                                                                     self.x_amp,
+                                  Gate_Schedule.single_gate_schedule(drive_freq=self.pulse_model.frequency,
+                                                                     drive_duration=self.pulse_model.duration,
+                                                                     drive_amp=self.x_amp,
                                                                      ),
                                   [self.x_amp])
         self.package = [qc_rabi12.assign_parameters({self.x_amp: a}, inplace=False)
