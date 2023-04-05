@@ -60,7 +60,7 @@ notebook==6.5.2
 notebook_shim==0.2.2
 numpy==1.23.5
 packaging==23.0
-pandas==1.5.3
+pandas==2.0.0
 pandocfilters==1.5.0
 parso==0.8.3
 pbr==5.11.1
@@ -110,6 +110,9 @@ threadpoolctl==3.1.0
 tinycss2==1.2.1
 tornado==6.2
 traitlets==5.9.0
+type-enforced==0.0.15
+typing_extensions==4.5.0
+tzdata==2023.3
 uri-template==1.2.0
 urllib3==1.26.14
 wcwidth==0.2.6
