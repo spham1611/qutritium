@@ -1,92 +1,112 @@
+"""
+Instruction class that can be called from VM
+Used to represent a gate in quantum circuit
+"""
+from typing import Union, Any
 import numpy as np
 from VM_utility import single_matrix_form
 from VM_utility import multi_matrix_form
 
-gate_set = ['I',
-            'x+',
-            'x-',
-            'S',
-            'T',
-            'CNOT',
-            'x01',
-            'x12',
-            'y01',
-            'y12',
-            'z01',
-            'z12',
-            'rx01',
-            'rx12',
-            'ry01',
-            'ry12',
-            'rz01',
-            'rz12',
-            'WH',
-            'measure']
+gate_set: list[Union[str, Any]] = ['I',
+                                   'x+',
+                                   'x-',
+                                   'S',
+                                   'T',
+                                   'CNOT',
+                                   'x01',
+                                   'x12',
+                                   'y01',
+                                   'y12',
+                                   'z01',
+                                   'z12',
+                                   'rx01',
+                                   'rx12',
+                                   'ry01',
+                                   'ry12',
+                                   'rz01',
+                                   'rz12',
+                                   'WH',
+                                   'measure']
 
 
 class Instruction:
-    def __init__(self, gate_type, n_qutrit, state, first_qutrit_set, second_qutrit_set=None, parameter=None):
-        self.type = gate_type
-        self.verify_gate()
+    """
+    The class is used to represent a gate in VM,
+    Each gate can be considered as an instruction and each has effect on the final state
+    """
+
+    def __init__(self, gate_type: str, n_qutrit: int, first_qutrit_set: int,
+                 second_qutrit_set: int = None, parameter: float = None):
+        self._type = gate_type
+        self._verify_gate()
         self.n_qutrit = n_qutrit
+        self.qutrit_dimension = 3 ** self.n_qutrit
         self.parameter = parameter
         self.first_qutrit = first_qutrit_set
         self.second_qutrit = second_qutrit_set
-        self.state = state
-        self.is_two_qutrit_gate = False
+        self._is_two_qutrit_gate = False
+        if first_qutrit_set > (self.n_qutrit - 1):
+            raise Exception("Acting qutrit is not defined")
         if second_qutrit_set is not None:
-            self.is_two_qutrit_gate = True
-            self.gate_matrix = multi_matrix_form(self.type, self.first_qutrit, self.second_qutrit, self.parameter)
+            self._is_two_qutrit_gate = True
+            self.gate_matrix = multi_matrix_form(gate_type=self._type, first_index=self.first_qutrit,
+                                                 second_index=self.second_qutrit)
         else:
-            self.is_two_qutrit_gate = False
-            self.gate_matrix = single_matrix_form(self.type, self.parameter)
-        self.__effect()
+            self._is_two_qutrit_gate = False
+            self.gate_matrix = single_matrix_form(gate_type=self._type, parameter=self.parameter)
+        self._effect_matrix = self._effect()
 
-    def __effect(self):
+    def _effect(self):
         """
-        Perform the gate on the quantum state
+        Return the matrix form effect of gate on the quantum state
         """
-        if not self.is_two_qutrit_gate:
+        if not self._is_two_qutrit_gate:
             if self.n_qutrit == 1:
-                self.state = self.gate_matrix @ self.state
+                return self.gate_matrix
             else:
                 if self.first_qutrit == 0:
-                    default_matrix = self.gate_matrix
+                    effect_matrix = np.einsum('ik,jl', self.gate_matrix,
+                                              np.eye(int(self.qutrit_dimension / 3))).reshape(self.qutrit_dimension,
+                                                                                              self.qutrit_dimension)
                 else:
-                    default_matrix = np.eye(3)
-                for i in range(self.n_qutrit - 1):
-                    if i == (self.first_qutrit - 1):
-                        default_matrix = np.kron(default_matrix, self.gate_matrix)
-                    else:
-                        default_matrix = np.kron(default_matrix, np.eye(3))
-                self.state = default_matrix @ self.state
+                    effect_matrix = np.einsum('ik,jl', np.eye(3 ** self.first_qutrit),
+                                              self.gate_matrix).reshape(3 ** (self.first_qutrit + 1),
+                                                                        3 ** (self.first_qutrit + 1))
+                    effect_matrix = np.einsum('ik,jl', effect_matrix,
+                                              np.eye(3 ** (self.n_qutrit - self.first_qutrit - 1))).reshape(
+                                                                                                self.qutrit_dimension,
+                                                                                                self.qutrit_dimension)
+                return effect_matrix
         else:
             left = min((self.first_qutrit, self.second_qutrit))
             right = max((self.first_qutrit, self.second_qutrit))
             if left == 0:
-                default_matrix = self.gate_matrix
+                effect_matrix = np.einsum('ik,jl', self.gate_matrix,
+                                          np.eye(3**(self.n_qutrit-right-1))).reshape(self.qutrit_dimension,
+                                                                                      self.qutrit_dimension)
             else:
-                default_matrix = np.eye(3)
-            for i in range(self.n_qutrit-1):
-                if i == (left-1):
-                    default_matrix = np.kron(default_matrix, self.gate_matrix)
-                if i+1 < left or i+1 > right:
-                    default_matrix = np.kron(default_matrix, np.eye(3))
-            self.state = default_matrix @ self.state
+                effect_matrix = np.einsum('ik,jl', np.eye(3 ** left),
+                                          self.gate_matrix).reshape(3 ** (self.first_qutrit + 1),
+                                                                    3 ** (self.first_qutrit + 1))
+                effect_matrix = np.einsum('ik,jl', effect_matrix,
+                                          np.eye(3 ** (self.n_qutrit - right - 1))).reshape(
+                                                                                    self.qutrit_dimension,
+                                                                                    self.qutrit_dimension)
+            return effect_matrix
 
-    def verify_gate(self):
-        if self.type not in gate_set:
+    def return_effect(self):
+        return self._effect_matrix
+
+    def _verify_gate(self):
+        if self._type not in gate_set:
             raise Exception("This gate is not defined in set of gate")
 
     def matrix(self):
         return self.gate_matrix
 
-    def return_effect(self):
-        return self.state
-
     def print(self):
-        if self.second_qutrit is None:
-            print("Gate " + str(self.type) + ", acting qutrit: " + str(self.first_qutrit))
+        if not self._is_two_qutrit_gate:
+            print("Gate " + str(self._type) + ", acting qutrit: " + str(self.first_qutrit))
         else:
-            print("Gate " + str(self.type) + ", acting qutrit: " \
+            print("Gate " + str(self._type) + ", acting qutrit: "
                   + str(self.first_qutrit) + ", control qutrit: " + str(self.second_qutrit))

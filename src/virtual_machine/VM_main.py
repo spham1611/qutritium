@@ -1,12 +1,19 @@
-import VM
+import QC
+import numpy as np
+from backend import QASM_simulator
+
+pi = np.pi
 '''
 Simple example to test VM 
 '''
-qc = VM.Virtual_Machine(5, 0, None)
-qc.add_gate('WH', 0)
-qc.add_gate('CNOT', 1, 0)
-qc.add_gate('measure', [])
-qc.draw()
-qc.run()
-print(qc.get_counts())
-qc.plot("histogram")
+qc = QC.Qutrit_circuit(4, None)
+qc.add_gate('x01', first_qutrit_set=1)
+qc.add_gate('x12', first_qutrit_set=1)
+# qc.add_gate('rx12', first_qutrit_set=0, parameter=pi / 2)
+qc.add_gate('CNOT', first_qutrit_set=3, second_qutrit_set=1)
+qc.add_gate('measure', 0)
+backend = QASM_simulator(QC=qc)
+backend.run()
+backend.result()
+print(backend.get_counts())
+backend.plot("histogram")
