@@ -3,9 +3,9 @@ Backend of the VM that can be used to simulate the Quantum Circuit
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from QC import Qutrit_circuit
-from VM_utility import statevector_to_state
-from instruction_structure import Instruction
+from src.quantumcircuit import Qutrit_circuit
+from src.quantumcircuit import statevector_to_state
+from src.quantumcircuit import Instruction
 
 
 class QASM_simulator:
@@ -114,7 +114,7 @@ class QASM_simulator:
         self._simulation()
         return self.state @ np.transpose(self.state)
 
-    def plot(self, _type):
+    def plot(self, _type: str):
         """
         :param _type: Type of plotting
         Draw graph

@@ -1,6 +1,6 @@
-import QC
+from src.quantumcircuit import QC
 import numpy as np
-from backend import QASM_simulator
+from src.backend import QASM_simulator
 
 pi = np.pi
 '''

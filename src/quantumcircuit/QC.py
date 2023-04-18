@@ -1,6 +1,6 @@
 import numpy as np
-from VM_utility import print_statevector
-from instruction_structure import Instruction
+from .QC_utility import print_statevector
+from .instruction_structure import Instruction
 
 
 class Qutrit_circuit:
@@ -17,9 +17,10 @@ class Qutrit_circuit:
         self._measurement_flag = False
         self.n_qutrit = n_qutrit
         self._operation_set = []
+        self._dimension = 3 ** n_qutrit
         self.state = []
         if initial_state is not None:
-            if initial_state.shape == (3 ** n_qutrit, 1):
+            if initial_state.shape == (self._dimension, 1):
                 self.initial_state = initial_state
                 self.state = initial_state
             else:
@@ -27,9 +28,8 @@ class Qutrit_circuit:
                     "The initial state declared does not have correct dimension. The current shape is " + str(
                         initial_state.shape))
         else:
-            self.initial_state = np.array([[1], [0], [0]])
-            for i in range(self.n_qutrit - 1):
-                self.initial_state = np.kron(self.initial_state, np.array([[1], [0], [0]]))
+            self.initial_state = np.array([[0]*self._dimension]).transpose()
+            self.initial_state[0][0] = 1
             self.state = self.initial_state
 
     def add_gate(self, gate_type: str, first_qutrit_set: int, second_qutrit_set: int = None, parameter: float = None):

@@ -26,6 +26,10 @@ def single_matrix_form(gate_type: str, parameter: float = None, omega=np.exp(1j 
         return np.array([[np.cos(parameter / 2), -1j * np.sin(parameter / 2), 0],
                          [-1j * np.sin(parameter / 2), np.cos(parameter / 2), 0],
                          [0, 0, 1]], dtype=complex)
+    elif gate_type == 'G01':
+        return np.array([[np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2) * np.exp(-1j * parameter[1]), 0],
+                         [-1j * np.sin(parameter[0] / 2) * np.exp(1j * parameter[1]), np.cos(parameter[0] / 2), 0],
+                         [0, 0, 1]], dtype=complex)
     elif gate_type == 'x12':
         return np.array([[1, 0, 0],
                          [0, 0, 1],
@@ -34,6 +38,11 @@ def single_matrix_form(gate_type: str, parameter: float = None, omega=np.exp(1j 
         return np.array([[1, 0, 0],
                          [0, np.cos(parameter / 2), -1j * np.sin(parameter / 2)],
                          [0, -1j * np.sin(parameter / 2), np.cos(parameter / 2)]], dtype=complex)
+    elif gate_type == 'G12':
+        return np.array([[1, 0, 0],
+                         [0, np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2) * np.exp(-1j * parameter[1])],
+                         [0, -1j * np.sin(parameter[0] / 2) * np.exp(1j * parameter[1]), np.cos(parameter[0] / 2)]],
+                        dtype=complex)
     elif gate_type == 'I':
         return np.array([[1, 0, 0],
                          [0, 1, 0],
@@ -109,7 +118,7 @@ def multi_matrix_form(gate_type: str, first_index: int, second_index: int):
             if space == 0:
                 spacing = 1
             else:
-                spacing = np.eye(3**space)
+                spacing = np.eye(3 ** space)
             if second_index < first_index:
                 matrix = np.kron(np.kron(state_0 @ np.transpose(state_0), spacing), np.eye(3)) + \
                          np.kron(np.kron(state_1 @ np.transpose(state_1), spacing),
