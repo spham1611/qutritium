@@ -1,7 +1,10 @@
 """Utility functions to analyze data"""
+import os.path
+
 from scipy.optimize import curve_fit
 from scipy.optimize import minimize
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Optional, Any
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -17,6 +20,8 @@ def fit_function(x_values, y_values: List, function: Callable, init_params: List
     """
     fit_parameters, *_ = curve_fit(function, x_values, y_values, init_params)
     y_fit = function(x_values, *fit_parameters)
+    # print(fit_parameters)
+    # print(y_fit)
 
     return fit_parameters, y_fit
 
@@ -79,3 +84,29 @@ def reshape_complex_vec(vec: np.ndarray) -> np:
     for i in range(len(vec)):
         vec_reshaped[i] = [np.real(vec[i]), np.imag(vec[i])]
     return vec_reshaped
+
+
+def plot_and_save(x_values: Any,
+                  y_values: Any,
+                  line_label: Optional[List[str]],
+                  x_label: str = '',
+                  y_label: str = '',
+                  plot_name: str = '') -> None:
+    """
+    Plot the matplotlib and save it in output folder
+    :param x_values:
+    :param y_values:
+    :param line_label:
+    :param x_label:
+    :param y_label:
+    :param plot_name:
+    :return:
+    """
+    for x_list, y_list, label in zip(x_values, y_values, line_label):
+        plt.scatter(x=x_list, y=y_list, label=label)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.legend()
+    plt.grid()
+    plt.savefig(plot_name)
+    plt.show()
