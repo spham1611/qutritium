@@ -14,7 +14,7 @@ from src.pulse import Pulse01, Pulse12
 from src.analyzer import DataAnalysis
 from src.constant import QUBIT_PARA
 from src.calibration.calibration_utility import Gate_Schedule
-from src.utility import fit_function
+from src.utility import fit_function, plot_and_save
 from src.exceptions.pulse_exception import MissingDurationPulse
 from abc import ABC, abstractmethod
 from numpy import linspace, ndarray
@@ -66,7 +66,6 @@ class TR(ABC):
         self.set_up()
         self.tr_create_circuit()
         self.run_monitor()
-        # self.get_submitted_job()
         self.modify_pulse_model()
         print("Process run successfully!")
 
@@ -108,11 +107,17 @@ class TR(ABC):
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
 
         analyzer.retrieve_data(average=True)
-        # print(analyzer.IQ_data)
-        fit_params, _ = fit_function(self.freq_sweeping_range, analyzer.IQ_data,
+        fit_params, _ = fit_function(self.freq_sweeping_range_ghz, analyzer.IQ_data,
                                      lambda x, c1, q_freq, c2, c3:
                                      (c1 / np.pi) * (c2 / ((x - q_freq) ** 2 + c2 ** 2)) + c3,
                                      self.lambda_list)
+        plot_name = f'TR_{self.pulse_model.__class__.__name__}.png'
+        plot_and_save(x_values=[self.freq_sweeping_range_ghz],
+                      y_values=[analyzer.IQ_data],
+                      line_label=[''],
+                      y_label='Signal (arb.units)',
+                      x_label='Frequency [GHz]',
+                      plot_name=f'output/{plot_name}')
 
         freq = fit_params[1] * QUBIT_PARA.GHZ.value
         return freq
@@ -188,6 +193,9 @@ class TR_12(TR):
         self.frequency = Parameter('transition_freq_12')
         self.pulse01_schedule = None
 
+    def run(self) -> None:
+        super().run()
+
     def set_up(self) -> None:
         """
 
@@ -195,9 +203,9 @@ class TR_12(TR):
         """
         self.pulse_model: Pulse12
         self.pulse01_schedule = Gate_Schedule.single_gate_schedule(
-            self.pulse_model.pulse01.frequency,
-            self.pulse_model.pulse01.duration,
-            self.pulse_model.pulse01.x_amp,
+            drive_freq=self.pulse_model.pulse01.frequency,
+            drive_duration=self.pulse_model.pulse01.duration,
+            drive_amp=self.pulse_model.pulse01.x_amp,
         )
         mhz_unit = QUBIT_PARA.MHZ.value
         max_freq, min_freq = DEFAULT_F12 + 36 * mhz_unit, DEFAULT_F12 - 36 * mhz_unit
@@ -232,4 +240,5 @@ class TR_12(TR):
         """
         self.pulse_model: Pulse12
         f12 = self.analyze(job_id=job_id)
+        # self.analyze(job_id)
         self.pulse_model.frequency = f12

@@ -13,6 +13,8 @@ from typing import List, Union, Optional
 import qiskit.pulse as pulse
 import numpy as np
 
+from src.utility import plot_and_save
+
 
 class DragLK(ABC):
     """
@@ -118,7 +120,16 @@ class DragLK(ABC):
         analyzer.lda()
         analyzer.count_pop()
         analyzer.error_mitiq()
+        drag_values_n3 = analyzer.mitiq_data[3:35, index_taken]
+        drag_values_n5 = analyzer.mitiq_data[35:67, index_taken]
         drag_values_n7 = analyzer.mitiq_data[67:99, index_taken]
+        plot_name = f'Drag_leakage_{self.pulse_model.__class__.__name__}.png'
+        plot_and_save(x_values=[self.drive_betas] * 3,
+                      y_values=[drag_values_n3, drag_values_n5, drag_values_n7],
+                      line_label=['drag_values_n3', 'drag_values_n5', 'drag_values_n7'],
+                      y_label='Signal (arb.units)',
+                      x_label='Beta Leakage',
+                      plot_name=f'output/{plot_name}')
         beta = self.drive_betas[np.argmax(drag_values_n7)]
         return beta
 
@@ -246,7 +257,7 @@ class DragLK01(DragLK):
         :return:
         """
         self.pulse_model: Pulse01
-        self.pulse_model.beta_leakage = self.analyze(job_id=job_id)
+        self.pulse_model.beta_leakage = self.analyze(job_id=job_id, index_taken=0)
 
 
 class DragLK12(DragLK):

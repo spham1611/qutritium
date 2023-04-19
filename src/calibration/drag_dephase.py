@@ -6,11 +6,12 @@ from src.analyzer import DataAnalysis
 from src.pulse import Pulse01, Pulse12
 from src.calibration import backend, QUBIT_VAL
 from src.calibration.calibration_utility import Gate_Schedule
-from src.utility import fit_function
+from src.utility import fit_function, plot_and_save
 from src.exceptions.pulse_exception import MissingDurationPulse, MissingFrequencyPulse, MissingAmplitudePulse
 from abc import ABC, abstractmethod
 from typing import List, Union, Optional
 import qiskit.pulse as pulse
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -122,8 +123,17 @@ class DragDP(ABC):
         analyzer.count_pop()
         analyzer.error_mitiq()
 
+        drag_values_x = analyzer.mitiq_data[3:35, 0]
         drag_values_yp = analyzer.mitiq_data[35:67, index_taken]
         drag_values_ym = analyzer.mitiq_data[67:99, index_taken]
+
+        plot_name = f'Drag_dephase_{self.pulse_model.__class__.__name__}.png'
+        plot_and_save(x_values=[self.drive_betas] * 3,
+                      y_values=[drag_values_x, drag_values_yp, drag_values_ym],
+                      line_label=['drag_values_x', 'drag_values_yp', 'drag_values_ym'],
+                      y_label='Signal (arb.units)',
+                      x_label='Beta Dephase',
+                      plot_name=f'output/{plot_name}')
 
         fit_params_yp, y_fit_yp = fit_function(self.drive_betas,
                                                drag_values_yp,

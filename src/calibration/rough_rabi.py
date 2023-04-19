@@ -1,7 +1,7 @@
 """Rough rabi techniques"""
 from qiskit.circuit import QuantumCircuit, Parameter, Gate
 from qiskit.tools.monitor import job_monitor
-from src.utility import fit_function
+from src.utility import fit_function, plot_and_save
 from src.calibration import (
     backend,
     QUBIT_VAL
@@ -13,6 +13,7 @@ from src.constant import QUBIT_PARA
 from src.exceptions.pulse_exception import MissingDurationPulse, MissingFrequencyPulse
 from abc import ABC, abstractmethod
 from typing import Optional, List, Union
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -101,6 +102,15 @@ class Rough_Rabi(ABC):
                                      lambda x, c1, c2, drive_period, phi:
                                      (c1 * np.cos(2 * np.pi * x / drive_period - phi) + c2),
                                      [5, 0, 0.5, 0])
+
+        plot_name = f'Rough_Rabi_{self.pulse_model.__class__.__name__}.png'
+        plot_and_save(x_values=[self._x_amp_sweeping_range],
+                      y_values=[analyzer.IQ_data],
+                      line_label=[''],
+                      y_label='Signal (arb.units)',
+                      x_label='Amplitude',
+                      plot_name=f'output/{plot_name}')
+
         x_amp = (fit_params[2] / 2)
         return x_amp
 
