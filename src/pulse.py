@@ -87,8 +87,8 @@ class Pulse(ABC):
     """
     pulse_list = Pulse_List()
 
-    def __init__(self, frequency: float = 0, x_amp: float = 0, sx_amp: float = 0,
-                 beta_dephase: float = 0, beta_leakage: float = 0, duration: int = 0) -> None:
+    def __init__(self, frequency: float, x_amp: float, sx_amp: float,
+                 beta_dephase: float, beta_leakage: float, duration: int) -> None:
         """
 
         :param frequency:
@@ -117,8 +117,8 @@ class Pulse(ABC):
 class Pulse01(Pulse):
     """Pulse of 0 -> 1 state"""
 
-    def __init__(self, frequency: float = 0, x_amp: float = 0, sx_amp: float = 0,
-                 beta_dephase: float = 0, beta_leakage: float = 0, duration: int = 0,
+    def __init__(self, frequency: float = 0, x_amp: float = 0.2, sx_amp: float = 0,
+                 beta_dephase: float = 0, beta_leakage: float = 0, duration: int = 144,
                  pulse12: Pulse12 = None) -> None:
         """
 
@@ -171,8 +171,8 @@ class Pulse01(Pulse):
 class Pulse12(Pulse):
     """Pulse of 1 -> 2 state"""
 
-    def __init__(self, pulse01: Pulse01, frequency: float = 0, x_amp: float = 0, sx_amp: float = 0,
-                 beta_dephase: float = 0, beta_leakage: float = 0, duration: int = 0,
+    def __init__(self, pulse01: Pulse01, frequency: float = 0, x_amp: float = 0.2, sx_amp: float = 0,
+                 beta_dephase: float = 0, beta_leakage: float = 0, duration: int = 144,
                  ) -> None:
         """
 
@@ -222,11 +222,3 @@ class Pulse12(Pulse):
         :return:
         """
         return self.pulse01 is not None
-
-
-# Run demo on save_pulses
-# pulse1 = Pulse01(duration=144, frequency=15000, x_amp=40, sx_amp=50, beta_dephase=5)
-# pulse2 = Pulse01(duration=120, frequency=4000, x_amp=50, sx_amp=4, beta_leakage=10)
-# pulse3 = Pulse12(pulse01=pulse2, duration=150, frequency=5000, beta_dephase=5)
-#
-# Pulse.pulse_list.save_pulses(saved_type='csv')
