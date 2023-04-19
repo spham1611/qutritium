@@ -32,6 +32,7 @@ from qutritium.calibration import TR01
 
 - **[Son Pham](https://github.com/spham1611)**
 - **[Tien Nguyen](https://github.com/ngdnhtien)**
+- **[Bao Bach](https://github.com/bachbao)**
 
 ## License
 
