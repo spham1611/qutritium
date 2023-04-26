@@ -1,4 +1,5 @@
 
+[![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund)
 ![qutrit](./project_images/qutrit.jpg)
 *[Image Reference](https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DVbiKCqy_mmg&psig=AOvVaw1S_GSos-28aYQVnZkevZp8&ust=1677162127754000&source=images&cd=vfe&ved=0CBEQjhxqFwoTCMinoPipqf0CFQAAAAAdAAAAABAE)* 
 # Qutritium
