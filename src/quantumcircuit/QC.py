@@ -1,5 +1,5 @@
 import numpy as np
-from .QC_utility import print_statevector
+from .qc_utility import print_statevector
 from .instruction_structure import Instruction
 
 

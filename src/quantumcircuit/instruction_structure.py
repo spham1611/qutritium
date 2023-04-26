@@ -4,7 +4,7 @@ Used to represent a gate in quantum circuit
 """
 from typing import Union, Any
 import numpy as np
-from .QC_utility import single_matrix_form, multi_matrix_form
+from .qc_utility import single_matrix_form, multi_matrix_form
 
 gate_set: list[Union[str, Any]] = ['I',
                                    'x+',
