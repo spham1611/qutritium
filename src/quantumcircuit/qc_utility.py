@@ -254,32 +254,32 @@ def checking_unitary(u: ndarray):
         return False
 
 
-def decomposition(u: ndarray):
-    """
-    :param u: Unitary matrix to decompose into gates
-    :return: parameters of the gates decomposition
-    """
-    if checking_unitary(u):
-        if abs(np.absolute(u[2][2]) - 1) < 1e-6:
-            theta_1 = phi_1 = theta_2 = phi_2 = 0
-            phi_4 = np.angle(u[2][2])
-            phi_5 = np.angle(u[1][1])
-            phi_6 = np.angle(u[0][0])
-            # phi_3 = phi_6 - pi/2 - np.angle(U[0, 1])
-            phi_3 = np.angle(u[1][0]) - phi_5 + pi / 2
-            theta_3 = 2 * np.arccos(np.absolute(u[1][1]))
-        else:
-            phi_4 = np.angle(u[2][2])
-            theta_2 = 2 * np.arccos(np.round(np.absolute(u[2][2]), 6))
-            phi_2 = np.angle(u[2][1]) - phi_4 + pi / 2
-            phi_1 = np.angle(-1 * u[2][0]) - phi_2 - phi_4
-            theta_1 = 2 * np.arccos(np.round(np.absolute(u[2][1]) / np.sin(theta_2 / 2), 6))
-            theta_3 = 2 * np.arccos(np.round(np.absolute(u[1][2]) / np.sin(theta_2 / 2), 6))
-            phi_5 = np.angle(u[1][2]) + phi_2 + pi / 2
-            phi_3 = np.angle(
-                np.cos(theta_1 / 2) * np.cos(theta_2 / 2) * np.cos(theta_3 / 2) - u[1][1] * np.exp(-1j * phi_5)) + phi_1
-            phi_6 = np.angle(-1 * u[0][2]) + phi_3 + phi_2
-        return theta_1, theta_2, theta_3, phi_1, phi_2, phi_3, phi_4, phi_5, phi_6
-    else:
-        print("The given matrix is not unitary")
-        return None
+# def decomposition(u: ndarray):
+#     """
+#     :param u: Unitary matrix to decompose into gates
+#     :return: parameters of the gates decomposition
+#     """
+#     if checking_unitary(u):
+#         if abs(np.absolute(u[2][2]) - 1) < 1e-6:
+#             theta_1 = phi_1 = theta_2 = phi_2 = 0
+#             phi_4 = np.angle(u[2][2])
+#             phi_5 = np.angle(u[1][1])
+#             phi_6 = np.angle(u[0][0])
+#             # phi_3 = phi_6 - pi/2 - np.angle(U[0, 1])
+#             phi_3 = np.angle(u[1][0]) - phi_5 + pi / 2
+#             theta_3 = 2 * np.arccos(np.absolute(u[1][1]))
+#         else:
+#             phi_4 = np.angle(u[2][2])
+#             theta_2 = 2 * np.arccos(np.round(np.absolute(u[2][2]), 6))
+#             phi_2 = np.angle(u[2][1]) - phi_4 + pi / 2
+#             phi_1 = np.angle(-1 * u[2][0]) - phi_2 - phi_4
+#             theta_1 = 2 * np.arccos(np.round(np.absolute(u[2][1]) / np.sin(theta_2 / 2), 6))
+#             theta_3 = 2 * np.arccos(np.round(np.absolute(u[1][2]) / np.sin(theta_2 / 2), 6))
+#             phi_5 = np.angle(u[1][2]) + phi_2 + pi / 2
+#             phi_3 = np.angle(
+#                 np.cos(theta_1 / 2) * np.cos(theta_2 / 2) * np.cos(theta_3 / 2) - u[1][1] * np.exp(-1j * phi_5)) + phi_1
+#             phi_6 = np.angle(-1 * u[0][2]) + phi_3 + phi_2
+#         return theta_1, theta_2, theta_3, phi_1, phi_2, phi_3, phi_4, phi_5, phi_6
+#     else:
+#         print("The given matrix is not unitary")
+#         return None
