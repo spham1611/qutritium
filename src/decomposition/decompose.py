@@ -1,7 +1,8 @@
 """"""
-from typing import NamedTuple
+from typing import NamedTuple, DefaultDict
 from collections import namedtuple
 from src.quantumcircuit.qc_utility import u_d, r01, r12
+from src.quantumcircuit.QC import Qutrit_circuit
 import numpy as np
 
 
@@ -63,7 +64,7 @@ class SU3_matrices:
         self.su3: np.ndarray = su3
         self.parameters: NamedTuple = Parameter.get_parameters(su3=self.su3)
 
-    def decomposed_unitary_gate(self) -> np.ndarray:
+    def unitary_diagonal(self) -> np.ndarray:
         """
 
         :return:
@@ -95,8 +96,46 @@ class SU3_matrices:
 
     def reconstruct(self) -> np.ndarray:
         return (
-            self.decomposed_unitary_gate()
+            self.unitary_diagonal()
             @ self.rotation_theta3_01()
             @ self.rotation_theta2_12()
             @ self.rotation_theta1_01()
         )
+
+    def __str__(self) -> str:
+        """
+
+        :return:
+        """
+        return f"U_diagonal = {self.unitary_diagonal()}\n" \
+               f"R_theta1 = {self.rotation_theta1_01()}\n" \
+               f"R_theta2 = {self.rotation_theta2_12()}\n" \
+               f"R_theta3 = {self.rotation_theta3_01()}\n"
+
+    def __repr__(self) -> str:
+        """
+
+        :return:
+        """
+        return f"U_diagonal = {self.unitary_diagonal()}\n" \
+               f"R_theta1 = {self.rotation_theta1_01()}\n" \
+               f"R_theta2 = {self.rotation_theta2_12()}\n" \
+               f"R_theta3 = {self.rotation_theta3_01()}\n"
+
+
+class Matrix_Wrapper:
+    """
+
+    """
+    def __init__(self, qc: Qutrit_circuit) -> None:
+        """
+
+        :param qc:
+        """
+        self.qc = qc
+
+    def transpile(self) -> DefaultDict[str, np.ndarray]:
+        """
+
+        :return:
+        """
