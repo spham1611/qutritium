@@ -28,7 +28,7 @@ class Qutrit_circuit:
                     "The initial state declared does not have correct dimension. The current shape is " + str(
                         initial_state.shape))
         else:
-            self.initial_state = np.array([[0]*self._dimension]).transpose()
+            self.initial_state = np.array([[0] * self._dimension]).transpose()
             self.initial_state[0][0] = 1
             self.state = self.initial_state
 
@@ -54,6 +54,7 @@ class Qutrit_circuit:
     def return_meas_flag(self):
         return self._measurement_flag
 
+    # TODO: Add image circuit
     def draw(self):
         """
         Representation of the quantum circuit
