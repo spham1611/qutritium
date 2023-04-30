@@ -4,7 +4,7 @@ Used to represent a gate in quantum circuit
 """
 from typing import Union, Any
 import numpy as np
-from .qc_utility import single_matrix_form, multi_matrix_form
+# from .qc_utility import single_matrix_form, multi_matrix_form
 
 gate_set: list[Union[str, Any]] = ['I',
                                    'x+',
@@ -34,8 +34,9 @@ class Instruction:
     Each gate can be considered as an instruction and each has effect on the final state
     """
 
-    def __init__(self, gate_type: str, n_qutrit: int, first_qutrit_set: int,
-                 second_qutrit_set: int = None, parameter: float = None):
+    def __init__(self, gate_type: str,
+                 n_qutrit: int, first_qutrit_set: int,
+                 second_qutrit_set: int = None, parameter: float = None) -> None:
         self._type = gate_type
         self._verify_gate()
         self.n_qutrit = n_qutrit
@@ -55,7 +56,7 @@ class Instruction:
             self.gate_matrix = single_matrix_form(gate_type=self._type, parameter=self.parameter)
         self._effect_matrix = self._effect()
 
-    def _effect(self):
+    def _effect(self) -> np.ndarray:
         """
         Return the matrix form effect of gate on the quantum state
         """
@@ -93,15 +94,16 @@ class Instruction:
                                                                                     self.qutrit_dimension)
             return effect_matrix
 
-    def return_effect(self):
+    def _verify_gate(self) -> None:
+        if self._type not in gate_set:
+            raise Exception("This gate is not defined in set of gates")
+
+    @property
+    def effect_matrix(self) -> np.ndarray:
         return self._effect_matrix
 
-    def _verify_gate(self):
-        if self._type not in gate_set:
-            raise Exception("This gate is not defined in set of gate")
-
-    def matrix(self):
-        return self.gate_matrix
+    def type(self) -> str:
+        return self._type
 
     def print(self):
         if not self._is_two_qutrit_gate:

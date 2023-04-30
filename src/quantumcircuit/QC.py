@@ -1,6 +1,7 @@
-import numpy as np
+from typing import List, Union
 from .qc_utility import print_statevector
 from .instruction_structure import Instruction
+import numpy as np
 
 
 class Qutrit_circuit:
@@ -8,17 +9,17 @@ class Qutrit_circuit:
     This class defines the wrapper for Virtual Machine which can be treated as a Quantum Circuit
     """
 
-    def __init__(self, n_qutrit: int, initial_state: np.array):
+    def __init__(self, n_qutrit: int, initial_state: np.array) -> None:
         """
         :param n_qutrit: Number of qutrit
         :param initial_state: The initial state of the quantum circuit
         """
+        self.n_qutrit = n_qutrit
+        self.state = []
         self._measurement_result = None
         self._measurement_flag = False
-        self.n_qutrit = n_qutrit
         self._operation_set = []
         self._dimension = 3 ** n_qutrit
-        self.state = []
         if initial_state is not None:
             if initial_state.shape == (self._dimension, 1):
                 self.initial_state = initial_state
@@ -32,7 +33,10 @@ class Qutrit_circuit:
             self.initial_state[0][0] = 1
             self.state = self.initial_state
 
-    def add_gate(self, gate_type: str, first_qutrit_set: int, second_qutrit_set: int = None, parameter: float = None):
+    def add_gate(self, gate_type: str,
+                 first_qutrit_set: int,
+                 second_qutrit_set: int = None,
+                 parameter: float = None) -> None:
         """
         :param gate_type: quantum gate type as define in gate_set
         :param first_qutrit_set: acting qubits
@@ -41,18 +45,32 @@ class Qutrit_circuit:
         :return:
         """
         if gate_type != 'measure':
-            ins = Instruction(gate_type, self.n_qutrit, first_qutrit_set, second_qutrit_set,
+            ins = Instruction(gate_type, self.n_qutrit,
+                              first_qutrit_set, second_qutrit_set,
                               parameter)
-            self._operation_set.append(ins)
+            self.operation_set = [ins]
         else:
             self._measurement_flag = True
-            self._operation_set.append("measurement")
+            self.operation_set = ['measurement']
 
-    def return_operation_set(self):
+    @property
+    def operation_set(self) -> List:
         return self._operation_set
 
-    def return_meas_flag(self):
+    @operation_set.setter
+    def operation_set(self, op: List[Union[Instruction, str]]) -> None:
+        self._operation_set.extend(op)
+
+    @property
+    def measurement_flag(self) -> bool:
         return self._measurement_flag
+
+    def reset_circuit(self) -> None:
+        """
+        Delete all the elements of the operation set
+        :return:
+        """
+        self._operation_set.clear()
 
     # TODO: Add image circuit
     def draw(self):
