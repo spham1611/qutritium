@@ -3,9 +3,9 @@ Backend of the VM that can be used to simulate the Quantum Circuit
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from src.quantumcircuit import Qutrit_circuit
-from src.quantumcircuit import statevector_to_state
-from src.quantumcircuit import Instruction
+from src.quantumcircuit.QC import Qutrit_circuit
+from src.quantumcircuit.qc_utility import statevector_to_state
+from src.quantumcircuit.instruction_structure import Instruction
 
 
 class QASM_simulator:

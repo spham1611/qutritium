@@ -1,6 +1,6 @@
 """"""
-from typing import NamedTuple, DefaultDict, List, Optional
-from collections import defaultdict, namedtuple
+from typing import List, NamedTuple, DefaultDict
+from collections import namedtuple, defaultdict
 from src.quantumcircuit.qc_elementary_matrices import u_d, r01, r12
 from src.quantumcircuit.QC import Qutrit_circuit
 import numpy as np
@@ -129,18 +129,19 @@ class Matrix_Wrapper:
     """
 
     """
+
     def __init__(self, qc: Qutrit_circuit,
-                 native_gates: Optional[List[str]]) -> None:
+                 native_gates: List[str]) -> None:
         """
         :param qc:
         """
         self.qc = qc
         self._su3_dictionary: DefaultDict = defaultdict()
-        self.native_gates = native_gates if native_gates else ['rx01', 'rx12', 'rz01', 'rz12']
+        self.native_gates = native_gates
 
     def transpile(self) -> None:
         """
-
+        Convert to SU3_matrices for further decomposition
         :return:
         """
         operation_set = self.qc.operation_set
