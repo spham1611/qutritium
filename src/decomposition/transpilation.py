@@ -97,6 +97,10 @@ class SU3_matrices:
         return r12(getattr(self.parameters, 'phi2'), getattr(self.parameters, 'theta2'))
 
     def reconstruct(self) -> np.ndarray:
+        """
+
+        :return:
+        """
         return (
                 self.unitary_diagonal()
                 @ self.rotation_theta3_01()
@@ -153,9 +157,16 @@ class Matrix_Wrapper:
             else:
                 self._su3_dictionary[instr_type] = ...
 
-    def convert_to_qiskit_pulses(self):
+    def convert_to_pulse_model(self):
         """
         Convert to l
+        :return:
+        """
+        pass
+
+    def pulse_model_to_qiskit(self):
+        """
+
         :return:
         """
         pass
