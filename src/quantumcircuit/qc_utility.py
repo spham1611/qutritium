@@ -3,11 +3,8 @@ Unitary Gates: Elementary matrices
 """
 from __future__ import annotations
 from numpy import ndarray
-from numpy.linalg import inv, matrix_power, LinAlgError
-from sympy import *
-from qc_elementary_matrices import *
+from numpy.linalg import inv, LinAlgError
 import numpy as np
-
 
 pi = np.pi
 state_0 = [[1], [0], [0]]
@@ -15,186 +12,127 @@ state_1 = [[0], [1], [0]]
 state_2 = [[0], [0], [1]]
 
 
-def g01(theta: float, phi: float, var_phi):
+def single_matrix_form(gate_type: str, parameter: list[float] = None, omega=np.exp(1j * 2 * pi / 3)):
     """
-
-    :param theta:
-    :param phi:
-    :param var_phi:
-    :return:
+    :param gate_type: quantum gate type as define in gate_set
+    :param parameter: parameter of rotation gate (if needed)
+    :param omega: omega for phase gate
+    :return: matrix form of the qutrit gate
     """
-    return z12(var_phi) @ rz01(phi) * rx01(theta) * rz01(-phi)
+    if gate_type == 'x01':
+        return np.array([[0, 1, 0],
+                         [1, 0, 0],
+                         [0, 0, 1]], dtype=complex)
+    elif gate_type == 'rx01':
+        return np.array([[np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2), 0],
+                         [-1j * np.sin(parameter[0] / 2), np.cos(parameter[0] / 2), 0],
+                         [0, 0, 1]], dtype=complex)
+    elif gate_type == 'G01':
+        return np.array([[np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2) * np.exp(-1j * parameter[1]), 0],
+                         [-1j * np.sin(parameter[0] / 2) * np.exp(1j * parameter[1]), np.cos(parameter[0] / 2), 0],
+                         [0, 0, 1]], dtype=complex)
+    elif gate_type == 'x12':
+        return np.array([[1, 0, 0],
+                         [0, 0, 1],
+                         [0, 1, 0]], dtype=complex)
+    elif gate_type == 'rx12':
+        return np.array([[1, 0, 0],
+                         [0, np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2)],
+                         [0, -1j * np.sin(parameter[0] / 2), np.cos(parameter[0] / 2)]], dtype=complex)
+    elif gate_type == 'G12':
+        return np.array([[1, 0, 0],
+                         [0, np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2) * np.exp(-1j * parameter[1])],
+                         [0, -1j * np.sin(parameter[0] / 2) * np.exp(1j * parameter[1]), np.cos(parameter[0] / 2)]],
+                        dtype=complex)
+    elif gate_type == 'I':
+        return np.array([[1, 0, 0],
+                         [0, 1, 0],
+                         [0, 0, 1]], dtype=complex)
+    elif gate_type == 'x+':
+        return np.array([[0, 0, 1],
+                         [1, 0, 0],
+                         [0, 1, 0]], dtype=complex)
+    elif gate_type == 'x-':
+        return np.array([[0, 1, 0],
+                         [0, 0, 1],
+                         [1, 0, 0]], dtype=complex)
+    elif gate_type == 'z01':
+        return np.array([[1, 0, 0],
+                         [0, -1, 0],
+                         [0, 0, 1]], dtype=complex)
+    elif gate_type == 'rz01':
+        return np.array([[np.exp(-1j * parameter[0] / 2), 0, 0],
+                         [0, np.exp(1j * parameter[0] / 2), 0],
+                         [0, 0, 1]], dtype=complex)
+    elif gate_type == 'z12':
+        return np.array([[1, 0, 0],
+                         [0, 1, 0],
+                         [0, 0, -1]], dtype=complex)
+    elif gate_type == 'rz12':
+        return np.array([[1, 0, 0],
+                         [0, np.exp(-1j * parameter[0] / 2), 0],
+                         [0, 0, np.exp(1j * parameter[0] / 2)]], dtype=complex)
+    elif gate_type == 'y01':
+        return np.array([[0, -1j, 0],
+                         [1j, 0, 0],
+                         [0, 0, 1]], dtype=complex)
+    elif gate_type == 'ry01':
+        return np.array([[np.cos(parameter[0] / 2), -np.sin(parameter[0] / 2), 0],
+                         [np.sin(parameter[0] / 2), np.cos(parameter[0] / 2), 0],
+                         [0, 0, 1]], dtype=complex)
+    elif gate_type == 'y12':
+        return np.array([[1, 0, 0],
+                         [0, 0, -1j],
+                         [0, 1j, 0]], dtype=complex)
+    elif gate_type == 'ry12':
+        return np.array([[1, 0, 0],
+                         [0, np.cos(parameter[0] / 2), -np.sin(parameter[0] / 2)],
+                         [0, np.sin(parameter[0] / 2), np.cos(parameter[0] / 2)]], dtype=complex)
+    elif gate_type == 'WH':
+        return (1 / np.sqrt(3)) * np.array([[1, 1, 1],
+                                            [1, omega, np.conj(omega)],
+                                            [1, np.conj(omega), omega]], dtype=complex)
+    elif gate_type == 'S':
+        return np.array([[1, 0, 0],
+                         [0, 1, 0],
+                         [0, 0, omega]], dtype=complex)
+    elif gate_type == 'T':
+        return np.array([[1, 0, 0],
+                         [0, np.power(omega, 1 / 3), 0],
+                         [0, 0, np.power(omega, -1 / 3)]], dtype=complex)
+    else:
+        raise Exception("This gate is not implemented yet.")
 
 
-def g12(theta: float, phi: float, var_phi: float):
+def multi_matrix_form(gate_type: str, first_index: int, second_index: int):
     """
-
-    :param var_phi:
-    :param theta:
-    :param phi:
-    :return:
+    :param gate_type: quantum gate type as define in gate_set
+    :param first_index: acting qubit
+    :param second_index: control qubit
+    :return: matrix form of the control-qutrit gate
     """
-    return z01(var_phi) @ rz12(phi) * rx12(theta) * rz12(-phi)
-
-
-def r01(phi: float, theta: float) -> np.ndarray:
-    """
-
-    :param phi:
-    :param theta:
-    :return:
-    """
-    return z01(-phi) @ x01(theta) @ z01(phi)
-
-
-def r12(phi: float, theta: float) -> np.ndarray:
-    """
-
-    :param phi:
-    :param theta:
-    :return:
-    """
-    return z12(phi) @ x12(theta) @ z12(-phi)  # note that R12 is reversed
-
-
-def u_d(phi_1: float, phi_2: float, phi_3: float) -> np.ndarray:
-    """
-
-    :param phi_1:
-    :param phi_2:
-    :param phi_3:
-    :return:
-    """
-    return np.array([[np.exp(1j * phi_1), 0, 0],
-                     [0, np.exp(1j * phi_2), 0],
-                     [0, 0, np.exp(1j * phi_3)]])
-
-
-# def single_matrix_form(gate_type: str,
-#                        phi: float = None,
-#                        theta: float = None,
-#                        omega=np.exp(1j * 2 * pi / 3)):
-#     """
-#     :param theta: angle in radians
-#     :param phi: angle in radians
-#     :param gate_type: quantum gate type as define in gate_set
-#     :param omega: omega for phase gate
-#     :return: matrix form of the qutrit gate
-#     """
-#     if gate_type == 'x01':
-#         return np.array([[0, 1, 0],
-#                          [1, 0, 0],
-#                          [0, 0, 1]], dtype=complex)
-#     elif gate_type == 'rx01':
-#         return np.array([[np.cos(theta / 2), -1j * np.sin(theta / 2), 0],
-#                          [-1j * np.sin(theta / 2), np.cos(theta / 2), 0],
-#                          [0, 0, 1]], dtype=complex)
-#     elif gate_type == 'G01':
-#         return np.array([[np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2) * np.exp(-1j * parameter[1]), 0],
-#                          [-1j * np.sin(parameter[0] / 2) * np.exp(1j * parameter[1]), np.cos(parameter[0] / 2), 0],
-#                          [0, 0, 1]], dtype=complex)
-#     elif gate_type == 'x12':
-#         return np.array([[1, 0, 0],
-#                          [0, 0, 1],
-#                          [0, 1, 0]], dtype=complex)
-#     elif gate_type == 'rx12':
-#         return np.array([[1, 0, 0],
-#                          [0, np.cos(parameter / 2), -1j * np.sin(parameter / 2)],
-#                          [0, -1j * np.sin(parameter / 2), np.cos(parameter / 2)]], dtype=complex)
-#     elif gate_type == 'G12':
-#         return np.array([[1, 0, 0],
-#                          [0, np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2) * np.exp(-1j * parameter[1])],
-#                          [0, -1j * np.sin(parameter[0] / 2) * np.exp(1j * parameter[1]), np.cos(parameter[0] / 2)]],
-#                         dtype=complex)
-#     elif gate_type == 'I':
-#         return np.array([[1, 0, 0],
-#                          [0, 1, 0],
-#                          [0, 0, 1]], dtype=complex)
-#     elif gate_type == 'x+':
-#         return np.array([[0, 0, 1],
-#                          [1, 0, 0],
-#                          [0, 1, 0]], dtype=complex)
-#     elif gate_type == 'x-':
-#         return np.array([[0, 1, 0],
-#                          [0, 0, 1],
-#                          [1, 0, 0]], dtype=complex)
-#     elif gate_type == 'z01':
-#         return np.array([[1, 0, 0],
-#                          [0, -1, 0],
-#                          [0, 0, 1]], dtype=complex)
-#     elif gate_type == 'rz01':
-#         return np.array([[np.exp(-1j * parameter / 2), 0, 0],
-#                          [0, np.exp(1j * parameter / 2), 0],
-#                          [0, 0, 1]], dtype=complex)
-#     elif gate_type == 'z12':
-#         return np.array([[1, 0, 0],
-#                          [0, 1, 0],
-#                          [0, 0, -1]], dtype=complex)
-#     elif gate_type == 'rz12':
-#         return np.array([[1, 0, 0],
-#                          [0, np.exp(-1j * parameter / 2), 0],
-#                          [0, 0, np.exp(1j * parameter / 2)]], dtype=complex)
-#     elif gate_type == 'y01':
-#         return np.array([[0, -1j, 0],
-#                          [1j, 0, 0],
-#                          [0, 0, 1]], dtype=complex)
-#     elif gate_type == 'ry01':
-#         return np.array([[np.cos(parameter / 2), -np.sin(parameter / 2), 0],
-#                          [np.sin(parameter / 2), np.cos(parameter / 2), 0],
-#                          [0, 0, 1]], dtype=complex)
-#     elif gate_type == 'y12':
-#         return np.array([[1, 0, 0],
-#                          [0, 0, -1j],
-#                          [0, 1j, 0]], dtype=complex)
-#     elif gate_type == 'ry12':
-#         return np.array([[1, 0, 0],
-#                          [0, np.cos(parameter / 2), -np.sin(parameter / 2)],
-#                          [0, np.sin(parameter / 2), np.cos(parameter / 2)]], dtype=complex)
-#     elif gate_type == 'WH':
-#         return (1 / np.sqrt(3)) * np.array([[1, 1, 1],
-#                                             [1, omega, np.conj(omega)],
-#                                             [1, np.conj(omega), omega]], dtype=complex)
-#     elif gate_type == 'S':
-#         return np.array([[1, 0, 0],
-#                          [0, 1, 0],
-#                          [0, 0, omega]], dtype=complex)
-#     elif gate_type == 'T':
-#         return np.array([[1, 0, 0],
-#                          [0, np.power(omega, 1 / 3), 0],
-#                          [0, 0, np.power(omega, -1 / 3)]], dtype=complex)
-#     else:
-#         raise Exception("This gate is not implemented yet.")
-
-
-# def multi_matrix_form(gate_type: str, first_index: int, second_index: int):
-#     """
-#     :param gate_type: quantum gate type as define in gate_set
-#     :param first_index: acting qubit
-#     :param second_index: control qubit
-#     :return: matrix form of the control-qutrit gate
-#     """
-#     if gate_type == 'CNOT':
-#         if second_index == first_index:
-#             raise Exception("Control qutrit and acting qutrit can not be the same")
-#         else:
-#             space = np.abs(first_index - second_index) - 1
-#             if space == 0:
-#                 spacing = 1
-#             else:
-#                 spacing = np.eye(3 ** space)
-#             if second_index < first_index:
-#                 matrix = np.kron(np.kron(state_0 @ np.transpose(state_0), spacing), np.eye(3)) + \
-#                          np.kron(np.kron(state_1 @ np.transpose(state_1), spacing),
-#                                  single_matrix_form('x01') @ single_matrix_form('x12')) + \
-#                          np.kron(np.kron(state_2 @ np.transpose(state_2), spacing),
-#                                  single_matrix_form('x12') @ single_matrix_form('x01'))
-#             else:
-#                 matrix = np.kron(np.kron(np.eye(3), spacing), state_0 @ np.transpose(state_0)) + \
-#                          np.kron(np.kron(single_matrix_form('x01') @ single_matrix_form('x12'), spacing),
-#                                  state_1 @ np.transpose(state_1)) + \
-#                          np.kron(np.kron(single_matrix_form('x12') @ single_matrix_form('x01'), spacing),
-#                                  state_2 @ np.transpose(state_2))
-#             return np.array(matrix, dtype=complex)
+    if gate_type == 'CNOT':
+        if second_index == first_index:
+            raise Exception("Control qutrit and acting qutrit can not be the same")
+        else:
+            space = np.abs(first_index - second_index) - 1
+            if space == 0:
+                spacing = 1
+            else:
+                spacing = np.eye(3 ** space)
+            if second_index < first_index:
+                matrix = np.kron(np.kron(state_0 @ np.transpose(state_0), spacing), np.eye(3)) + \
+                         np.kron(np.kron(state_1 @ np.transpose(state_1), spacing),
+                                 single_matrix_form('x01') @ single_matrix_form('x12')) + \
+                         np.kron(np.kron(state_2 @ np.transpose(state_2), spacing),
+                                 single_matrix_form('x12') @ single_matrix_form('x01'))
+            else:
+                matrix = np.kron(np.kron(np.eye(3), spacing), state_0 @ np.transpose(state_0)) + \
+                         np.kron(np.kron(single_matrix_form('x01') @ single_matrix_form('x12'), spacing),
+                                 state_1 @ np.transpose(state_1)) + \
+                         np.kron(np.kron(single_matrix_form('x12') @ single_matrix_form('x01'), spacing),
+                                 state_2 @ np.transpose(state_2))
+            return np.array(matrix, dtype=complex)
 
 
 def statevector_to_state(state: np.array, n_qutrit: int):
@@ -244,11 +182,11 @@ def checking_unitary(u: ndarray):
     :return: True if matrix is unitary, False otherwise
     """
     try:
-        prod = u @ inv(u)
+        p = u @ inv(u)
     except LinAlgError:
         print("The matrix can not inverse")
         return False
-    if np.absolute(np.sum(prod - np.eye(3))) < 1e-5:
+    if np.absolute(np.sum(p - np.eye(3))) < 1e-5:
         return True
     else:
         return False

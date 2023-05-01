@@ -16,8 +16,8 @@ class QASM_simulator:
     def __init__(self, QC: Qutrit_circuit):
         self.circuit = QC
         self.n_qutrit = QC.n_qutrit
-        self._measurement_flag = QC.return_meas_flag()
-        self._operation_set = QC.return_operation_set()
+        self._measurement_flag = QC.measurement_flag
+        self._operation_set = QC.operation_set
         self._SPAM_error = None
         self._error_meas = []
         self._measurement_result = []
@@ -54,10 +54,10 @@ class QASM_simulator:
         """
         if self._measurement_flag:
             for i in range(len(self._operation_set)-1):
-                self.state = np.einsum('ij,jk', self._operation_set[i].return_effect(), self.state)
+                self.state = np.einsum('ij,jk', self._operation_set[i].effect_matrix, self.state)
         else:
             for i in self._operation_set:
-                self.state = np.einsum('ij,jk', i.return_effect(), self.state)
+                self.state = np.einsum('ij,jk', i.effect_matrix, self.state)
 
     def run(self, num_shots: int = 1024):
         """

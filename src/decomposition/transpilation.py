@@ -1,7 +1,12 @@
 """"""
 from typing import NamedTuple, DefaultDict
+<<<<<<< Updated upstream:src/decomposition/transpilation.py
 from collections import namedtuple, defaultdict
 from src.quantumcircuit.qc_utility import u_d, r01, r12
+=======
+from collections import namedtuple
+from src.quantumcircuit.qc_elementary_matrices import u_d, r01, r12
+>>>>>>> Stashed changes:src/decomposition/decompose.py
 from src.quantumcircuit.QC import Qutrit_circuit
 import numpy as np
 
@@ -10,6 +15,7 @@ class Parameter:
     """
     Static class
     """
+
     @classmethod
     def get_parameters(cls, su3: np.ndarray) -> NamedTuple:
         """
@@ -25,7 +31,7 @@ class Parameter:
             phi6 = np.angle(su3[0, 0])
             phi3 = np.angle(su3[1, 0]) - phi5 + np.pi / 2
             theta3 = 2 * np.arccos(np.round(np.absolute(su3[1, 1]), 6))
-        elif abs(2*np.arccos(np.round(np.absolute(su3[2, 2]), 6)) - np.pi) < 1e-6:
+        elif abs(2 * np.arccos(np.round(np.absolute(su3[2, 2]), 6)) - np.pi) < 1e-6:
             theta1 = theta3 = 0
             theta2 = np.pi
             phi2 = 0
@@ -35,7 +41,7 @@ class Parameter:
             phi1 = phi3 = 0
         else:
             phi4 = np.angle(su3[2, 2])
-            theta2 = 2*np.arccos(np.round(np.absolute(su3[2, 2]), 6))
+            theta2 = 2 * np.arccos(np.round(np.absolute(su3[2, 2]), 6))
             phi2 = np.angle(su3[2, 1]) - phi4 + np.pi / 2
             phi1 = np.angle(-su3[2, 0]) - phi2 - phi4
             theta1 = 2 * np.arccos(np.round(np.absolute(su3[2, 1]) / np.sin(theta2 / 2), 6))
@@ -53,6 +59,7 @@ class SU3_matrices:
     """
 
     """
+
     def __init__(self, su3: np.ndarray) -> None:
         """
 
@@ -96,10 +103,10 @@ class SU3_matrices:
 
     def reconstruct(self) -> np.ndarray:
         return (
-            self.unitary_diagonal()
-            @ self.rotation_theta3_01()
-            @ self.rotation_theta2_12()
-            @ self.rotation_theta1_01()
+                self.unitary_diagonal()
+                @ self.rotation_theta3_01()
+                @ self.rotation_theta2_12()
+                @ self.rotation_theta1_01()
         )
 
     def __str__(self) -> str:
@@ -127,17 +134,25 @@ class Matrix_Wrapper:
     """
 
     """
-    def __init__(self, qc: Qutrit_circuit) -> None:
-        """
 
+    def __init__(self, qc: Qutrit_circuit,
+                 native_gates: list[str] = ['rx01', 'rx12', 'rz01', 'rz12']) -> None:
+        """
         :param qc:
         """
         self.qc = qc
+<<<<<<< Updated upstream:src/decomposition/transpilation.py
         self._su3_dictionary: DefaultDict = defaultdict()
+=======
+        self.native_gates = native_gates
+>>>>>>> Stashed changes:src/decomposition/decompose.py
 
     def transpile(self) -> None:
         """
+<<<<<<< Updated upstream:src/decomposition/transpilation.py
         Convert to SU3_matrices for further decomposition
+=======
+>>>>>>> Stashed changes:src/decomposition/decompose.py
         :return:
         """
         operation_set = self.qc.operation_set
