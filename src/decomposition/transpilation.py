@@ -1,6 +1,6 @@
 """"""
 from typing import NamedTuple, DefaultDict
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from src.quantumcircuit.qc_utility import u_d, r01, r12
 from src.quantumcircuit.QC import Qutrit_circuit
 import numpy as np
@@ -133,9 +133,37 @@ class Matrix_Wrapper:
         :param qc:
         """
         self.qc = qc
+        self._su3_dictionary: DefaultDict = defaultdict()
 
-    def transpile(self) -> DefaultDict[str, np.ndarray]:
+    def transpile(self) -> None:
         """
-
+        Convert to SU3_matrices for further decomposition
         :return:
         """
+        operation_set = self.qc.operation_set
+        # TODO: Define native gates and matrix form of it
+        native_gate = []
+        for instruction in operation_set:
+            if instr_type := instruction.type() not in native_gate:
+                self._su3_dictionary[instr_type] = SU3_matrices(instruction.gate_matrix).reconstruct()
+            else:
+                self._su3_dictionary[instr_type] = ...
+
+    def convert_to_qiskit_pulses(self):
+        """
+        Convert to l
+        :return:
+        """
+        pass
+
+    def __str__(self) -> str:
+        return ""
+
+    def __repr__(self) -> str:
+        return ""
+
+
+
+
+
+
