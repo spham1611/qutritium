@@ -4,6 +4,7 @@ Unitary Gates: Elementary matrices
 from __future__ import annotations
 from numpy import ndarray
 from numpy.linalg import inv, LinAlgError
+from qc_elementary_matrices import *
 import numpy as np
 
 pi = np.pi

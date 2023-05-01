@@ -1,12 +1,7 @@
 """"""
-from typing import NamedTuple, DefaultDict
-<<<<<<< Updated upstream:src/decomposition/transpilation.py
-from collections import namedtuple, defaultdict
-from src.quantumcircuit.qc_utility import u_d, r01, r12
-=======
-from collections import namedtuple
+from typing import NamedTuple, DefaultDict, List, Optional
+from collections import defaultdict, namedtuple
 from src.quantumcircuit.qc_elementary_matrices import u_d, r01, r12
->>>>>>> Stashed changes:src/decomposition/decompose.py
 from src.quantumcircuit.QC import Qutrit_circuit
 import numpy as np
 
@@ -134,25 +129,18 @@ class Matrix_Wrapper:
     """
 
     """
-
     def __init__(self, qc: Qutrit_circuit,
-                 native_gates: list[str] = ['rx01', 'rx12', 'rz01', 'rz12']) -> None:
+                 native_gates: Optional[List[str]]) -> None:
         """
         :param qc:
         """
         self.qc = qc
-<<<<<<< Updated upstream:src/decomposition/transpilation.py
         self._su3_dictionary: DefaultDict = defaultdict()
-=======
-        self.native_gates = native_gates
->>>>>>> Stashed changes:src/decomposition/decompose.py
+        self.native_gates = native_gates if native_gates else ['rx01', 'rx12', 'rz01', 'rz12']
 
     def transpile(self) -> None:
         """
-<<<<<<< Updated upstream:src/decomposition/transpilation.py
-        Convert to SU3_matrices for further decomposition
-=======
->>>>>>> Stashed changes:src/decomposition/decompose.py
+
         :return:
         """
         operation_set = self.qc.operation_set
@@ -176,9 +164,3 @@ class Matrix_Wrapper:
 
     def __repr__(self) -> str:
         return ""
-
-
-
-
-
-
