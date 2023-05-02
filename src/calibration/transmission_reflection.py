@@ -13,7 +13,7 @@ from src.calibration import (
 from src.pulse import Pulse01, Pulse12
 from src.analyzer import DataAnalysis
 from src.constant import QUBIT_PARA
-from src.calibration.calibration_utility import Gate_Schedule
+from src.pulse_creation import Gate_Schedule
 from src.utility import fit_function, plot_and_save
 from src.exceptions.pulse_exception import MissingDurationPulse
 from abc import ABC, abstractmethod

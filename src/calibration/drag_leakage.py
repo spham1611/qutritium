@@ -5,7 +5,7 @@ from qiskit.pulse.schedule import ScheduleBlock
 from src.analyzer import DataAnalysis
 from src.pulse import Pulse01, Pulse12
 from src.calibration import backend, QUBIT_VAL
-from src.calibration.calibration_utility import Gate_Schedule
+from src.pulse_creation import Gate_Schedule
 from src.exceptions.pulse_exception import MissingDurationPulse, MissingFrequencyPulse, MissingAmplitudePulse
 # from src.utility import fit_function
 from abc import ABC, abstractmethod
