@@ -2,10 +2,10 @@
 Instruction class that can be called from VM
 Used to represent a gate in quantum circuit
 """
-from typing import Union, Any
-from .qc_elementary_matrices import *
-
-from .qc_utility import multi_matrix_form, single_matrix_form
+import numpy as np
+from typing import Union, Any, List
+# from .qc_elementary_matrices import *
+from src.quantumcircuit.qc_utility import multi_matrix_form, single_matrix_form
 
 gate_set: list[Union[str, Any]] = ['Identity',
                                    'x_plus',
@@ -13,6 +13,8 @@ gate_set: list[Union[str, Any]] = ['Identity',
                                    'sdg',
                                    'tdg',
                                    'CNOT',
+                                   'g01',
+                                   'g12',
                                    'x01',
                                    'x12',
                                    'y01',
@@ -29,29 +31,6 @@ gate_set: list[Union[str, Any]] = ['Identity',
                                    'measure']
 
 
-# parameterless_set: list[Union[str, Any]] = ['Identity',
-#                                             'x_plus',
-#                                             'x_minus',
-#                                             'sdg',
-#                                             'tdg',
-#                                             'CNOT',
-#                                             'x01',
-#                                             'x12',
-#                                             'y01',
-#                                             'y12',
-#                                             'z01',
-#                                             'z12',
-#                                             'hdm']
-#
-# one_param_set: list[Union[str, Any]] = ['rx01',
-#                                         'rx12',
-#                                         'ry01',
-#                                         'ry12',
-#                                         'rz01',
-#                                         'rz12']
-#
-# two_param_set: list[Union[str, Any]] = ['r01',
-#                                         'r12']
 class Instruction:
     """
     The class is used to represent a gate in VM,
@@ -60,7 +39,7 @@ class Instruction:
 
     def __init__(self, gate_type: str,
                  n_qutrit: int, first_qutrit_set: int,
-                 second_qutrit_set: int = None, parameter: float = None) -> None:
+                 second_qutrit_set: int = None, parameter: List[float] = None) -> None:
         self._type = gate_type
         self._verify_gate()
         self.n_qutrit = n_qutrit
@@ -132,7 +111,11 @@ class Instruction:
 
     def print(self):
         if not self._is_two_qutrit_gate:
-            print("Gate " + str(self._type) + ", acting qutrit: " + str(self.first_qutrit))
+            if self.parameter is None:
+                print("Gate " + str(self._type) + ", acting qutrit: " + str(self.first_qutrit))
+            else:
+                print("Gate " + str(self._type) + " with parameter " + str(self.parameter) +
+                      ", acting qutrit: " + str(self.first_qutrit))
         else:
             print("Gate " + str(self._type) + ", acting qutrit: "
                   + str(self.first_qutrit) + ", control qutrit: " + str(self.second_qutrit))

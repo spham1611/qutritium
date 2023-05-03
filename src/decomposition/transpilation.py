@@ -1,7 +1,8 @@
 """"""
-from typing import List, NamedTuple, DefaultDict
+from typing import List, NamedTuple, DefaultDict, Union
 from collections import namedtuple, defaultdict
 from src.quantumcircuit.qc_elementary_matrices import u_d, r01, r12
+from src.quantumcircuit.instruction_structure import Instruction
 from src.quantumcircuit.QC import Qutrit_circuit
 import numpy as np
 
@@ -55,7 +56,7 @@ class SU3_matrices:
 
     """
 
-    def __init__(self, su3: np.ndarray) -> None:
+    def __init__(self, su3: np.ndarray, qutrit_index: int, n_qutrits: int) -> None:
         """
 
         :param su3:
@@ -64,6 +65,8 @@ class SU3_matrices:
         assert su3.shape[0] == 3
         assert su3.shape[1] == 3
         self.su3: np.ndarray = su3
+        self.qutrit_index = qutrit_index
+        self.n_qutrits = n_qutrits
         self.parameters: NamedTuple = Parameter.get_parameters(su3=self.su3)
 
     def unitary_diagonal(self) -> np.ndarray:
@@ -108,6 +111,26 @@ class SU3_matrices:
                 @ self.rotation_theta1_01()
         )
 
+    def native_list(self) -> List[Union[List[float], List[Instruction]]]:
+        """
+        :return:
+        """
+        phase01 = float(getattr(self.parameters, 'phi6') - getattr(self.parameters, 'phi5'))
+        phase12 = float(getattr(self.parameters, 'phi5') - getattr(self.parameters, 'phi4'))
+        return [np.array([phase01, phase12]), [Instruction(gate_type='g01', first_qutrit_set=self.qutrit_index,
+                                                           n_qutrit=self.n_qutrits,
+                                                           parameter=[getattr(self.parameters, 'theta1'),
+                                                                      getattr(self.parameters, 'phi1')]),
+                                               Instruction(gate_type='g12', first_qutrit_set=self.qutrit_index,
+                                                           n_qutrit=self.n_qutrits,
+                                                           parameter=[getattr(self.parameters, 'theta2'),
+                                                                      getattr(self.parameters, 'phi2')]),
+                                               Instruction(gate_type='g01', first_qutrit_set=self.qutrit_index,
+                                                           n_qutrit=self.n_qutrits,
+                                                           parameter=[getattr(self.parameters, 'theta3'),
+                                                                      getattr(self.parameters,
+                                                                              'phi3')])]]
+
     def __str__(self) -> str:
         """
 
@@ -129,7 +152,7 @@ class SU3_matrices:
                f"R_theta3 = {self.rotation_theta3_01()}\n"
 
 
-class Matrix_Wrapper:
+class Pulse_Wrapper:
     """
 
     """
@@ -140,29 +163,46 @@ class Matrix_Wrapper:
         :param qc:
         """
         self.qc = qc
+        self.ins_list = qc.operation_set
         self._su3_dictionary: DefaultDict = defaultdict()
         self.native_gates = native_gates
+        self.accumulated_phase = np.array([0.0, 0.0])
 
-    def transpile(self) -> None:
+    def decompose(self) -> None:
         """
         Convert to SU3_matrices for further decomposition
         :return:
         """
-        operation_set = self.qc.operation_set
-        # TODO: Define native gates and matrix form of it
-        native_gate = []
+        operation_set = self.ins_list
+        n_qutrit = self.qc.n_qutrit
+
         for instruction in operation_set:
-            if instr_type := instruction.type() not in native_gate:
-                self._su3_dictionary[instr_type] = SU3_matrices(instruction.gate_matrix).reconstruct()
+            if (ins_type := instruction.type()) not in self.native_gates:
+                decomposed_res = SU3_matrices(instruction.gate_matrix,
+                                              qutrit_index=0, n_qutrits=n_qutrit).native_list()
+                self.accumulated_phase = self.accumulated_phase + decomposed_res[0]
+                self._su3_dictionary[ins_type] = decomposed_res[1]
             else:
-                self._su3_dictionary[instr_type] = ...
+                self._su3_dictionary[ins_type] = instruction
+
+    def print_decompose_ins(self):
+        """
+        Check the ins after decomposition
+        :return:
+        """
+        print("Phase accumulated: " + str(self.accumulated_phase))
+        for ins in self.ins_list:
+            if type(self._su3_dictionary[ins.type()]) == list:
+                for i in self._su3_dictionary[ins.type()]:
+                    i.print()
+            else:
+                ins.print()
 
     def convert_to_pulse_model(self):
         """
         Convert to l
         :return:
         """
-        pass
 
     def pulse_model_to_qiskit(self):
         """

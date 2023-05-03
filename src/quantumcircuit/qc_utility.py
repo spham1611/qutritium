@@ -4,7 +4,8 @@ Unitary Gates: Elementary matrices
 from __future__ import annotations
 from numpy import ndarray
 from numpy.linalg import inv, LinAlgError
-from qc_elementary_matrices import *
+from src.quantumcircuit.qc_elementary_matrices import *
+from typing import List
 import numpy as np
 
 pi = np.pi
@@ -13,7 +14,7 @@ state_1 = [[0], [1], [0]]
 state_2 = [[0], [0], [1]]
 
 
-def single_matrix_form(gate_type: str, parameter: list[float] = None, omega=np.exp(1j * 2 * pi / 3)):
+def single_matrix_form(gate_type: str, parameter: List[float] = None, omega=np.exp(1j * 2 * pi / 3)):
     """
     :param gate_type: quantum gate type as define in gate_set
     :param parameter: parameter of rotation gate (if needed)
@@ -28,7 +29,7 @@ def single_matrix_form(gate_type: str, parameter: list[float] = None, omega=np.e
         return np.array([[np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2), 0],
                          [-1j * np.sin(parameter[0] / 2), np.cos(parameter[0] / 2), 0],
                          [0, 0, 1]], dtype=complex)
-    elif gate_type == 'G01':
+    elif gate_type == 'g01':
         return np.array([[np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2) * np.exp(-1j * parameter[1]), 0],
                          [-1j * np.sin(parameter[0] / 2) * np.exp(1j * parameter[1]), np.cos(parameter[0] / 2), 0],
                          [0, 0, 1]], dtype=complex)
@@ -40,20 +41,20 @@ def single_matrix_form(gate_type: str, parameter: list[float] = None, omega=np.e
         return np.array([[1, 0, 0],
                          [0, np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2)],
                          [0, -1j * np.sin(parameter[0] / 2), np.cos(parameter[0] / 2)]], dtype=complex)
-    elif gate_type == 'G12':
+    elif gate_type == 'g12':
         return np.array([[1, 0, 0],
                          [0, np.cos(parameter[0] / 2), -1j * np.sin(parameter[0] / 2) * np.exp(-1j * parameter[1])],
                          [0, -1j * np.sin(parameter[0] / 2) * np.exp(1j * parameter[1]), np.cos(parameter[0] / 2)]],
                         dtype=complex)
-    elif gate_type == 'I':
+    elif gate_type == 'Identity':
         return np.array([[1, 0, 0],
                          [0, 1, 0],
                          [0, 0, 1]], dtype=complex)
-    elif gate_type == 'x+':
+    elif gate_type == 'x_plus':
         return np.array([[0, 0, 1],
                          [1, 0, 0],
                          [0, 1, 0]], dtype=complex)
-    elif gate_type == 'x-':
+    elif gate_type == 'x_minus':
         return np.array([[0, 1, 0],
                          [0, 0, 1],
                          [1, 0, 0]], dtype=complex)
@@ -89,15 +90,15 @@ def single_matrix_form(gate_type: str, parameter: list[float] = None, omega=np.e
         return np.array([[1, 0, 0],
                          [0, np.cos(parameter[0] / 2), -np.sin(parameter[0] / 2)],
                          [0, np.sin(parameter[0] / 2), np.cos(parameter[0] / 2)]], dtype=complex)
-    elif gate_type == 'WH':
+    elif gate_type == 'hdm':
         return (1 / np.sqrt(3)) * np.array([[1, 1, 1],
                                             [1, omega, np.conj(omega)],
                                             [1, np.conj(omega), omega]], dtype=complex)
-    elif gate_type == 'S':
+    elif gate_type == 'sdg':
         return np.array([[1, 0, 0],
                          [0, 1, 0],
                          [0, 0, omega]], dtype=complex)
-    elif gate_type == 'T':
+    elif gate_type == 'tdg':
         return np.array([[1, 0, 0],
                          [0, np.power(omega, 1 / 3), 0],
                          [0, 0, np.power(omega, -1 / 3)]], dtype=complex)

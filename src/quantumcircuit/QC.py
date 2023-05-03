@@ -1,6 +1,6 @@
 from typing import List, Union
-from .qc_utility import print_statevector
-from .instruction_structure import Instruction
+from src.quantumcircuit.qc_utility import print_statevector
+from src.quantumcircuit.instruction_structure import Instruction
 import numpy as np
 
 

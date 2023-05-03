@@ -3,7 +3,7 @@ Contain pulse classes
 """
 from __future__ import annotations
 from abc import ABC
-from typing import Dict, Optional
+from typing import Dict
 import os
 import json
 import pandas as pd
