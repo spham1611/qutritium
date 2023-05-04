@@ -1,6 +1,7 @@
 """"""
-from typing import List, NamedTuple, DefaultDict, Union
+from typing import List, NamedTuple, DefaultDict, Union, Optional, Any
 from collections import namedtuple, defaultdict
+from src.pulse import Pulse01, Pulse12
 from src.quantumcircuit.qc_elementary_matrices import u_d, r01, r12
 from src.quantumcircuit.instruction_structure import Instruction
 from src.quantumcircuit.QC import Qutrit_circuit
@@ -157,15 +158,20 @@ class Pulse_Wrapper:
 
     """
 
-    def __init__(self, qc: Qutrit_circuit,
-                 native_gates: List[str]) -> None:
+    def __init__(self, pulse01: Pulse01,
+                 pulse12: Pulse12,
+                 /,
+                 qc: Qutrit_circuit,
+                 native_gates: Optional[List[str]]) -> None:
         """
         :param qc:
         """
         self.qc = qc
         self.ins_list = qc.operation_set
-        self._su3_dictionary: DefaultDict = defaultdict()
-        self.native_gates = native_gates
+        self._su3_dictionary: DefaultDict[str, Any] = defaultdict()
+        self.pulse01 = pulse01
+        self.pulse12 = pulse12
+        self.native_gates = native_gates if native_gates else ['u_d', 'rx', 'ry', 'rz']
         self.accumulated_phase = np.array([0.0, 0.0])
 
     def decompose(self) -> None:
