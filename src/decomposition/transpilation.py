@@ -212,7 +212,6 @@ class Pulse_Wrapper:
 
     def pulse_model_to_qiskit(self):
         """
-
         :return:
         """
         pass
