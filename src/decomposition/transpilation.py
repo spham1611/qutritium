@@ -2,10 +2,12 @@
 from typing import List, NamedTuple, DefaultDict, Union, Optional, Any
 from collections import namedtuple, defaultdict
 from src.pulse import Pulse01, Pulse12
+from src.pulse_creation import Pulse_Schedule
 from src.quantumcircuit.qc_elementary_matrices import u_d, r01, r12
 from src.quantumcircuit.instruction_structure import Instruction
 from src.quantumcircuit.QC import Qutrit_circuit
 import numpy as np
+import copy
 
 
 class Parameter:
@@ -172,7 +174,8 @@ class Pulse_Wrapper:
         self.pulse01 = pulse01
         self.pulse12 = pulse12
         self.native_gates = native_gates if native_gates else ['u_d', 'rx', 'ry', 'rz']
-        self.accumulated_phase = np.array([0.0, 0.0])
+        self.pulse_wrapper = []
+        self.accumulated_phase = [np.array([0.0, 0.0])]
 
     def decompose(self) -> None:
         """
@@ -186,35 +189,66 @@ class Pulse_Wrapper:
             if (ins_type := instruction.type()) not in self.native_gates:
                 decomposed_res = SU3_matrices(instruction.gate_matrix,
                                               qutrit_index=0, n_qutrits=n_qutrit).native_list()
-                self.accumulated_phase = self.accumulated_phase + decomposed_res[0]
                 self._su3_dictionary[ins_type] = decomposed_res[1]
+                self.accumulated_phase = self.accumulated_phase.append(self.accumulated_phase[-1] + decomposed_res[0])
             else:
-                self._su3_dictionary[ins_type] = instruction
-
-    def print_decompose_ins(self):
-        """
-        Check the ins after decomposition
-        :return:
-        """
-        print("Phase accumulated: " + str(self.accumulated_phase))
-        for ins in self.ins_list:
-            if type(self._su3_dictionary[ins.type()]) == list:
-                for i in self._su3_dictionary[ins.type()]:
-                    i.print()
-            else:
-                ins.print()
+                self._su3_dictionary[ins_type] = [instruction]
 
     def convert_to_pulse_model(self):
         """
         Convert to l
         :return:
         """
+        # cnt = 0
+        for instruction in self.ins_list:
+            ins_type = instruction.type()
+            # phase_ud = self.accumulated_phase[cnt]
+            for ins in self._su3_dictionary[ins_type]:
+                gate_type = ins.type()
+                if gate_type[0:1] == "rx":
+                    if gate_type[2:3] == "01":
+                        pulse = copy.deepcopy(self.pulse01)
+                        # phase_operator = Shift(shift_type="phase_offset", value=phase_ud[0],
+                        #                        channel=instruction.first_qutrit)
+                    elif gate_type[2:3] == "12":
+                        pulse = copy.deepcopy(self.pulse12)
+                        # phase_operator = Shift(shift_type="phase_offset", value=phase_ud[1],
+                        #                        channel=instruction.first_qutrit)
+                    else:
+                        raise Exception("The gate can not be decomposed to pulse")
+                    pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter
+                else:
+                    raise Exception("The gate can not be decomposed to pulse")
+                self.pulse_wrapper.append([pulse, instruction.first_qutrit])
+            # cnt +=1
 
     def pulse_model_to_qiskit(self):
         """
         :return:
         """
-        pass
+        schedule = 0
+        for pul in self.pulse_wrapper:
+            schedule += Pulse_Schedule.single_pulse_gaussian_schedule(pulse_model=pul[0], channel=pul[1])
+        return schedule
+
+    def print_decompose_ins(self):
+        """
+        Check the ins after decomposition
+        :return:
+        """
+        cnt = 0
+        for ins in self.ins_list:
+            print("Phase accumulated: " + str(self.accumulated_phase[cnt]))
+            for i in self._su3_dictionary[ins.type()]:
+                i.print()
+
+    def print_decompose_pulse(self):
+        """
+        Check the ins after decomposition
+        :return:
+        """
+        for pul in self.pulse_wrapper:
+            print(pul)
 
     def __str__(self) -> str:
         return ""
