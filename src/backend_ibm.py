@@ -5,7 +5,7 @@ from typing import DefaultDict, Tuple, List
 from src.constant import QUBIT_PARA
 
 
-class BackEndList(DefaultDict[str, (IBMBackend, int)]):
+class BackEndDict(DefaultDict[str, Tuple]):
     """Show the name of backends and map the qubit used for each backend"""
 
     def __init__(self, /, token: str = '') -> None:
@@ -49,4 +49,4 @@ class BackEndList(DefaultDict[str, (IBMBackend, int)]):
         :return:
         """
         backend = self[quantum_computer][0]
-        return backend, self[quantum_computer]
+        return backend, self[quantum_computer][1]
