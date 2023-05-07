@@ -36,7 +36,7 @@ class Qutrit_circuit:
     def add_gate(self, gate_type: str,
                  first_qutrit_set: int,
                  second_qutrit_set: int = None,
-                 parameter: float = None) -> None:
+                 parameter: List[float] = None) -> None:
         """
         :param gate_type: quantum gate type as define in gate_set
         :param first_qutrit_set: acting qubits
