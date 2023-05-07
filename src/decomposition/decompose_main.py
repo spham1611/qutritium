@@ -17,4 +17,8 @@ pulse_wrap = Pulse_Wrapper(pulse01, pulse12, qc=qc, native_gates=['x12', 'x01',
                                                                   'rz01', 'rz12',
                                                                   'z01', 'z12'])
 pulse_wrap.decompose()
-pulse_wrap.print_decompose_ins()
+# pulse_wrap.print_decompose_ins()
+pulse_wrap.convert_to_pulse_model()
+pulse_wrap.print_decompose_pulse()
+sched = pulse_wrap.pulse_model_to_qiskit()
+print(sched)

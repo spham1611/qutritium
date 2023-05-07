@@ -10,8 +10,8 @@ from src.quantumcircuit.instruction_structure import Instruction
 
 class QASM_simulator:
     """
-    The class is used to represent a backend simulator in VM,
-    A Quantum Circuit is given as input to the backend and the final result is returned.
+    The class is used to represent a vm_backend simulator in VM,
+    A Quantum Circuit is given as input to the vm_backend and the final result is returned.
     """
     def __init__(self, QC: Qutrit_circuit):
         self.circuit = QC
@@ -50,7 +50,7 @@ class QASM_simulator:
 
     def _simulation(self):
         """
-        The simulation process of the backend
+        The simulation process of the vm_backend
         """
         if self._measurement_flag:
             for i in range(len(self._operation_set)-1):
