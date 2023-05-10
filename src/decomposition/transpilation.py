@@ -170,6 +170,7 @@ class Pulse_Wrapper:
         :param qc:
         """
         self.qc = qc
+        self.n_qutrit = qc.n_qutrit
         self.ins_list = qc.operation_set
         self._su3_dictionary: DefaultDict[str, Any] = defaultdict()
         self.pulse01 = pulse01
