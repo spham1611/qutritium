@@ -1,13 +1,16 @@
-"""Calibration utility functions for gate operations and other"""
+"""
+Calibration utility functions for gate operations and other.
+The Gate_Schedule model is deprecated and will be updated further
+"""
 from qiskit.pulse.schedule import ScheduleBlock
 from qiskit import pulse
 from qiskit.circuit import Parameter
 from src.calibration import backend
 from typing import Union
-
 from src.pulse import Pulse
 
 
+# TODO: Delete!
 class Gate_Schedule:
     """Static class"""
 
@@ -92,7 +95,9 @@ class Pulse_Schedule(Gate_Schedule):
         return drive_schedule
 
     @staticmethod
-    def single_pulse_gaussian_schedule(pulse_model: Pulse, channel: int = 0, name: str = '') -> ScheduleBlock:
+    def single_pulse_gaussian_schedule(pulse_model: Pulse,
+                                       channel: int = 0,
+                                       name: str = '') -> ScheduleBlock:
         """
 
         :param channel:
@@ -110,21 +115,41 @@ class Pulse_Schedule(Gate_Schedule):
 
 class Shift:
     def __init__(self, shift_type: str, value: float, channel: int) -> None:
+        """
+
+        :param shift_type:
+        :param value:
+        :param channel:
+        """
         self.type = shift_type
         self.value = value
         self.channel = pulse.drive_channel(channel)
 
     def generate_qiskit_phase(self, coeff: int = 1) -> ScheduleBlock:
+        """
+
+        :param coeff:
+        :return:
+        """
         with pulse.build(backend=backend) as schedule:
             pulse.shift_phase(phase=self.value * coeff, channel=self.channel)
         return schedule
 
     def generate_qiskit_freq(self) -> ScheduleBlock:
+        """
+
+        :return:
+        """
         with pulse.build(backend=backend) as schedule:
             pulse.shift_frequency(frequency=self.value, channel=self.channel)
         return schedule
 
     def create_qiskit_effect(self, gate_pulse: ScheduleBlock) -> ScheduleBlock:
+        """
+
+        :param gate_pulse:
+        :return:
+        """
         if self.type == "phase_offset":
             pos_schedule = self.generate_qiskit_phase(coeff=1)
             neg_schedule = self.generate_qiskit_phase(coeff=-1)
@@ -139,3 +164,5 @@ class Shift:
             pos_schedule = self.generate_qiskit_freq()
             schedule = pos_schedule + gate_pulse
             return schedule
+        else:
+            raise ValueError("Invalid type of shift!")

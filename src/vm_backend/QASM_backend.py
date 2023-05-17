@@ -13,15 +13,15 @@ class QASM_simulator:
     The class is used to represent a vm_backend simulator in VM,
     A Quantum Circuit is given as input to the vm_backend and the final result is returned.
     """
-    def __init__(self, QC: Qutrit_circuit):
-        self.circuit = QC
-        self.n_qutrit = QC.n_qutrit
-        self._measurement_flag = QC.measurement_flag
-        self._operation_set = QC.operation_set
+    def __init__(self, qc: Qutrit_circuit):
+        self.circuit = qc
+        self.n_qutrit = qc.n_qutrit
+        self._measurement_flag = qc.measurement_flag
+        self._operation_set = qc.operation_set
         self._SPAM_error = None
         self._error_meas = []
         self._measurement_result = []
-        self.initial_state = QC.initial_state
+        self.initial_state = qc.initial_state
         self._error_meas = None
         self.state = self.initial_state
 
