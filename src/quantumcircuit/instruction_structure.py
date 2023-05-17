@@ -39,7 +39,7 @@ class Instruction:
 
     def __init__(self, gate_type: str,
                  n_qutrit: int, first_qutrit_set: int,
-                 second_qutrit_set: int = None, parameter: List[float] = None) -> None:
+                 second_qutrit_set: int = 0, parameter: List[float] = None) -> None:
         self._type = gate_type
         self._verify_gate()
         self.n_qutrit = n_qutrit

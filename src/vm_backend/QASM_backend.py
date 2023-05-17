@@ -1,31 +1,36 @@
 """
 Backend of the VM that can be used to simulate the Quantum Circuit
 """
-import numpy as np
-import matplotlib.pyplot as plt
+from typing import Dict, Union, List
 from src.quantumcircuit.QC import Qutrit_circuit
 from src.quantumcircuit.qc_utility import statevector_to_state
 from src.quantumcircuit.instruction_structure import Instruction
+import numpy as np
+import matplotlib.pyplot as plt
 
 
-class QASM_simulator:
+class QASM_Simulator:
     """
     The class is used to represent a vm_backend simulator in VM,
     A Quantum Circuit is given as input to the vm_backend and the final result is returned.
     """
-    def __init__(self, qc: Qutrit_circuit):
+    def __init__(self, qc: Qutrit_circuit) -> None:
+        """
+
+        :param qc:
+        """
         self.circuit = qc
         self.n_qutrit = qc.n_qutrit
+        self.initial_state = qc.initial_state
+        self.state = self.initial_state
         self._measurement_flag = qc.measurement_flag
         self._operation_set = qc.operation_set
         self._SPAM_error = None
-        self._error_meas = []
-        self._measurement_result = []
-        self.initial_state = qc.initial_state
+        self._error_meas: List = []
+        self._measurement_result: List = []
         self._error_meas = None
-        self.state = self.initial_state
 
-    def add_SPAM_noise(self, p_prep: float, p_meas: float, error_type: str = 'Pauli_error'):
+    def add_SPAM_noise(self, p_prep: float, p_meas: float, error_type: str = 'Pauli_error') -> None:
         """
         :param p_prep:  Probability of preparation error
         :param p_meas:  Probability of measurement error
@@ -47,8 +52,10 @@ class QASM_simulator:
             Adding measurement error
             """
             self._SPAM_error = True
+        else:
+            pass
 
-    def _simulation(self):
+    def _simulation(self) -> None:
         """
         The simulation process of the vm_backend
         """
@@ -59,7 +66,7 @@ class QASM_simulator:
             for i in self._operation_set:
                 self.state = np.einsum('ij,jk', i.effect_matrix, self.state)
 
-    def run(self, num_shots: int = 1024):
+    def run(self, num_shots: int = 1024) -> None:
         """
         :param num_shots: Number of shots
         Performs the defined amount of shots.
@@ -82,48 +89,50 @@ class QASM_simulator:
         else:
             raise Exception("Your circuit does not contains measurement.")
 
-    def get_counts(self):
+    def get_counts(self) -> Dict:
         """
         :return: count of each state
         """
         if self._measurement_result is not None:
             return dict((x, self._measurement_result.count(x)) for x in set(self._measurement_result))
         else:
-            raise Exception("You have not make measurement yet.")
+            raise Exception("You have not made measurement yet.")
 
-    def return_final_state(self):
+    def return_final_state(self) -> np.ndarray:
         """
         :return: Final state of the quantum circuit
         """
         self._simulation()
         return self.state
 
-    def result(self):
+    def result(self) -> List:
         """
         :return: Measurement result
         """
         if self._measurement_result is not None:
             return self._measurement_result
         else:
-            raise Exception("You have not make measurement yet.")
+            raise Exception("You have not made measurement yet.")
 
-    def density_matrix(self):
+    def density_matrix(self) -> np.ndarray:
         """
         :return: Density matrix of the current state of the quantum circuit
         """
         self._simulation()
         return self.state @ np.transpose(self.state)
 
-    def plot(self, _type: str):
+    def plot(self, plot_type: str) -> None:
         """
-        :param _type: Type of plotting
+        :param plot_type: Type of plotting
         Draw graph
         """
         result_dict = self.get_counts()
-        if _type == "histogram":
+        if plot_type == "histogram":
             plt.bar(result_dict.keys(), result_dict.values())
-        elif _type == "line":
+        elif plot_type == "line":
             plt.plot(result_dict.keys(), result_dict.values())
-        elif _type == "dot":
+        elif plot_type == "dot":
             plt.scatter(result_dict.keys(), result_dict.values())
+        else:
+            raise Exception("Invalid plotting type!")
         plt.show()
