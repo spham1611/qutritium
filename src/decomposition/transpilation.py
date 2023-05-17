@@ -256,7 +256,6 @@ class Pulse_Wrapper:
             if type(pul[0]) in [Pulse01, Pulse12]:
                 tmp_pulse = Pulse_Schedule.single_pulse_gaussian_schedule(pulse_model=pul[0], channel=pul[2])
                 schedule += pul[1].generate_qiskit_phase_offset(gate_pulse=tmp_pulse)
-                # print(schedule)
             else:
                 if pul[1].subspace == "01":
                     freq_op = Set_frequency(value=self.pulse01.frequency, channel=pul[2])
@@ -267,7 +266,6 @@ class Pulse_Wrapper:
                 freq_sched = freq_op.generate_qiskit_freq()
                 phase_sched = pul[1].generate_qiskit_phase(coeff=1.0)
                 schedule = schedule + freq_sched + phase_sched
-                # print(schedule)
         self.qiskit_sched = schedule
         return schedule
 
