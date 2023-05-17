@@ -113,6 +113,17 @@ class Pulse_Schedule(Gate_Schedule):
         return drive_schedule
 
 
+class Shift:
+    def __init__(self, shift_type: str, value: float, channel: int) -> None:
+        """
+
+        :param shift_type:
+        :param value:
+        :param channel:
+        """
+        self.type = shift_type
+
+
 class Shift_phase:
     def __init__(self, value: float, channel: int, subspace: str = "01") -> None:
         self.value = value
@@ -156,3 +167,26 @@ class Set_frequency:
         with pulse.build(backend=backend) as schedule:
             pulse.set_frequency(frequency=self.value, channel=pulse.drive_channel(self.channel))
         return schedule
+
+    def create_qiskit_effect(self, gate_pulse: ScheduleBlock) -> ScheduleBlock:
+        """
+
+        :param gate_pulse:
+        :return:
+        """
+        if self.type == "phase_offset":
+            pos_schedule = self.generate_qiskit_phase(coeff=1)
+            neg_schedule = self.generate_qiskit_phase(coeff=-1)
+            schedule = pos_schedule + gate_pulse
+            schedule += neg_schedule
+            return schedule
+        elif self.type == "shift_phase":
+            pos_schedule = self.generate_qiskit_phase(coeff=1)
+            schedule = pos_schedule + gate_pulse
+            return schedule
+        elif self.type == "shift_freq":
+            pos_schedule = self.generate_qiskit_freq()
+            schedule = pos_schedule + gate_pulse
+            return schedule
+        else:
+            raise ValueError("Invalid type of shift!")

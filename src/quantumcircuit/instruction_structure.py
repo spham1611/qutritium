@@ -2,10 +2,11 @@
 Instruction class that can be called from VM
 Used to represent a gate in quantum circuit
 """
-import numpy as np
+from __future__ import annotations
 from typing import Union, Any, List
 # from .qc_elementary_matrices import *
 from src.quantumcircuit.qc_utility import multi_matrix_form, single_matrix_form
+import numpy as np
 
 gate_set: list[Union[str, Any]] = ['Identity',
                                    'x_plus',
@@ -39,7 +40,7 @@ class Instruction:
 
     def __init__(self, gate_type: str,
                  n_qutrit: int, first_qutrit_set: int,
-                 second_qutrit_set: int = 0, parameter: List[float] = None) -> None:
+                 second_qutrit_set: int | None = 0, parameter: List[float] = None) -> None:
         self._type = gate_type
         self._verify_gate()
         self.n_qutrit = n_qutrit
