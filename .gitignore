@@ -26,9 +26,23 @@ Thumbs.db
 *.bak
 *.cache
 
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+.coverage
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+
 # Ignore dependencies and virtual environment directories
 venv/
 node_modules/
 
 # Ignore pycache
 __pycache__/
+
