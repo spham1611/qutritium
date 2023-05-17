@@ -2,7 +2,7 @@
 from typing import List, NamedTuple, DefaultDict, Union, Optional, Any
 from collections import namedtuple, defaultdict
 from src.pulse import Pulse01, Pulse12
-from src.pulse_creation import Pulse_Schedule
+from src.pulse_creation import Pulse_Schedule, Shift_phase, Set_frequency
 from src.quantumcircuit.qc_elementary_matrices import u_d, r01, r12
 from src.quantumcircuit.instruction_structure import Instruction
 from src.quantumcircuit.QC import Qutrit_circuit
@@ -193,7 +193,7 @@ class Pulse_Wrapper:
                 decomposed_res = SU3_matrices(instruction.gate_matrix,
                                               qutrit_index=0, n_qutrits=n_qutrit).native_list()
                 self._su3_dictionary[ins_type] = decomposed_res[1]
-                self.accumulated_phase = self.accumulated_phase.append(self.accumulated_phase[-1] + decomposed_res[0])
+                self.accumulated_phase.append(self.accumulated_phase[-1] + decomposed_res[0])
             else:
                 self._su3_dictionary[ins_type] = [instruction]
 
@@ -202,29 +202,50 @@ class Pulse_Wrapper:
         Convert to l
         :return:
         """
-        # cnt = 0
+        cnt = 0
         for instruction in self.ins_list:
             ins_type = instruction.type()
-            # phase_ud = self.accumulated_phase[cnt]
+            phase_ud = self.accumulated_phase[cnt]
             for ins in self._su3_dictionary[ins_type]:
                 gate_type = ins.type()
                 if gate_type[0:2] == "rx":
                     if gate_type[2:4] == "01":
                         pulse = copy.deepcopy(self.pulse01)
-                        # phase_operator = Shift(shift_type="phase_offset", value=phase_ud[0],
-                        #                        channel=instruction.first_qutrit)
+                        pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter[0]
+                        phase_operator = Shift_phase(value=phase_ud[0],
+                                                     channel=instruction.first_qutrit, subspace="01")
                     elif gate_type[2:4] == "12":
                         pulse = copy.deepcopy(self.pulse12)
-                        # phase_operator = Shift(shift_type="phase_offset", value=phase_ud[1],
-                        #                        channel=instruction.first_qutrit)
+                        pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter[0]
+                        phase_operator = Shift_phase(value=phase_ud[1],
+                                                     channel=instruction.first_qutrit, subspace="12")
                     else:
                         raise Exception("The gate can not be decomposed to pulse")
+                elif gate_type[0:2] == "rz":
+                    if gate_type[2:4] == "01":
+                        pulse = "01"
+                        phase_operator = Shift_phase(value=phase_ud[0],
+                                                     channel=instruction.first_qutrit, subspace="01")
+                    elif gate_type[2:4] == "12":
+                        pulse = "12"
+                        phase_operator = Shift_phase(value=phase_ud[1],
+                                                     channel=instruction.first_qutrit, subspace="12")
+                    else:
+                        raise Exception("The gate can not be decomposed to pulse")
+                elif gate_type == 'g01':
+                    pulse = copy.deepcopy(self.pulse01)
                     pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter[0]
+                    phase_operator = Shift_phase(value=phase_ud[0] + ins.parameter[1],
+                                                 channel=instruction.first_qutrit, subspace="01")
+                elif gate_type == 'g12':
+                    pulse = copy.deepcopy(self.pulse12)
+                    pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter[0]
+                    phase_operator = Shift_phase(value=phase_ud[1] + ins.parameter[1],
+                                                 channel=instruction.first_qutrit, subspace="12")
                 else:
-                    print(2)
                     raise Exception("The gate can not be decomposed to pulse")
-                self.pulse_wrapper.append([pulse, instruction.first_qutrit])
-            # cnt +=1
+                self.pulse_wrapper.append([pulse, phase_operator, instruction.first_qutrit])
+            cnt += 1
 
     def pulse_model_to_qiskit(self):
         """
@@ -232,7 +253,21 @@ class Pulse_Wrapper:
         """
         schedule = ScheduleBlock()
         for pul in self.pulse_wrapper:
-            schedule += Pulse_Schedule.single_pulse_gaussian_schedule(pulse_model=pul[0], channel=pul[1])
+            if type(pul[0]) in [Pulse01, Pulse12]:
+                tmp_pulse = Pulse_Schedule.single_pulse_gaussian_schedule(pulse_model=pul[0], channel=pul[2])
+                schedule += pul[1].generate_qiskit_phase_offset(gate_pulse=tmp_pulse)
+                # print(schedule)
+            else:
+                if pul[1].subspace == "01":
+                    freq_op = Set_frequency(value=self.pulse01.frequency, channel=pul[2])
+                elif pul[1].subspace == "12":
+                    freq_op = Set_frequency(value=self.pulse12.frequency, channel=pul[2])
+                else:
+                    raise Exception("The pulse can not be translated to Qiskit pulse")
+                freq_sched = freq_op.generate_qiskit_freq()
+                phase_sched = pul[1].generate_qiskit_phase(coeff=1.0)
+                schedule = schedule + freq_sched + phase_sched
+                # print(schedule)
         self.qiskit_sched = schedule
         return schedule
 
@@ -241,11 +276,12 @@ class Pulse_Wrapper:
         Check the ins after decomposition
         :return:
         """
-        cnt = 0
+        cnt = 1
         for ins in self.ins_list:
             print("Phase accumulated: " + str(self.accumulated_phase[cnt]))
             for i in self._su3_dictionary[ins.type()]:
                 i.print()
+            cnt += 1
 
     def print_decompose_pulse(self):
         """
@@ -261,6 +297,7 @@ class Pulse_Wrapper:
         :return:
         """
         if self.qiskit_sched is not None:
+            print(self.qiskit_sched)
             self.qiskit_sched.draw()
         else:
             raise Exception("Required conversion to Qiskit ScheduleBlock")

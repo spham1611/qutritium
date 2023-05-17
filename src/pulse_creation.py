@@ -122,8 +122,11 @@ class Shift:
         :param channel:
         """
         self.type = shift_type
+class Shift_phase:
+    def __init__(self, value: float, channel: int, subspace: str = "01") -> None:
         self.value = value
-        self.channel = pulse.drive_channel(channel)
+        self.channel = channel
+        self.subspace = subspace
 
     def generate_qiskit_phase(self, coeff: int = 1) -> ScheduleBlock:
         """
@@ -132,8 +135,27 @@ class Shift:
         :return:
         """
         with pulse.build(backend=backend) as schedule:
-            pulse.shift_phase(phase=self.value * coeff, channel=self.channel)
+            pulse.shift_phase(phase=self.value * coeff, channel=pulse.drive_channel(self.channel))
         return schedule
+
+    def generate_qiskit_phase_offset(self, gate_pulse: ScheduleBlock) -> ScheduleBlock:
+        if self.subspace == "01":
+            pos_schedule = self.generate_qiskit_phase(coeff=1)
+            neg_schedule = self.generate_qiskit_phase(coeff=-1)
+        elif self.subspace == "12":
+            pos_schedule = self.generate_qiskit_phase(coeff=-1)
+            neg_schedule = self.generate_qiskit_phase(coeff=1)
+        else:
+            raise Exception("The shift phase is not in the defined subspace")
+        schedule = pos_schedule + gate_pulse
+        schedule += neg_schedule
+        return schedule
+
+
+class Set_frequency:
+    def __init__(self, value: float, channel: int) -> None:
+        self.value = value
+        self.channel = channel
 
     def generate_qiskit_freq(self) -> ScheduleBlock:
         """
@@ -141,7 +163,7 @@ class Shift:
         :return:
         """
         with pulse.build(backend=backend) as schedule:
-            pulse.shift_frequency(frequency=self.value, channel=self.channel)
+            pulse.set_frequency(frequency=self.value, channel=pulse.drive_channel(self.channel))
         return schedule
 
     def create_qiskit_effect(self, gate_pulse: ScheduleBlock) -> ScheduleBlock:
