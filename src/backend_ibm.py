@@ -5,17 +5,24 @@ from src.constant import QUBIT_PARA
 
 
 class BackEndDict(DefaultDict[str, Tuple]):
-    """Show the name of backends and map the qubit used for each vm_backend"""
+    """Show the name of backends and map the qubit used for package"""
 
     def __init__(self, /, token: str = '', overwrite: bool = True) -> None:
         """
-
+        Initialize Dictionary + IBM check
+        :param token: IBM account token
+        :param overwrite: Overwrite token that is existed in local machine
+        :return: None
+        :raises:
+            EnvironmentError: Missing token from the input + local machine
+            TimeOutError: Can not load the given token
         """
         super().__init__()
         # IBM Config -> activate account in this file
         self.provider = IBMProvider()
         if not self.provider.active_account() and not token:
-            raise EnvironmentError("Can't find the account saved in this session. Please activate in the script folder")
+            raise EnvironmentError("Can't find the account saved in this session. Please activate in the script folder"
+                                   "or token input")
         elif token:
             try:
                 self.provider.save_account(token=token, overwrite=overwrite)
@@ -29,8 +36,8 @@ class BackEndDict(DefaultDict[str, Tuple]):
 
     def _set_up(self) -> None:
         """
-        Get the name from each vm_backend
-        :return:
+        Get the name from each quantum computer and their corresponding effective number of qubits
+        :return: None
         """
         self._available_backends = self.provider.backends()
         for backend in self._available_backends:
@@ -43,7 +50,7 @@ class BackEndDict(DefaultDict[str, Tuple]):
     def show(self) -> None:
         """
         Show the name of all available backends and their associated qubit used
-        :return:
+        :return: None
         """
         print(f"{'Backend name:':<30}{'# Qubit used:':<40}")
         for name in self:
@@ -52,7 +59,7 @@ class BackEndDict(DefaultDict[str, Tuple]):
     def default_backend(self, quantum_computer: str = 'ibm_nairobi') -> Tuple[IBMBackend, int]:
         """
         Return nairobi vm_backend as the default and its qubit value
-        :return:
+        :return: Tuple[IBMBackEnd, int]: The quantum computer provider and its corresponding number of qubits
         """
         backend = self[quantum_computer][0]
         return backend, self[quantum_computer][1]

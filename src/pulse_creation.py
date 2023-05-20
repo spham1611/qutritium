@@ -10,9 +10,13 @@ from typing import Union
 from src.pulse import Pulse
 
 
-# TODO: Delete!
 class Gate_Schedule:
-    """Static class"""
+    """ Gate_Schedule have two static functions which are used to set up schedules for our pulse model
+    This class is deprecated and will be fixed in further update
+    .. deprecated:: 0.0
+
+    .. seealso: Pulse_Schedule
+    """
 
     @staticmethod
     def single_gate_schedule(drive_freq: Union[float, Parameter],
@@ -24,23 +28,21 @@ class Gate_Schedule:
                              channel: int = 0) -> ScheduleBlock:
         """
 
-        :param channel:
-        :param drive_freq:
-        :param drive_phase:
-        :param drive_duration:
-        :param drive_amp:
+        :param channel: qiskit.schedule channel, typically = 0
+        :param drive_freq: Our pulse model frequency in Hz
+        :param drive_phase: Used for phase offset
+        :param drive_duration: Our pulse model duration in milliseconds
+        :param drive_amp: Our pulse model amplitude
         :param drive_beta:
-        :param name:
+        :param name: Name of the pulse
         :return:
         """
-        if name != '$X^{01}$' and name != '$X^{12}$':
-            raise ValueError
         drive_sigma = drive_duration / 4
         with pulse.build(backend=backend) as drive_schedule:
             drive_chan = pulse.drive_channel(channel)
             pulse.set_frequency(drive_freq, drive_chan)
             with pulse.phase_offset(drive_phase):
-                pulse.play(pulse.Drag(drive_duration, drive_amp, drive_sigma, drive_beta), drive_chan)
+                pulse.play(pulse.Drag(drive_duration, drive_amp, drive_sigma, drive_beta), drive_chan, name=name)
 
         return drive_schedule
 
@@ -48,19 +50,17 @@ class Gate_Schedule:
     def single_gate_schedule_gaussian(drive_freq: float,
                                       drive_duration: int,
                                       drive_amp: float,
-                                      name: str = '$X^{01}$',
+                                      name: str = '',
                                       channel: int = 0) -> ScheduleBlock:
         """
 
-        :param channel:
-        :param drive_freq:
-        :param drive_duration:
-        :param drive_amp:
-        :param name:
+        :param channel: qiskit.schedule channel, typically = 0
+        :param drive_freq: Our pulse model frequency in Hz
+        :param drive_duration: Our pulse model duration in milliseconds
+        :param drive_amp: Our pulse model amplitude
+        :param name: Name of the pulse
         :return:
         """
-        if name != '$X^{01}$' and name != '$X^{12}$':
-            raise ValueError
         with pulse.build(backend=backend) as drive_schedule:
             drive_chan = pulse.drive_channel(channel)
             pulse.set_frequency(drive_freq, drive_chan)
@@ -71,7 +71,7 @@ class Gate_Schedule:
 
 class Pulse_Schedule(Gate_Schedule):
     """
-    Overwriting the phase offset and gaussian method for pulse model
+    Overwriting the phase offset and gaussian schedule method for pulse model
     """
 
     @staticmethod
@@ -82,6 +82,11 @@ class Pulse_Schedule(Gate_Schedule):
                               channel: int = 0) -> ScheduleBlock:
         """
 
+        :param pulse_model:
+        :param name: Name of the pulse
+        :param drive_phase: Used for phase offset
+        :param drive_beta:
+        :param channel: qiskit.schedule channel, typically = 0
         :return:
         """
         drive_sigma = pulse_model.duration / 4
@@ -100,8 +105,8 @@ class Pulse_Schedule(Gate_Schedule):
                                        name: str = '') -> ScheduleBlock:
         """
 
-        :param channel:
-        :param name:
+        :param channel: qiskit.schedule channel, typically = 0
+        :param name: Name of the pulse
         :param pulse_model:
         :return:
         """
@@ -114,6 +119,9 @@ class Pulse_Schedule(Gate_Schedule):
 
 
 class Shift:
+    """
+
+    """
     def __init__(self, shift_type: str, value: float, channel: int) -> None:
         """
 
@@ -125,7 +133,16 @@ class Shift:
 
 
 class Shift_phase:
+    """
+
+    """
     def __init__(self, value: float, channel: int, subspace: str = "01") -> None:
+        """
+
+        :param value:
+        :param channel:
+        :param subspace:
+        """
         self.value = value
         self.channel = channel
         self.subspace = subspace
@@ -140,6 +157,11 @@ class Shift_phase:
         return schedule
 
     def generate_qiskit_phase_offset(self, gate_pulse: ScheduleBlock) -> ScheduleBlock:
+        """
+
+        :param gate_pulse:
+        :return:
+        """
         if self.subspace == "01":
             pos_schedule = self.generate_qiskit_phase(coeff=1)
             neg_schedule = self.generate_qiskit_phase(coeff=-1)
@@ -154,7 +176,15 @@ class Shift_phase:
 
 
 class Set_frequency:
+    """
+
+    """
     def __init__(self, value: float, channel: int) -> None:
+        """
+
+        :param value:
+        :param channel:
+        """
         self.value = value
         self.channel = channel
 
