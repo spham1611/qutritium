@@ -1,28 +1,25 @@
-"""Utility functions to analyze data"""
-import os.path
-
+"""Utility functions to analyze data
+..deprecated:: 0.0
+"""
 from scipy.optimize import curve_fit
 from scipy.optimize import minimize
-from typing import Callable, List, Tuple, Optional, Any
+from typing import Callable, Tuple, Optional, Iterable
 import matplotlib.pyplot as plt
 import numpy as np
 
 
 # Fitting functions
-def fit_function(x_values, y_values: List, function: Callable, init_params: List) -> Tuple:
+def fit_function(x_values: Iterable, y_values: Iterable, function: Callable, init_params: Iterable) -> Tuple:
     """
 
-    :param x_values:
-    :param y_values:
+    :param x_values: can be List or np.ndarray
+    :param y_values: can be List or np.ndarray
     :param function:
-    :param init_params:
+    :param init_params: lambda_list
     :return:
     """
     fit_parameters, *_ = curve_fit(function, x_values, y_values, init_params)
     y_fit = function(x_values, *fit_parameters)
-    # print(fit_parameters)
-    # print(y_fit)
-
     return fit_parameters, y_fit
 
 
@@ -44,12 +41,11 @@ def average_counter(counts, num_shots) -> float:
 
 
 def data_mitigatory(raw_data, assign_matrix):
-    """data_mitigatory _summary_
-
-    _extended_summary_
-
-    Returns:
-        _type_: _description_
+    """
+    Normalize matrix function
+    :param raw_data:
+    :param assign_matrix:
+    :return:
     """
     cal_mat = np.transpose(assign_matrix)
     raw_data = raw_data
@@ -71,13 +67,10 @@ def data_mitigatory(raw_data, assign_matrix):
 
 def reshape_complex_vec(vec: np.ndarray) -> np:
     """reshape_complex_vec
-
     Take in complex vector vec and return 2d array w/ real, imag entries. This is needed for the learning.
 
-    Args:
-        vec (np): complex vector of data
-    Returns:
-        np: vector w/ entries given by (real(vec], imag(vec))
+    :param: vec (np): complex vector of data
+    :return: np: vector w/ entries given by (real(vec], imag(vec))
     """
     length = len(vec)
     vec_reshaped = np.zeros((length, 2))
@@ -86,17 +79,17 @@ def reshape_complex_vec(vec: np.ndarray) -> np:
     return vec_reshaped
 
 
-def plot_and_save(x_values: Any,
-                  y_values: Any,
-                  line_label: Optional[List[str]],
+def plot_and_save(x_values: Iterable,
+                  y_values: Iterable,
+                  line_label: Optional[Iterable[str]],
                   x_label: str = '',
                   y_label: str = '',
                   plot_name: str = '') -> None:
     """
     Plot the matplotlib and save it in output folder
-    :param x_values:
-    :param y_values:
-    :param line_label:
+    :param x_values: List or np.ndarray
+    :param y_values: List or np.ndarray
+    :param line_label: We can have multiple label for multiple subplots
     :param x_label:
     :param y_label:
     :param plot_name:
