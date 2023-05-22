@@ -4,7 +4,9 @@ from src.backend_ibm import BackEndDict
 # import numpy as np
 
 
-backend, QUBIT_VAL = BackEndDict().default_backend()
+backend_dict = BackEndDict()
+backend, QUBIT_VAL = backend_dict.default_backend()
+provider = backend_dict.provider()
 # Constant values coming from the IBM quantum computer. Because those depend
 # on computer, we will not save them in the constant.py
 ANHAR = backend.qubit_properties(QUBIT_VAL).__getattribute__('anharmonicity')

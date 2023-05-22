@@ -1,18 +1,17 @@
 """Drag Leakage classes and their techniques"""
+import qiskit.pulse as pulse
+import numpy as np
 from qiskit.circuit import Parameter, Gate, QuantumCircuit
 from qiskit.tools.monitor import job_monitor
 from qiskit.pulse.schedule import ScheduleBlock
 from src.analyzer import DataAnalysis
 from src.pulse import Pulse01, Pulse12
-from src.calibration import backend, QUBIT_VAL
+from src.calibration import backend, provider, QUBIT_VAL
 from src.pulse_creation import Gate_Schedule
 from src.exceptions.pulse_exception import MissingDurationPulse, MissingFrequencyPulse, MissingAmplitudePulse
 # from src.utility import fit_function
 from abc import ABC, abstractmethod
 from typing import List, Union, Optional
-import qiskit.pulse as pulse
-import numpy as np
-
 from src.utility import plot_and_save
 
 
@@ -109,10 +108,10 @@ class DragLK(ABC):
         :return:
         """
         if job_id is None:
-            experiment = backend.retrieve_job(self.submitted_job_id)
+            experiment = provider.retrieve_job(self.submitted_job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
         else:
-            experiment = backend.retrieve_job(job_id)
+            experiment = provider.retrieve_job(job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
 
         # Analyze process

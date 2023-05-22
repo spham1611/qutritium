@@ -1,4 +1,8 @@
-""""""
+"""
+
+"""
+import numpy as np
+import copy
 from typing import List, NamedTuple, DefaultDict, Union, Optional, Any
 from collections import namedtuple, defaultdict
 from src.pulse import Pulse01, Pulse12
@@ -7,8 +11,7 @@ from src.quantumcircuit.qc_elementary_matrices import u_d, r01, r12
 from src.quantumcircuit.instruction_structure import Instruction
 from src.quantumcircuit.QC import Qutrit_circuit
 from qiskit.pulse.schedule import ScheduleBlock
-import numpy as np
-import copy
+from numpy.typing import NDArray
 
 
 class Parameter:
@@ -17,7 +20,7 @@ class Parameter:
     """
 
     @classmethod
-    def get_parameters(cls, su3: np.ndarray) -> NamedTuple:
+    def get_parameters(cls, su3: NDArray) -> NamedTuple:
         """
 
         :param su3:
@@ -60,7 +63,7 @@ class SU3_matrices:
 
     """
 
-    def __init__(self, su3: np.ndarray, qutrit_index: int, n_qutrits: int) -> None:
+    def __init__(self, su3: NDArray, qutrit_index: int, n_qutrits: int) -> None:
         """
 
         :param su3:
@@ -73,7 +76,7 @@ class SU3_matrices:
         self.n_qutrits = n_qutrits
         self.parameters: NamedTuple = Parameter.get_parameters(su3=self.su3)
 
-    def unitary_diagonal(self) -> np.ndarray:
+    def unitary_diagonal(self) -> NDArray:
         """
 
         :return:
@@ -82,28 +85,28 @@ class SU3_matrices:
                    phi_2=getattr(self.parameters, 'phi5'),
                    phi_3=getattr(self.parameters, 'phi4'))
 
-    def rotation_theta3_01(self) -> np.ndarray:
+    def rotation_theta3_01(self) -> NDArray:
         """
 
         :return:
         """
         return r01(getattr(self.parameters, 'phi3'), getattr(self.parameters, 'theta3'))
 
-    def rotation_theta1_01(self) -> np.ndarray:
+    def rotation_theta1_01(self) -> NDArray:
         """
 
         :return:
         """
         return r01(getattr(self.parameters, 'phi1'), getattr(self.parameters, 'theta1'))
 
-    def rotation_theta2_12(self) -> np.ndarray:
+    def rotation_theta2_12(self) -> NDArray:
         """
 
         :return:
         """
         return r12(getattr(self.parameters, 'phi2'), getattr(self.parameters, 'theta2'))
 
-    def reconstruct(self) -> np.ndarray:
+    def reconstruct(self) -> NDArray:
         """
 
         :return:
@@ -177,7 +180,7 @@ class Pulse_Wrapper:
         self.pulse12 = pulse12
         self.native_gates = native_gates if native_gates else ['u_d', 'rx', 'ry', 'rz']
         self.pulse_wrapper = []
-        self.qiskit_sched = None
+        self.qiskit_schedule = None
         self.accumulated_phase = [np.array([0.0, 0.0])]
 
     def decompose(self) -> None:
@@ -263,10 +266,10 @@ class Pulse_Wrapper:
                     freq_op = Set_frequency(value=self.pulse12.frequency, channel=pul[2])
                 else:
                     raise Exception("The pulse can not be translated to Qiskit pulse")
-                freq_sched = freq_op.generate_qiskit_freq()
-                phase_sched = pul[1].generate_qiskit_phase(coeff=1.0)
-                schedule = schedule + freq_sched + phase_sched
-        self.qiskit_sched = schedule
+                freq_schedule = freq_op.generate_qiskit_freq()
+                phase_schedule = pul[1].generate_qiskit_phase(coeff=1.0)
+                schedule = schedule + freq_schedule + phase_schedule
+        self.qiskit_schedule = schedule
         return schedule
 
     def print_decompose_ins(self):
@@ -289,14 +292,14 @@ class Pulse_Wrapper:
         for pul in self.pulse_wrapper:
             print(pul)
 
-    def print_qiskit_sched(self):
+    def print_qiskit_schedule(self):
         """
         Check the ins after decomposition
         :return:
         """
-        if self.qiskit_sched is not None:
-            print(self.qiskit_sched)
-            self.qiskit_sched.draw()
+        if self.qiskit_schedule is not None:
+            print(self.qiskit_schedule)
+            self.qiskit_schedule.draw()
         else:
             raise Exception("Required conversion to Qiskit ScheduleBlock")
 

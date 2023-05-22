@@ -63,3 +63,6 @@ class BackEndDict(DefaultDict[str, Tuple]):
         """
         backend = self[quantum_computer][0]
         return backend, self[quantum_computer][1]
+
+    def provider(self) -> IBMProvider:
+        return self.provider

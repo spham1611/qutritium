@@ -1,11 +1,14 @@
 """Transmission and reflection techniques for 0-1 and 1-2
 In here TR stands for transmission and reflection
 """
+import numpy as np
+from qiskit import execute
 from qiskit.circuit import Parameter, Gate, QuantumCircuit
 from qiskit.tools.monitor import job_monitor
 from typing import List, Union, Optional
 from src.calibration import (
     backend,
+    provider,
     QUBIT_VAL,
     DEFAULT_F01,
     DEFAULT_F12
@@ -17,7 +20,6 @@ from src.pulse_creation import Gate_Schedule
 from src.utility import fit_function, plot_and_save
 from abc import ABC, abstractmethod
 from numpy import linspace, ndarray
-import numpy as np
 
 
 class TR(ABC):
@@ -83,10 +85,11 @@ class TR(ABC):
         Submit job to ibm quantum computers. Measurement level is set to 1 and return is average
         :return:
         """
-        submitted_job = backend.run(self.package,
-                                    meas_level=1,
-                                    meas_return='avg',
-                                    shots=self.num_shots)
+        # submitted_job = backend.run(self.package,
+        #                             meas_level=1,
+        #                             meas_return='avg',
+        #                             shots=self.num_shots)
+        submitted_job = execute(self.package, backend, meas_level=1, meas_return='avg', shots=self.num_shots)
         self.submitted_job_id = submitted_job.job_id()
         job_monitor(submitted_job)
 
@@ -97,10 +100,10 @@ class TR(ABC):
         :return:
         """
         if job_id is None:
-            experiment = backend.retrieve_job(self.submitted_job_id)
+            experiment = provider.retrieve_job(self.submitted_job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
         else:
-            experiment = backend.retrieve_job(job_id)
+            experiment = provider.retrieve_job(job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
 
         # Analyze data -> plot and save plot in the output folder

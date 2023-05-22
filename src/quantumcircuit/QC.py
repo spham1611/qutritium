@@ -1,7 +1,11 @@
+"""
+
+"""
+import numpy as np
 from typing import List, Union
+from numpy.typing import NDArray
 from src.quantumcircuit.qc_utility import print_statevector
 from src.quantumcircuit.instruction_structure import Instruction
-import numpy as np
 
 
 class Qutrit_circuit:
@@ -9,7 +13,7 @@ class Qutrit_circuit:
     This class defines the wrapper for Virtual Machine which can be treated as a Quantum Circuit
     """
 
-    def __init__(self, n_qutrit: int, initial_state: np.array) -> None:
+    def __init__(self, n_qutrit: int, initial_state: NDArray) -> None:
         """
         :param n_qutrit: Number of qutrit
         :param initial_state: The initial state of the quantum circuit
@@ -18,7 +22,7 @@ class Qutrit_circuit:
         self.state = []
         self._measurement_result = None
         self._measurement_flag = False
-        self._operation_set = []
+        self._operation_set: List = []
         self._dimension = 3 ** n_qutrit
         if initial_state is not None:
             if initial_state.shape == (self._dimension, 1):

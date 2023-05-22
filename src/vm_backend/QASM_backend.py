@@ -1,12 +1,13 @@
 """
 Backend of the VM that can be used to simulate the Quantum Circuit
 """
-from typing import Dict, Union, List
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict, List
+from numpy.typing import NDArray
 from src.quantumcircuit.QC import Qutrit_circuit
 from src.quantumcircuit.qc_utility import statevector_to_state
 from src.quantumcircuit.instruction_structure import Instruction
-import numpy as np
-import matplotlib.pyplot as plt
 
 
 class QASM_Simulator:
@@ -98,7 +99,7 @@ class QASM_Simulator:
         else:
             raise Exception("You have not made measurement yet.")
 
-    def return_final_state(self) -> np.ndarray:
+    def return_final_state(self) -> NDArray:
         """
         :return: Final state of the quantum circuit
         """
@@ -114,7 +115,7 @@ class QASM_Simulator:
         else:
             raise Exception("You have not made measurement yet.")
 
-    def density_matrix(self) -> np.ndarray:
+    def density_matrix(self) -> NDArray:
         """
         :return: Density matrix of the current state of the quantum circuit
         """

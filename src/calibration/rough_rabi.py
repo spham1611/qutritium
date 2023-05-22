@@ -1,9 +1,11 @@
 """Rough rabi techniques"""
+import numpy as np
 from qiskit.circuit import QuantumCircuit, Parameter, Gate
 from qiskit.tools.monitor import job_monitor
 from src.utility import fit_function, plot_and_save
 from src.calibration import (
     backend,
+    provider,
     QUBIT_VAL
 )
 from src.pulse_creation import Gate_Schedule
@@ -13,7 +15,6 @@ from src.constant import QUBIT_PARA
 from src.exceptions.pulse_exception import MissingDurationPulse, MissingFrequencyPulse
 from abc import ABC, abstractmethod
 from typing import Optional, List, Union
-import numpy as np
 
 
 class Rough_Rabi(ABC):
@@ -90,10 +91,10 @@ class Rough_Rabi(ABC):
         :return:
         """
         if job_id is None:
-            experiment = backend.retrieve_job(self.submitted_job_id)
+            experiment = provider.retrieve_job(self.submitted_job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
         else:
-            experiment = backend.retrieve_job(job_id)
+            experiment = provider.retrieve_job(job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
 
         analyzer.retrieve_data(average=True)

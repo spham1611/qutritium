@@ -3,10 +3,11 @@ Instruction class that can be called from VM
 Used to represent a gate in quantum circuit
 """
 from __future__ import annotations
+import numpy as np
 from typing import Union, Any, List
+from numpy.typing import NDArray
 # from .qc_elementary_matrices import *
 from src.quantumcircuit.qc_utility import multi_matrix_form, single_matrix_form
-import numpy as np
 
 gate_set: list[Union[str, Any]] = ['Identity',
                                    'x_plus',
@@ -43,12 +44,12 @@ class Instruction:
                  second_qutrit_set: int | None = 0, parameter: List[float] = None) -> None:
         self._type = gate_type
         self._verify_gate()
-        self.n_qutrit = n_qutrit
-        self.qutrit_dimension = 3 ** self.n_qutrit
-        self.parameter = parameter
-        self.first_qutrit = first_qutrit_set
-        self.second_qutrit = second_qutrit_set
-        self._is_two_qutrit_gate = False
+        self.n_qutrit: int = n_qutrit
+        self.qutrit_dimension: int = 3 ** self.n_qutrit
+        self.parameter: List[float] = parameter
+        self.first_qutrit: int = first_qutrit_set
+        self.second_qutrit: int = second_qutrit_set
+        self._is_two_qutrit_gate: bool = False
         if first_qutrit_set > (self.n_qutrit - 1):
             raise Exception("Acting qutrit is not defined")
         if second_qutrit_set is not None:
@@ -61,7 +62,7 @@ class Instruction:
             self.gate_matrix = single_matrix_form(gate_type=self._type, parameter=self.parameter)
         self._effect_matrix = self._effect()
 
-    def _effect(self) -> np.array:
+    def _effect(self) -> NDArray:
         """
         Return the matrix form effect of gate on the quantum state
         """
@@ -104,7 +105,7 @@ class Instruction:
             raise Exception("This gate is not defined in set of gates")
 
     @property
-    def effect_matrix(self) -> np.array:
+    def effect_matrix(self) -> NDArray:
         return self._effect_matrix
 
     def type(self) -> str:

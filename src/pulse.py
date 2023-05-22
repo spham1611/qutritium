@@ -2,14 +2,14 @@
 Contain pulse classes
 """
 from __future__ import annotations
-from abc import ABC
-from typing import Dict
 import tkinter as tk
 import os
 import json
 import numpy as np
 import pandas as pd
 import uuid
+from abc import ABC
+from typing import Dict
 
 
 class Pulse_List(list["Pulse"]):
@@ -117,12 +117,12 @@ class Pulse(ABC):
             raise ValueError("Time must be >= 0")
         if not x_amp:
             raise ValueError("Pulse must have amplitude")
-        self.frequency = frequency
-        self.x_amp = x_amp
-        self.sx_amp = sx_amp if sx_amp else self.x_amp / 2
-        self.beta_leakage = beta_leakage
-        self.beta_dephase = beta_dephase
-        self.duration = duration
+        self.frequency: float = frequency
+        self.x_amp: float = x_amp
+        self.sx_amp: float = sx_amp if sx_amp else self.x_amp / 2
+        self.beta_leakage: float = beta_leakage
+        self.beta_dephase: float = beta_dephase
+        self.duration: int = duration
         self.sigma = duration / 4 if duration else 0
         self.id = uuid.uuid4()
         Pulse.pulse_list.append(self)
