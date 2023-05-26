@@ -71,7 +71,7 @@ def rx12(theta: float) -> NDArray:
 
 def rz01(phi: float) -> NDArray:
     return np.array([
-        [np.exp(-1j * phi), 0, 0],
+        [np.exp(1j * phi), 0, 0],
         [0, 1, 0],
         [0, 0, 1]], dtype=complex)
 

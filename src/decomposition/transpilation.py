@@ -71,7 +71,7 @@ class SU3_matrices:
         # Check dimensions
         assert su3.shape[0] == 3
         assert su3.shape[1] == 3
-        self.su3: np.ndarray = su3
+        self.su3: NDArray = su3
         self.qutrit_index = qutrit_index
         self.n_qutrits = n_qutrits
         self.parameters: NamedTuple = Parameter.get_parameters(su3=self.su3)
@@ -90,7 +90,7 @@ class SU3_matrices:
 
         :return:
         """
-        return r01(getattr(self.parameters, 'phi3'), getattr(self.parameters, 'theta3'))
+        return r01(phi=getattr(self.parameters, 'phi3'), theta=getattr(self.parameters, 'theta3'))
 
     def rotation_theta1_01(self) -> NDArray:
         """
@@ -143,20 +143,20 @@ class SU3_matrices:
 
         :return:
         """
-        return f"U_diagonal = {self.unitary_diagonal()}\n" \
-               f"R_theta1 = {self.rotation_theta1_01()}\n" \
-               f"R_theta2 = {self.rotation_theta2_12()}\n" \
-               f"R_theta3 = {self.rotation_theta3_01()}\n"
+        return f"U_diagonal:\n{self.unitary_diagonal()}\n" \
+               f"R_theta1:\n{self.rotation_theta1_01()}\n" \
+               f"R_theta2:\n{self.rotation_theta2_12()}\n" \
+               f"R_theta3:\n{self.rotation_theta3_01()}\n"
 
     def __repr__(self) -> str:
         """
 
         :return:
         """
-        return f"U_diagonal = {self.unitary_diagonal()}\n" \
-               f"R_theta1 = {self.rotation_theta1_01()}\n" \
-               f"R_theta2 = {self.rotation_theta2_12()}\n" \
-               f"R_theta3 = {self.rotation_theta3_01()}\n"
+        return f"U_diagonal:\n{self.unitary_diagonal()}\n" \
+               f"R_theta1:\n{self.rotation_theta1_01()}\n" \
+               f"R_theta2:\n{self.rotation_theta2_12()}\n" \
+               f"R_theta3:\n{self.rotation_theta3_01()}\n"
 
 
 class Pulse_Wrapper:
