@@ -1,8 +1,9 @@
 """Rough rabi techniques"""
 import numpy as np
+import pandas as pd
 from qiskit.circuit import QuantumCircuit, Parameter, Gate
 from qiskit.tools.monitor import job_monitor
-from src.utility import fit_function, plot_and_save
+from src.utility import fit_function
 from src.calibration import (
     backend,
     provider,
@@ -73,6 +74,19 @@ class Rough_Rabi(ABC):
     def modify_pulse_model(self, job_id: str = None) -> None:
         raise NotImplementedError
 
+    def save_data(self, y_values) -> None:
+        """
+        Save as csv
+        :param y_values:
+        :return:
+        """
+        data = {
+            'x_amp': self._x_amp_sweeping_range,
+            'x_amp_val': y_values
+        }
+        df = pd.DataFrame(data)
+        df.to_csv(f'Rabii of {self.pulse_model.__class__.__name__}', index=False)
+
     def rr_job_monitor(self) -> None:
         """
 
@@ -102,14 +116,7 @@ class Rough_Rabi(ABC):
                                      lambda x, c1, c2, drive_period, phi:
                                      (c1 * np.cos(2 * np.pi * x / drive_period - phi) + c2),
                                      [5, 0, 0.5, 0])
-
-        plot_name = f'Rough_Rabi_{self.pulse_model.__class__.__name__}.png'
-        plot_and_save(x_values=[self._x_amp_sweeping_range],
-                      y_values=[analyzer.IQ_data],
-                      line_label=[''],
-                      y_label='Signal (arb.units)',
-                      x_label='Amplitude',
-                      plot_name=f'output/{plot_name}')
+        self.save_data(analyzer.IQ_data)
 
         x_amp = (fit_params[2] / 2)
         return x_amp

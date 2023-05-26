@@ -2,6 +2,7 @@
 In here TR stands for transmission and reflection
 """
 import numpy as np
+import pandas as pd
 from qiskit import execute
 from qiskit.circuit import Parameter, Gate, QuantumCircuit
 from qiskit.tools.monitor import job_monitor
@@ -17,7 +18,7 @@ from src.pulse import Pulse01, Pulse12
 from src.analyzer import DataAnalysis
 from src.constant import QUBIT_PARA
 from src.pulse_creation import Gate_Schedule
-from src.utility import fit_function, plot_and_save
+from src.utility import fit_function
 from abc import ABC, abstractmethod
 from numpy import linspace, ndarray
 
@@ -80,15 +81,24 @@ class TR(ABC):
     def modify_pulse_model(self, job_id: str = None) -> None:
         raise NotImplementedError
 
+    def save_data(self, y_values) -> None:
+        """
+        Save as csv
+        :param y_values:
+        :return:
+        """
+        data = {
+            'freq_range': self.freq_sweeping_range_ghz,
+            'f_val': y_values
+        }
+        df = pd.DataFrame(data)
+        df.to_csv(f'TR of {self.pulse_model.__class__.__name__}', index=False)
+
     def run_monitor(self) -> None:
         """
         Submit job to ibm quantum computers. Measurement level is set to 1 and return is average
         :return:
         """
-        # submitted_job = backend.run(self.package,
-        #                             meas_level=1,
-        #                             meas_return='avg',
-        #                             shots=self.num_shots)
         submitted_job = execute(self.package, backend, meas_level=1, meas_return='avg', shots=self.num_shots)
         self.submitted_job_id = submitted_job.job_id()
         job_monitor(submitted_job)
@@ -112,14 +122,7 @@ class TR(ABC):
                                      lambda x, c1, q_freq, c2, c3:
                                      (c1 / np.pi) * (c2 / ((x - q_freq) ** 2 + c2 ** 2)) + c3,
                                      self.lambda_list)
-        plot_name = f'TR_{self.pulse_model.__class__.__name__}.png'
-        plot_and_save(x_values=[self.freq_sweeping_range_ghz],
-                      y_values=[analyzer.IQ_data],
-                      line_label=[''],
-                      y_label='Signal (arb.units)',
-                      x_label='Frequency [GHz]',
-                      plot_name=f'output/{plot_name}')
-
+        self.save_data(y_values=analyzer.IQ_data)
         freq = fit_params[1] * QUBIT_PARA.GHZ.value
         return freq
 

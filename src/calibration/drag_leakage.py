@@ -1,6 +1,7 @@
 """Drag Leakage classes and their techniques"""
 import qiskit.pulse as pulse
 import numpy as np
+import pandas as pd
 from qiskit.circuit import Parameter, Gate, QuantumCircuit
 from qiskit.tools.monitor import job_monitor
 from qiskit.pulse.schedule import ScheduleBlock
@@ -12,7 +13,6 @@ from src.exceptions.pulse_exception import MissingDurationPulse, MissingFrequenc
 # from src.utility import fit_function
 from abc import ABC, abstractmethod
 from typing import List, Union, Optional
-from src.utility import plot_and_save
 
 
 class DragLK(ABC):
@@ -75,6 +75,23 @@ class DragLK(ABC):
         """
         raise NotImplementedError
 
+    def save_data(self, n_3, n_5, n_7) -> None:
+        """
+        Save as csv
+        :param n_3:
+        :param n_5:
+        :param n_7:
+        :return:
+        """
+        data = {
+            'x_val': self.drive_betas,
+            'n_3': n_3,
+            'n_5': n_5,
+            'n_7': n_7
+        }
+        df = pd.DataFrame(data)
+        df.to_csv(f'Drag_Leakage of {self.pulse_model.__class__.__name__}', index=False)
+
     def establish_discriminator(self) -> None:
         """
 
@@ -122,13 +139,9 @@ class DragLK(ABC):
         drag_values_n3 = analyzer.mitiq_data[3:35, index_taken]
         drag_values_n5 = analyzer.mitiq_data[35:67, index_taken]
         drag_values_n7 = analyzer.mitiq_data[67:99, index_taken]
-        plot_name = f'Drag_leakage_{self.pulse_model.__class__.__name__}.png'
-        plot_and_save(x_values=[self.drive_betas] * 3,
-                      y_values=[drag_values_n3, drag_values_n5, drag_values_n7],
-                      line_label=['drag_values_n3', 'drag_values_n5', 'drag_values_n7'],
-                      y_label='Signal (arb.units)',
-                      x_label='Beta Leakage',
-                      plot_name=f'output/{plot_name}')
+        self.save_data(n_3=drag_values_n3,
+                       n_5=drag_values_n5,
+                       n_7=drag_values_n7)
         beta = self.drive_betas[np.argmax(drag_values_n7)]
         return beta
 

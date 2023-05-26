@@ -1,6 +1,7 @@
 """Drag Dephase classes and their techniques"""
 import qiskit.pulse as pulse
 import numpy as np
+import pandas as pd
 from qiskit.circuit import Parameter, Gate, QuantumCircuit
 from qiskit.tools.monitor import job_monitor
 from qiskit.pulse.schedule import ScheduleBlock
@@ -8,10 +9,9 @@ from src.analyzer import DataAnalysis
 from src.pulse import Pulse01, Pulse12
 from src.calibration import backend, provider, QUBIT_VAL
 from src.pulse_creation import Gate_Schedule
-from src.utility import fit_function, plot_and_save
+from src.utility import fit_function
 from abc import ABC, abstractmethod
 from typing import List, Union, Optional
-
 
 
 class DragDP(ABC):
@@ -77,6 +77,23 @@ class DragDP(ABC):
         """
         raise NotImplementedError
 
+    def save_data(self, drag_x, drag_yp, drag_ym) -> None:
+        """
+
+        :param drag_x:
+        :param drag_yp:
+        :param drag_ym:
+        :return:
+        """
+        data = {
+            'x_val': self.drive_betas,
+            'drag_x': drag_x,
+            'drag_yp': drag_yp,
+            'drag_ym': drag_ym,
+        }
+        df = pd.DataFrame(data)
+        df.to_csv(f'Drag_Dephase of {self.pulse_model.__class__.__name__}', index=False)
+
     def establish_discriminator(self) -> None:
         """
         Create excited circuit -> add to final circuit
@@ -125,14 +142,9 @@ class DragDP(ABC):
         drag_values_x = analyzer.mitiq_data[3:35, 0]
         drag_values_yp = analyzer.mitiq_data[35:67, index_taken]
         drag_values_ym = analyzer.mitiq_data[67:99, index_taken]
-
-        plot_name = f'Drag_dephase_{self.pulse_model.__class__.__name__}.png'
-        plot_and_save(x_values=[self.drive_betas] * 3,
-                      y_values=[drag_values_x, drag_values_yp, drag_values_ym],
-                      line_label=['drag_values_x', 'drag_values_yp', 'drag_values_ym'],
-                      y_label='Signal (arb.units)',
-                      x_label='Beta Dephase',
-                      plot_name=f'output/{plot_name}')
+        self.save_data(drag_x=drag_values_x,
+                       drag_yp=drag_values_yp,
+                       drag_ym=drag_values_ym)
 
         fit_params_yp, y_fit_yp = fit_function(self.drive_betas,
                                                drag_values_yp,
