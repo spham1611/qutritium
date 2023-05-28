@@ -1,9 +1,10 @@
 """Utility functions to analyze data
 ..deprecated:: 0.0
 """
+import numpy as np
 from scipy.optimize import curve_fit
 from typing import Callable, Tuple, Iterable
-import numpy as np
+from numpy.typing import NDArray
 
 
 # Fitting functions
@@ -38,7 +39,7 @@ def average_counter(counts, num_shots) -> float:
     return np.array(all_exp) / num_shots
 
 
-def reshape_complex_vec(vec: np.ndarray) -> np:
+def reshape_complex_vec(vec: NDArray) -> NDArray:
     """reshape_complex_vec
     Take in complex vector vec and return 2d array w/ real, imag entries. This is needed for the learning.
 

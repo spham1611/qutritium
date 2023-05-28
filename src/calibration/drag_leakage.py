@@ -90,7 +90,7 @@ class DragLK(ABC):
             'n_7': n_7
         }
         df = pd.DataFrame(data)
-        df.to_csv(f'Drag_Leakage of {self.pulse_model.__class__.__name__}', index=False)
+        df.to_csv(f'Drag_Leakage of {self.pulse_model.__class__.__name__}.csv', index=False)
 
     def establish_discriminator(self) -> None:
         """
@@ -125,10 +125,10 @@ class DragLK(ABC):
         :return:
         """
         if job_id is None:
-            experiment = provider.retrieve_job(self.submitted_job_id)
+            experiment = provider.backend.retrieve_job(self.submitted_job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
         else:
-            experiment = provider.retrieve_job(job_id)
+            experiment = provider.backend.retrieve_job(job_id)
             analyzer = DataAnalysis(experiment=experiment, num_shots=self.num_shots)
 
         # Analyze process

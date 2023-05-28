@@ -29,8 +29,8 @@ class DataAnalysis:
         self.num_shots = num_shots
 
         # Analytical parameters
-        self._IQ_data: List = [Any]
-        self._mitiq_data: List = [Any]
+        self._IQ_data: List = []
+        self._mitiq_data: List = []
         self._gfs: List = []
         self._lda_012 = LinearDiscriminantAnalysis()
         self._score_012: float = 0.
