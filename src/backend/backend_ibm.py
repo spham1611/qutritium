@@ -1,21 +1,57 @@
+# MIT License
+#
+# Copyright (c) [2023] [son pham, tien nguyen, bach bao]
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 """List all the vm_backend available and assign qubit value"""
 from qiskit_ibm_provider import IBMProvider, IBMBackend
-from typing import DefaultDict, Tuple, List
+from qiskit_ibm_provider.api.exceptions import RequestsApiError
+from typing import DefaultDict, Tuple, List, Optional
 from src.constant import QUBIT_PARA
 
 
 class BackEndDict(DefaultDict[str, Tuple]):
-    """Show the name of backends and map the qubit used for package"""
+    """Show the name of backends and map the qubit used for package
+    This class is needed due to the fact that some quantum computers work better with qubit different from 0 qubit
+    You can run experiments as the example below:
+
+        from qutritium.backend_ibm import BackEndDict
+
+        backends = BackEndDict("some_token")
+        backends.show()
+
+    Here is list of attributes available on the ''BackEndDict'' class:
+        * provider: IBMProvider
+        * show(): show the available IBM quantum computers
+        * default_backend(): return the backend needed based on name of the computer. It will return nairobi in default
+    """
 
     def __init__(self, /, token: str = '', overwrite: bool = True) -> None:
         """
-        Initialize Dictionary + IBM check
-        :param token: IBM account token
-        :param overwrite: Overwrite token that is existed in local machine
-        :return: None
-        :raises:
-            EnvironmentError: Missing token from the input + local machine
-            TimeOutError: Can not load the given token
+
+        Args:
+            token: string representation
+            overwrite: overwrite the existed IBM account in local machine
+        Raises:
+            EnvironmentError: raise if token is not provided and no account present
+            RequestApiError: raise if invalid token
         """
         super().__init__()
         # IBM Config -> activate account in this file
@@ -28,29 +64,32 @@ class BackEndDict(DefaultDict[str, Tuple]):
                 self.provider.save_account(token=token, overwrite=overwrite)
                 # Create dummy var to check if we can access IBM account
                 self.provider.get_backend('ibm_nairobi')
-            except TimeoutError:
+            except RequestsApiError:
                 print('Invalid token')
 
         self._available_backends: List[IBMBackend] = []
         self._set_up()
 
-    def _set_up(self) -> None:
+    def _set_up(self, qc_qubit: Optional[DefaultDict[str, Tuple]] = None) -> None:
         """
-        Get the name from each quantum computer and their corresponding effective number of qubits
-        :return: None
+        Get the name from each quantum computer and their corresponding effective qubit number.
+        Note:
+            * The 'effective' is solely empirical!
         """
-        self._available_backends = self.provider.backends()
-        for backend in self._available_backends:
-            # We set it all to 0 except nairobi vm_backend
-            if "nairobi" in str(backend_name := backend.name):
-                self[backend_name] = backend, QUBIT_PARA.NUM_QUBIT_TYPE2.value
-            else:
-                self[backend_name] = backend, QUBIT_PARA.NUM_QUBIT_TYPE1.value
+        if qc_qubit is None:
+            self._available_backends = self.provider.backends()
+            for backend in self._available_backends:
+                # We set it all to 0 except nairobi vm_backend
+                if "nairobi" in str(backend_name := backend.name):
+                    self[backend_name] = backend, QUBIT_PARA.NUM_QUBIT_TYPE2.value
+                else:
+                    self[backend_name] = backend, QUBIT_PARA.NUM_QUBIT_TYPE1.value
+        else:
+            self.update(qc_qubit)
 
     def show(self) -> None:
         """
         Show the name of all available backends and their associated qubit used
-        :return: None
         """
         print(f"{'Backend name:':<30}{'# Qubit used:':<40}")
         for name in self:
@@ -59,7 +98,8 @@ class BackEndDict(DefaultDict[str, Tuple]):
     def default_backend(self, quantum_computer: str = 'ibm_nairobi') -> Tuple[IBMBackend, int]:
         """
         Return nairobi vm_backend as the default and its qubit value
-        :return: Tuple[IBMBackEnd, int]: The quantum computer provider and its corresponding number of qubits
+        Returns:
+            Tuple[IBMBackEnd, int]: The quantum computer provider and its corresponding number of qubits
         """
         backend = self[quantum_computer][0]
         return backend, self[quantum_computer][1]
