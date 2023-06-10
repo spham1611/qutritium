@@ -20,158 +20,105 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""List all the vm_backend available and assign qubit value"""
-from qiskit.providers import Provider
-from qiskit_ibm_provider.exceptions import IBMBackendError
+"""List all the available backends and assign their empirically effective qubit"""
 from qiskit_ibm_provider import IBMProvider, IBMBackend
-from qiskit_ibm_provider.api.exceptions import RequestsApiError
+from typing import DefaultDict, Tuple, Optional
+from collections import defaultdict
 from src.simple_backend_log import write_log
-from typing import DefaultDict, Tuple, List, Optional
 from src.constant import QUBIT_PARA
 
 
-class BackEnds(DefaultDict[str, Tuple]):
-    """Show the name of backends and map the qubit used for package
-    This class is needed due to the fact that some quantum computers work better with qubit different from 0 qubit
-    You can run experiments as the example below:
+def initiate_eff_dict() -> DefaultDict:
+    """
+    Create a default dictionary in which ibm_nairobi effective qubit: 6
+    Returns:
+        Dictionary that has the following format
+        ===============  ===============
+        IBMBackend Name  Effective Qubit
+        'ibm_nairobi'    6
+        ===============  ===============
+    """
+    return defaultdict(lambda: 0, {'ibm_nairobi': QUBIT_PARA.QUBIT_CHANGE_TYPE1.value})
 
-        from qutritium.backend_ibm import BackEndDict
 
-        backends = BackEndDict("some_token")
-        backends.show()
+class EffProvider(IBMProvider):
+    """ Provides default attributes and functions of IBMProvider + effective qubit + other parameters for qutrit process
+    An example of this flow::
 
-    Here is list of attributes available on the ''BackEndDict'' class:
-        * provider: IBMProvider
-        * show(): show the available IBM quantum computers
-        * default_backend(): return the backend needed based on name of the computer. It will return nairobi in default
+        from qutritium.backend.backend_ibm import EffProvider
+
+        eff_provider = EffProvider()
+        backend, _ = eff_provider.backend('ibmq_lima')
+
+        eff_provider.show()
+
+    Notes:
+        * This class inherits IBMProvider so the docs is analogous to IBMProvider.
+
+    Here is a list of available attributes in class ''EffProvider'' class, besides IBMProvider attrs:
+        * eff_dict: a dictionary that contains effective qubit number of respective quantum computer
+        * backend(): return the wanted backend and its parameters
+        * show(): print all available backends
     """
 
-    def __init__(self, /, token: str = '', overwrite: bool = True) -> None:
+    def __init__(
+            self,
+            token: Optional[str] = None,
+            url: Optional[str] = None,
+            name: Optional[str] = None,
+            instance: Optional[str] = None,
+            proxies: Optional[dict] = None,
+            verify: Optional[bool] = None,
+            eff_dict: Optional[DefaultDict] = None,
+    ) -> None:
+        """
+        Refer to the IBMProvider doc
+        Args:
+            token:
+            url:
+            name:
+            instance:
+            proxies:
+            verify:
+            eff_dict: Dictionary contains name of the backend and their effective qubits. For example:
+                    dict_eff = {'ibmq_lima': 2,
+                                'ibm_nairobi': 6,}
+
+        Returns:
+            An instance of EffBackends
+        """
+        super().__init__(token, url, name, instance, proxies, verify)
+        if not self.active_account():
+            raise ValueError('Can not find account saved on disk. Please provide token via constructor'
+                             ', or save_account() function')
+        self.eff_dict: DefaultDict[str, int] = eff_dict if eff_dict else initiate_eff_dict()
+
+    def backend(self, name: str = 'ibm_nairobi') -> Tuple[IBMBackend, DefaultDict]:
         """
 
         Args:
-            token: string representation
-            overwrite: overwrite the existed IBM account in local machine
-        Raises:
-            EnvironmentError: raise if token is not provided and no account present
-            RequestApiError: raise if invalid token
-        """
-        super().__init__()
-        # IBM Config -> activate account in this file
-        self.provider = IBMProvider()
-        if not self.provider.active_account() and not token:
-            raise EnvironmentError("Can't find the account saved in this session. Please activate in the script folder"
-                                   "or token input")
-        elif token:
-            try:
-                self.provider.save_account(token=token, overwrite=overwrite)
-                # Create dummy var to check if we can access IBM account
-                self.provider.get_backend('ibm_nairobi')
-            except RequestsApiError:
-                print('Invalid token')
+            name: name of the quantum computer which appears on API
 
-        self._available_backends: List[IBMBackend] = []
-        self._set_up()
+        Returns:
+            Tuple: name of the backend and its parameters
 
-    def _set_up(self, qc_qubit: Optional[DefaultDict[str, Tuple]] = None) -> None:
         """
-        Get the name from each quantum computer and their corresponding effective qubit number.
-        Note:
-            * The 'effective' is solely empirical!
-        """
-        if qc_qubit is None:
-            self._available_backends = self.provider.backends()
-            for backend in self._available_backends:
-                # We set it all to 0 except nairobi vm_backend
-                if "nairobi" in str(backend_name := backend.name):
-                    self[backend_name] = backend, QUBIT_PARA.NUM_QUBIT_TYPE2.value
-                else:
-                    self[backend_name] = backend, QUBIT_PARA.NUM_QUBIT_TYPE1.value
-        else:
-            self.update(qc_qubit)
+        backend = self.backends(name=name)[0]
+        anharmonicity = backend.qubit_properties(self.eff_dict[name]).__getattribute__('anharmonicity')
+        default_f01 = backend.qubit_properties(self.eff_dict[name]).frequency
+        backend_params = defaultdict(lambda: 0,
+                                     {'effective_qubit': self.eff_dict[name],
+                                      'anharmonicity': anharmonicity,
+                                      'default_f01': default_f01,
+                                      'default_f12': default_f01 + anharmonicity})
+        write_log(backend)
+        return backend, backend_params
 
     def show(self) -> None:
         """
-        Show the name of all available backends and their associated qubit used
+        Show all available backends based on given provider
         """
         print(f"{'Backend name:':<30}{'# Qubit used:':<40}")
-        for name in self:
-            print(f"{name:<30}{self[name][1]:<40}")
-
-    def default_backend(self, quantum_computer: str = 'ibm_nairobi') -> Tuple[IBMBackend, int]:
-        """
-        Return nairobi vm_backend as the default and its qubit value
-        Returns:
-            Tuple[IBMBackEnd, int]: The quantum computer provider and its corresponding number of qubits
-        """
-        backend = self[quantum_computer][0]
-        if backend is None:
-            raise IBMBackendError
-        return backend, self[quantum_computer][1]
-
-    def provider(self) -> IBMProvider:
-        return self.provider
-
-
-class BackEndChoice:
-    """
-    Choose the backend from list of backends and provide computer parameters
-    User can set the backend as follow::
-        from ...
-
-    Here is a list of available attributes from class ''BackEndChoice'' class:
-        *
-    """
-    def __init__(self, backend_name: str = 'ibm_nairobi') -> None:
-        """
-
-        Args:
-            backend_name:
-
-        Raises:
-
-        """
-
-        self._backends = BackEnds()
-        self._backend, self._qubit = self._backends.default_backend(backend_name)
-        self._provider = self._backend.provider
-        self._anhar = self._backend.qubit_properties(self._qubit).__getattribute__('anharmonicity')
-        self._default_f01 = self._backend.qubit_properties(self._qubit).frequency
-        self._default_f12 = self._default_f01 + self._anhar
-
-        write_log(self._backend)
-
-    @property
-    def default_f01(self) -> float:
-        return self._default_f01
-
-    @property
-    def default_f12(self) -> float:
-        return self._default_f12
-
-    @property
-    def anharmonicity(self) -> float:
-        return self._anhar
-
-    @property
-    def backend(self) -> IBMBackend:
-        return self._backend
-
-    @property
-    def effective_qubit(self) -> int:
-        return self._qubit
-
-    @property
-    def provider(self) -> Provider:
-        return self._provider
-
-    def set_backend(self, name: str) -> None:
-        """
-        If user wish to change the backend
-        Args:
-            name:
-
-        Returns:
-
-        """
-        self._backend, self._qubit = self._backends.default_backend(name)
+        for available_backend in self.backends():
+            name = available_backend.name
+            print(f"{name:<30}{self.eff_dict[name]:<40}")
