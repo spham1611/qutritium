@@ -1,11 +1,33 @@
+# MIT License
+#
+# Copyright (c) [2023] [son pham, tien nguyen, bach bao]
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 """
 Calibration utility functions for gate operations and other.
 The Gate_Schedule model is deprecated and will be updated further
 """
+from qiskit_ibm_provider import IBMBackend
 from qiskit.pulse.schedule import ScheduleBlock
 from qiskit import pulse
 from qiskit.circuit import Parameter
-from src.calibration import backend
 from typing import Union
 from src.pulse import Pulse
 
@@ -15,11 +37,12 @@ class Gate_Schedule:
     This class is deprecated and will be fixed in further update
     .. deprecated:: 0.0
 
-    .. seealso: Pulse_Schedule
+    .. see also: Pulse_Schedule
     """
 
     @staticmethod
-    def single_gate_schedule(drive_freq: Union[float, Parameter],
+    def single_gate_schedule(backend: IBMBackend,
+                             drive_freq: Union[float, Parameter],
                              drive_amp: Union[float, Parameter],
                              drive_duration: int,
                              drive_phase: float = .0,
@@ -28,14 +51,18 @@ class Gate_Schedule:
                              channel: int = 0) -> ScheduleBlock:
         """
 
-        :param channel: qiskit.schedule channel, typically = 0
-        :param drive_freq: Our pulse model frequency in Hz
-        :param drive_phase: Used for phase offset
-        :param drive_duration: Our pulse model duration in milliseconds
-        :param drive_amp: Our pulse model amplitude
-        :param drive_beta:
-        :param name: Name of the pulse
-        :return:
+        Args:
+            backend:
+            drive_freq:
+            drive_amp:
+            drive_duration:
+            drive_phase:
+            drive_beta:
+            name:
+            channel:
+
+        Returns:
+
         """
         drive_sigma = drive_duration / 4
         with pulse.build(backend=backend) as drive_schedule:
@@ -47,19 +74,24 @@ class Gate_Schedule:
         return drive_schedule
 
     @staticmethod
-    def single_gate_schedule_gaussian(drive_freq: float,
+    def single_gate_schedule_gaussian(backend: IBMBackend,
+                                      drive_freq: float,
                                       drive_duration: int,
                                       drive_amp: float,
                                       name: str = '',
                                       channel: int = 0) -> ScheduleBlock:
         """
 
-        :param channel: qiskit.schedule channel, typically = 0
-        :param drive_freq: Our pulse model frequency in Hz
-        :param drive_duration: Our pulse model duration in milliseconds
-        :param drive_amp: Our pulse model amplitude
-        :param name: Name of the pulse
-        :return:
+        Args:
+            backend:
+            drive_freq:
+            drive_duration:
+            drive_amp:
+            name:
+            channel:
+
+        Returns:
+
         """
         with pulse.build(backend=backend) as drive_schedule:
             drive_chan = pulse.drive_channel(channel)
@@ -75,19 +107,24 @@ class Pulse_Schedule(Gate_Schedule):
     """
 
     @staticmethod
-    def single_pulse_schedule(pulse_model: Pulse,
+    def single_pulse_schedule(backend: IBMBackend,
+                              pulse_model: Pulse,
                               name: str = '',
                               drive_phase: float = 0,
                               drive_beta: float = 0,
                               channel: int = 0) -> ScheduleBlock:
         """
 
-        :param pulse_model:
-        :param name: Name of the pulse
-        :param drive_phase: Used for phase offset
-        :param drive_beta:
-        :param channel: qiskit.schedule channel, typically = 0
-        :return:
+        Args:
+            backend:
+            pulse_model:
+            name:
+            drive_phase:
+            drive_beta:
+            channel:
+
+        Returns:
+
         """
         drive_sigma = pulse_model.duration / 4
         with pulse.build(backend=backend) as drive_schedule:
@@ -100,15 +137,20 @@ class Pulse_Schedule(Gate_Schedule):
         return drive_schedule
 
     @staticmethod
-    def single_pulse_gaussian_schedule(pulse_model: Pulse,
+    def single_pulse_gaussian_schedule(backend: IBMBackend,
+                                       pulse_model: Pulse,
                                        channel: int = 0,
                                        name: str = '') -> ScheduleBlock:
         """
 
-        :param channel: qiskit.schedule channel, typically = 0
-        :param name: Name of the pulse
-        :param pulse_model:
-        :return:
+        Args:
+            backend:
+            pulse_model:
+            channel:
+            name:
+
+        Returns:
+
         """
         with pulse.build(backend=backend) as drive_schedule:
             drive_chan = pulse.drive_channel(channel)
@@ -122,12 +164,14 @@ class Shift:
     """
 
     """
+
     def __init__(self, shift_type: str, value: float, channel: int) -> None:
         """
 
-        :param shift_type:
-        :param value:
-        :param channel:
+        Args:
+            shift_type:
+            value:
+            channel:
         """
         self.type = shift_type
 
@@ -136,7 +180,9 @@ class Shift_phase:
     """
 
     """
-    def __init__(self, value: float, channel: int, subspace: str = "01") -> None:
+
+    def __init__(self, value: float, channel: int,
+                 backend: IBMBackend, subspace: str = "01") -> None:
         """
 
         :param value:
@@ -146,13 +192,14 @@ class Shift_phase:
         self.value = value
         self.channel = channel
         self.subspace = subspace
+        self.backend = backend
 
     def generate_qiskit_phase(self, coeff: int = 1) -> ScheduleBlock:
         """
         :param coeff:
         :return:
         """
-        with pulse.build(backend=backend) as schedule:
+        with pulse.build(backend=self.backend) as schedule:
             pulse.shift_phase(phase=self.value * coeff, channel=pulse.drive_channel(self.channel))
         return schedule
 
@@ -179,7 +226,9 @@ class Set_frequency:
     """
 
     """
-    def __init__(self, value: float, channel: int) -> None:
+
+    def __init__(self, value: float,
+                 backend: IBMBackend, channel: int) -> None:
         """
 
         :param value:
@@ -187,12 +236,13 @@ class Set_frequency:
         """
         self.value = value
         self.channel = channel
+        self.backend = backend
 
     def generate_qiskit_freq(self) -> ScheduleBlock:
         """
 
         :return:
         """
-        with pulse.build(backend=backend) as schedule:
+        with pulse.build(backend=self.backend) as schedule:
             pulse.set_frequency(frequency=self.value, channel=pulse.drive_channel(self.channel))
         return schedule
