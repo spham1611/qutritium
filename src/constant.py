@@ -3,14 +3,16 @@ from enum import Enum
 
 
 class QUBIT_PARA(Enum):
+    """
+    Qutrit related Parameters
+    """
     # Frequency unit
     KHZ = 1.0e3
     MHZ = 1.0e6
     GHZ = 1.0e9
 
-    # th-Qubit used for running
-    NUM_QUBIT_TYPE1 = 0
-    NUM_QUBIT_TYPE2 = 6
+    # th-Qubit used for running: used for nairobi
+    QUBIT_CHANGE_TYPE1 = 6
 
     # Other constants
     CBIT = 0
@@ -20,4 +22,4 @@ class QUBIT_PARA(Enum):
     LCM = 16
 
     # Scale
-    SCALE_FACTOR = 1e-7
+    SCALE_FACTOR = 1.0e-14

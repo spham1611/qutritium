@@ -20,88 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-Calibration utility functions for gate operations and other.
-The Gate_Schedule model is deprecated and will be updated further
-"""
+""" Calibration utility functions for gate operations and other pulse type operations"""
 from qiskit_ibm_provider import IBMBackend
 from qiskit.pulse.schedule import ScheduleBlock
 from qiskit import pulse
-from qiskit.circuit import Parameter
-from typing import Union
+
 from src.pulse import Pulse
 
 
-class Gate_Schedule:
-    """ Gate_Schedule have two static functions which are used to set up schedules for our pulse model
-    This class is deprecated and will be fixed in further update
-    .. deprecated:: 0.0
-
-    .. see also: Pulse_Schedule
-    """
-
-    @staticmethod
-    def single_gate_schedule(backend: IBMBackend,
-                             drive_freq: Union[float, Parameter],
-                             drive_amp: Union[float, Parameter],
-                             drive_duration: int,
-                             drive_phase: float = .0,
-                             drive_beta: float = .0,
-                             name: str = '$X^{01}$',
-                             channel: int = 0) -> ScheduleBlock:
-        """
-
-        Args:
-            backend:
-            drive_freq:
-            drive_amp:
-            drive_duration:
-            drive_phase:
-            drive_beta:
-            name:
-            channel:
-
-        Returns:
-
-        """
-        drive_sigma = drive_duration / 4
-        with pulse.build(backend=backend) as drive_schedule:
-            drive_chan = pulse.drive_channel(channel)
-            pulse.set_frequency(drive_freq, drive_chan)
-            with pulse.phase_offset(drive_phase):
-                pulse.play(pulse.Drag(drive_duration, drive_amp, drive_sigma, drive_beta), drive_chan, name=name)
-
-        return drive_schedule
-
-    @staticmethod
-    def single_gate_schedule_gaussian(backend: IBMBackend,
-                                      drive_freq: float,
-                                      drive_duration: int,
-                                      drive_amp: float,
-                                      name: str = '',
-                                      channel: int = 0) -> ScheduleBlock:
-        """
-
-        Args:
-            backend:
-            drive_freq:
-            drive_duration:
-            drive_amp:
-            name:
-            channel:
-
-        Returns:
-
-        """
-        with pulse.build(backend=backend) as drive_schedule:
-            drive_chan = pulse.drive_channel(channel)
-            pulse.set_frequency(drive_freq, drive_chan)
-            pulse.play(pulse.Gaussian(duration=drive_duration, amp=drive_amp, sigma=drive_duration / 4,
-                                      name=name), drive_chan)
-        return drive_schedule
-
-
-class Pulse_Schedule(Gate_Schedule):
+class Pulse_Schedule:
     """
     Overwriting the phase offset and gaussian schedule method for pulse model
     """

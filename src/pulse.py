@@ -20,9 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-Contain Pulse models
-"""
+"""Pulse model and Pulse list"""
+
 from __future__ import annotations
 import tkinter as tk
 import os
@@ -32,10 +31,18 @@ import pandas as pd
 import uuid
 from abc import ABC
 from typing import Dict
+from src.exceptions.pulse_exception import MissingDurationPulse, MissingAmplitudePulse
 
 
 class Pulse_List(list["Pulse"]):
     """List of pulses which in turn can be saved in csv or text files
+
+    Notes:
+        * This class is attached to ''Pulse'' class and should not be instantiated
+
+    Here is list of available functions in ''Pulse_List'' class
+        * pulse_dictionary(): supplemented function to save pulses
+        * save_pulses(): currently support csv + txt
 
     """
 
@@ -43,6 +50,11 @@ class Pulse_List(list["Pulse"]):
         """Convert list of pulse to dictionary -> Tabulate in other formats
         Returns:
             dict_pulses: Dictionary of pulses and their characteristics
+            Dictionary that has the following format
+            ====== ====== ======== ========= ====== ====== ========== ====== =============
+            id     mode   duration frequency x_amp  sx_amp drag_coeff sigma  pulse_pointer
+
+            ====== ====== ======== ========= ====== ====== ========== ====== =============
         """
         dict_pulses = {'pulse id': [],
                        'mode': [],
@@ -77,33 +89,29 @@ class Pulse_List(list["Pulse"]):
 
         return dict_pulses
 
-    def save_pulses(self, saved_type: str, file_name: str = "pulses") -> None:
+    def save_pulses(self, saved_type: str, file_path: str = "pulses") -> None:
         """
         Save pulses info in supported formats
         Args:
             saved_type: csv, txt - will add other types
-            file_name: filename can contain path to save in local machine
+            file_path: path of t
 
         Raises:
             IOError: raise if invalid path
         """
         dict_pulses = self.pulse_dictionary()
-        # Get the current directory of the script
-        file_path = os.path.abspath(__file__).split("\\")[:-2]
-        file_path = "\\".join(file_path)
-        file_path = os.path.join(file_path, "output")
+        # Check if path exist:
+        if not os.path.exists(file_path):
+            raise ValueError('Invalid filepath')
         if saved_type == 'csv':
             # Save CSV
             save_pulses_df = pd.DataFrame(dict_pulses)
             save_pulses_df['mode'] = save_pulses_df['mode'].apply('="{}"'.format)
-            print(save_pulses_df['mode'])
-            full_path = file_path + f"\\{file_name}" + ".csv"
-            save_pulses_df.to_csv(full_path, index=False, )
+            save_pulses_df.to_csv(file_path, index=False, )
         elif saved_type == "json":
             # Save JSON
             json_pulse = json.dumps(dict_pulses, indent=4)
-            full_path = file_path + f"\\{file_name}" + ".json"
-            with open(full_path, "w") as outfile:
+            with open(file_path, "w") as outfile:
                 outfile.write(json_pulse)
         else:
             raise IOError("Unsupported type!")
@@ -129,7 +137,7 @@ class Pulse(ABC):
         * sigma: duration / 4
         * id: unique id of pulse
         * pulse_list: Pulse_List: class attr - list of pulses that have been initiated
-        * draw(): draw sine waveform of the pulse
+        * draw(): draw sine waveform of the pulse (figurative only)
     """
     pulse_list = Pulse_List()
 
@@ -140,7 +148,8 @@ class Pulse(ABC):
         Initiate pulse and add it to the list
         Args:
             frequency: in Hz and 0 in default.
-                       Users should set the frequency from TR protocol instead of self initializing.
+                       Users should set the frequency from TR protocol or get
+                        frequency from backend instead of self initializing.
             x_amp:
             sx_amp:
             drag_coeff:
@@ -149,9 +158,9 @@ class Pulse(ABC):
             ValueError: raise if pulse has invalid frequency, time and x_amp
         """
         if not duration or duration <= 0:
-            raise ValueError("Time must be >= 0")
+            raise MissingDurationPulse("Time must be >= 0")
         if not x_amp:
-            raise ValueError("Pulse must have amplitude")
+            raise MissingAmplitudePulse("Pulse must have amplitude")
         self.frequency: float = frequency
         self.x_amp: float = x_amp
         self.sx_amp: float = sx_amp if sx_amp else self.x_amp / 2
