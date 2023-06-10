@@ -1,3 +1,25 @@
+# MIT License
+#
+# Copyright (c) [2023] [son pham, tien nguyen, bach bao]
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 """Drag Leakage classes and their techniques"""
 import qiskit.pulse as pulse
 import numpy as np
@@ -139,9 +161,9 @@ class DragLK(ABC):
         drag_values_n3 = analyzer.mitiq_data[3:35, index_taken]
         drag_values_n5 = analyzer.mitiq_data[35:67, index_taken]
         drag_values_n7 = analyzer.mitiq_data[67:99, index_taken]
-        self.save_data(n_3=drag_values_n3,
-                       n_5=drag_values_n5,
-                       n_7=drag_values_n7)
+        # self.save_data(n_3=drag_values_n3,
+        #                n_5=drag_values_n5,
+        #                n_7=drag_values_n7)
         beta = self.drive_betas[np.argmax(drag_values_n7)]
         return beta
 
