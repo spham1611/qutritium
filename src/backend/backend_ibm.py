@@ -21,13 +21,16 @@
 # SOFTWARE.
 
 """List all the vm_backend available and assign qubit value"""
+from qiskit.providers import Provider
+from qiskit_ibm_provider.exceptions import IBMBackendError
 from qiskit_ibm_provider import IBMProvider, IBMBackend
 from qiskit_ibm_provider.api.exceptions import RequestsApiError
+from src.simple_backend_log import write_log
 from typing import DefaultDict, Tuple, List, Optional
 from src.constant import QUBIT_PARA
 
 
-class BackEndDict(DefaultDict[str, Tuple]):
+class BackEnds(DefaultDict[str, Tuple]):
     """Show the name of backends and map the qubit used for package
     This class is needed due to the fact that some quantum computers work better with qubit different from 0 qubit
     You can run experiments as the example below:
@@ -102,7 +105,73 @@ class BackEndDict(DefaultDict[str, Tuple]):
             Tuple[IBMBackEnd, int]: The quantum computer provider and its corresponding number of qubits
         """
         backend = self[quantum_computer][0]
+        if backend is None:
+            raise IBMBackendError
         return backend, self[quantum_computer][1]
 
     def provider(self) -> IBMProvider:
         return self.provider
+
+
+class BackEndChoice:
+    """
+    Choose the backend from list of backends and provide computer parameters
+    User can set the backend as follow::
+        from ...
+
+    Here is a list of available attributes from class ''BackEndChoice'' class:
+        *
+    """
+    def __init__(self, backend_name: str = 'ibm_nairobi') -> None:
+        """
+
+        Args:
+            backend_name:
+
+        Raises:
+
+        """
+
+        self._backends = BackEnds()
+        self._backend, self._qubit = self._backends.default_backend(backend_name)
+        self._provider = self._backend.provider
+        self._anhar = self._backend.qubit_properties(self._qubit).__getattribute__('anharmonicity')
+        self._default_f01 = self._backend.qubit_properties(self._qubit).frequency
+        self._default_f12 = self._default_f01 + self._anhar
+
+        write_log(self._backend)
+
+    @property
+    def default_f01(self) -> float:
+        return self._default_f01
+
+    @property
+    def default_f12(self) -> float:
+        return self._default_f12
+
+    @property
+    def anharmonicity(self) -> float:
+        return self._anhar
+
+    @property
+    def backend(self) -> IBMBackend:
+        return self._backend
+
+    @property
+    def effective_qubit(self) -> int:
+        return self._qubit
+
+    @property
+    def provider(self) -> Provider:
+        return self._provider
+
+    def set_backend(self, name: str) -> None:
+        """
+        If user wish to change the backend
+        Args:
+            name:
+
+        Returns:
+
+        """
+        self._backend, self._qubit = self._backends.default_backend(name)
