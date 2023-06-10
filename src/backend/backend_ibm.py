@@ -29,8 +29,7 @@ from src.constant import QUBIT_PARA
 
 
 def initiate_eff_dict() -> DefaultDict:
-    """
-    Create a default dictionary in which ibm_nairobi effective qubit: 6
+    """ Creates a default dictionary in which ibm_nairobi effective qubit: 6
     Returns:
         Dictionary that has the following format
         ===============  ===============
@@ -55,7 +54,7 @@ class EffProvider(IBMProvider):
     Notes:
         * This class inherits IBMProvider so the docs is analogous to IBMProvider.
 
-    Here is a list of available attributes in class ''EffProvider'' class, besides IBMProvider attrs:
+    Here is a list of available attributes in class "EffProvider" class, besides IBMProvider attrs:
         * eff_dict: a dictionary that contains effective qubit number of respective quantum computer
         * backend(): return the wanted backend and its parameters
         * show(): print all available backends
@@ -71,8 +70,7 @@ class EffProvider(IBMProvider):
             verify: Optional[bool] = None,
             eff_dict: Optional[DefaultDict] = None,
     ) -> None:
-        """
-        Refer to the IBMProvider doc
+        """ Refer to the IBMProvider doc
         Args:
             token:
             url:
@@ -100,17 +98,16 @@ class EffProvider(IBMProvider):
             name: name of the quantum computer which appears on API
 
         Returns:
-            Tuple: name of the backend and its parameters
+            Tuple: IBMBackend and its parameters
 
         """
         backend = self.backends(name=name)[0]
-        anharmonicity = backend.qubit_properties(self.eff_dict[name]).__getattribute__('anharmonicity')
-        default_f01 = backend.qubit_properties(self.eff_dict[name]).frequency
+        default_freq = backend.defaults().qubit_freq_est[self.eff_dict[name]]
+        anharmonicity = backend.properties().qubits[self.eff_dict[name]][3].value * QUBIT_PARA.GHZ.value
         backend_params = defaultdict(lambda: 0,
                                      {'effective_qubit': self.eff_dict[name],
-                                      'anharmonicity': anharmonicity,
-                                      'default_f01': default_f01,
-                                      'default_f12': default_f01 + anharmonicity})
+                                      'drive_frequency': default_freq,
+                                      'anharmonicity': anharmonicity})
         write_log(backend)
         return backend, backend_params
 

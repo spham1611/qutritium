@@ -52,7 +52,7 @@ class DataAnalysis:
         * Most of our analyzing tools are modification of qiskit analyzing tools used in this reference:
             https://learn.qiskit.org/course/quantum-hardware-pulses/calibrating-qubits-using-qiskit-pulse?fbclid=IwAR3z8d7nhqtbzBnua6aaOD7DktPeW1x1_77QzbGco50o27p0_JY8L2RoH1Y#zerovone
 
-    Here is a list of available attributes ''DataAnalysis'' class:
+    Here is a list of available attributes "DataAnalysis" class:
         * experiment: Job submitted to IBM Quantum Computer
         * num_shots: number of shots from given experiment
         * IQ_data: y_value of plot iq
@@ -67,7 +67,7 @@ class DataAnalysis:
     """
 
     def __init__(self, experiment: IBMJob) -> None:
-        """
+        """ Takes IBMJob and collect its data
 
         Args:
             experiment:
@@ -93,8 +93,7 @@ class DataAnalysis:
         return self._gfs
 
     def retrieve_data(self, average: bool) -> None:
-        """
-        Retrieve data from experiment
+        """ Retrieve data from experiment
 
         Args:
             average:
@@ -164,8 +163,7 @@ class DataAnalysis:
         self._assign_mat = self._raw_counted[0:3]
 
     def error_mitiq(self) -> None:
-        """
-        This consists of two stages: first is counting; then SPAM error is mitigated
+        """ Consists of two stages: first is counting; then SPAM error is mitigated
         using NN least-square optimization. For details, see __data_mitigatory()
 
         Returns:
@@ -187,8 +185,7 @@ class DataAnalysis:
 
     def iq_012_plot(self, x_min: float = -20, x_max: float = 20,
                     y_min: float = -20, y_max: float = 20) -> None:
-        """
-        Helper function for plotting IQ plane for 0, 1, 2. Limits of plot given
+        """ Helper function for plotting IQ plane for 0, 1, 2. Limits of plot given
         as arguments.
 
         Args:
@@ -234,8 +231,7 @@ class DataAnalysis:
     @staticmethod
     def _data_mitigatory(raw_data: Union[List, Iterable],
                          assign_matrix: Union[List, Iterable]):
-        """
-        Normalize matrix function
+        """ Normalizes matrix function
         Args:
             raw_data:
             assign_matrix:

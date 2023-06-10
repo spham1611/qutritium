@@ -34,13 +34,13 @@ from typing import Dict
 from src.exceptions.pulse_exception import MissingDurationPulse, MissingAmplitudePulse
 
 
-class Pulse_List(list["Pulse"]):
-    """List of pulses which in turn can be saved in csv or text files
+class PulseList(list["Pulse"]):
+    """ List of pulses which in turn can be saved in csv or text files
 
     Notes:
         * This class is attached to ''Pulse'' class and should not be instantiated
 
-    Here is list of available functions in ''Pulse_List'' class
+    Here is list of available functions in "Pulse_List" class
         * pulse_dictionary(): supplemented function to save pulses
         * save_pulses(): currently support csv + txt
 
@@ -90,8 +90,7 @@ class Pulse_List(list["Pulse"]):
         return dict_pulses
 
     def save_pulses(self, saved_type: str, file_path: str = "pulses") -> None:
-        """
-        Save pulses info in supported formats
+        """ Save pulses info in supported formats
         Args:
             saved_type: csv, txt - will add other types
             file_path: path of t
@@ -102,7 +101,7 @@ class Pulse_List(list["Pulse"]):
         dict_pulses = self.pulse_dictionary()
         # Check if path exist:
         if not os.path.exists(file_path):
-            raise ValueError('Invalid filepath')
+            raise ValueError(f'Invalid filepath {file_path}')
         if saved_type == 'csv':
             # Save CSV
             save_pulses_df = pd.DataFrame(dict_pulses)
@@ -118,7 +117,7 @@ class Pulse_List(list["Pulse"]):
 
 
 class Pulse(ABC):
-    """
+    """ Provides base model
     Our pulse model has 5 characteristics which are inherent to realistic pulse in a quantum computer. There are also
     T1 and T2 which are quantum decoherence times, but our model does not have at the moment.
     These 5 characteristics are: frequency, duration of the pulse, x_amp which is the max amplitude of the pulse,
@@ -128,7 +127,7 @@ class Pulse(ABC):
         * This class is abstract class; users should not initiate this class. Please check the examples in Pulse01
         and Pulse12 docstring
 
-    Here is a list of attributes available to ''Pulse'' class:
+    Here is a list of attributes available to "Pulse" class:
         * frequency:
         * x_amp:
         * sx_amp:
@@ -139,13 +138,12 @@ class Pulse(ABC):
         * pulse_list: Pulse_List: class attr - list of pulses that have been initiated
         * draw(): draw sine waveform of the pulse (figurative only)
     """
-    pulse_list = Pulse_List()
+    pulse_list = PulseList()
 
     def __init__(self, frequency: float,
                  x_amp: float, sx_amp: float,
                  drag_coeff: float, duration: int) -> None:
-        """
-        Initiate pulse and add it to the list
+        """ Initiates pulse and add it to the list
         Args:
             frequency: in Hz and 0 in default.
                        Users should set the frequency from TR protocol or get
@@ -208,10 +206,10 @@ class Pulse01(Pulse):
         pulse01 = Pulse01(x_amp=0.2, duration=144)
         pulse01.show()
 
-    Here is a list of attributes available in ''Pulse01'' class (except from the one we have with ''Pulse'' class):
+    Here is a list of attributes available in "Pulse01" class (except from the one we have with ''Pulse'' class):
         * pulse12: related Pulse12 model
         * is_pulse12_there(): check if Pulse12 exists
-        * All attributes of abstract class ''Pulse''
+        * All attributes of abstract class "Pulse"
     """
 
     def __init__(self, frequency: float = 0.,
@@ -229,6 +227,10 @@ class Pulse01(Pulse):
             duration:
             pulse12:
         """
+        if duration == 0:
+            raise MissingDurationPulse('Duration should not be 0!')
+        if x_amp == 0:
+            raise MissingAmplitudePulse('Amplitude should not be 0!')
         super().__init__(frequency=frequency, x_amp=x_amp,
                          sx_amp=sx_amp, drag_coeff=drag_coeff,
                          duration=duration)
@@ -293,9 +295,9 @@ class Pulse12(Pulse):
         * Pulse12 should share some pulse01's parameters such as: frequency, x_amp and duration.
         However, the package does not force that restriction
 
-    Here is list of attributes that available in ''Pulse12'' class:
+    Here is list of attributes that available in "Pulse12" class:
         * pulse01: related Pulse01
-        * All attributes of abstract class ''Pulse''
+        * All attributes of abstract class "Pulse"
     """
 
     def __init__(self, pulse01: Pulse01,
@@ -316,6 +318,10 @@ class Pulse12(Pulse):
             drag_coeff:
             duration:
         """
+        if duration == 0:
+            raise MissingDurationPulse('Duration should not be 0!')
+        if x_amp == 0:
+            raise MissingAmplitudePulse('Amplitude should not be 0!')
         super().__init__(frequency=frequency, x_amp=x_amp,
                          sx_amp=sx_amp, drag_coeff=drag_coeff,
                          duration=duration)

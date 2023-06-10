@@ -33,8 +33,7 @@ from numpy.typing import NDArray
 # Fitting functions
 def fit_function(x_values: Iterable[float], y_values: Iterable[float],
                  function: Callable, init_params: Iterable[float]) -> Tuple:
-    """
-    Used to plot fit line based on given x, y values
+    """ Used to plot fit line based on given x, y values
     Args:
         x_values:
         y_values:
@@ -51,8 +50,7 @@ def fit_function(x_values: Iterable[float], y_values: Iterable[float],
 
 
 def average_counter(counts: Iterable, num_shots: int) -> NDArray:
-    """
-    Simple average over an array
+    """ Simple average over an array
     Args:
         counts:
         num_shots:
@@ -71,8 +69,7 @@ def average_counter(counts: Iterable, num_shots: int) -> NDArray:
 
 
 def reshape_complex_vec(vec: NDArray) -> NDArray:
-    """
-    Take in complex vector vec and return 2d array w/ real, imag entries.
+    """ Take in complex vector vec and return 2d array w/ real, imag entries.
 
     Args:
         vec:

@@ -33,8 +33,7 @@ if not os.path.exists(folder_path):
 
 
 def write_log(backend) -> None:
-    """
-    Write an info log that contains some information about the accessed quantum computer
+    """ Write an info log that contains some information about the accessed quantum computer
     Args:
         backend: IBMBackend
     """

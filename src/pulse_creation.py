@@ -27,65 +27,64 @@ from qiskit import pulse
 
 from src.pulse import Pulse
 
+from typing import Union
 
-class Pulse_Schedule:
-    """
-    Overwriting the phase offset and gaussian schedule method for pulse model
-    """
 
+class GateSchedule:
+    """ Provides custom schedules
+    Here is list of available static methods of "GateSchedule" class:
+        * freq_gaussian(): sweep over frequency
+        * x_amp_gaussian(): sweep over x_amp
+    """
     @staticmethod
-    def single_pulse_schedule(backend: IBMBackend,
-                              pulse_model: Pulse,
-                              name: str = '',
-                              drive_phase: float = 0,
-                              drive_beta: float = 0,
-                              channel: int = 0) -> ScheduleBlock:
+    def freq_gaussian(
+            backend: IBMBackend,
+            frequency: float,
+            pulse_model: Pulse,
+            qubit: int,
+    ) -> ScheduleBlock:
         """
 
         Args:
             backend:
+            frequency:
             pulse_model:
-            name:
-            drive_phase:
-            drive_beta:
-            channel:
+            qubit:
 
         Returns:
-
+            ScheduleBlock: object
         """
-        drive_sigma = pulse_model.duration / 4
-        with pulse.build(backend=backend) as drive_schedule:
-            drive_chan = pulse.drive_channel(channel)
-            pulse.set_frequency(pulse_model.frequency, drive_chan)
-            with pulse.phase_offset(drive_phase):
-                pulse.play(pulse.Drag(pulse_model.duration, pulse_model.x_amp,
-                                      drive_sigma, drive_beta, name=name), drive_chan)
-
-        return drive_schedule
+        with pulse.build(backend=backend) as gaussian_schedule:
+            drive_chan = pulse.drive_channel(qubit)
+            pulse.set_frequency(frequency, drive_chan)
+            pulse.play(pulse.Gaussian(duration=pulse_model.duration,
+                                      sigma=pulse_model.sigma, amp=pulse_model.x_amp), drive_chan)
+        return gaussian_schedule
 
     @staticmethod
-    def single_pulse_gaussian_schedule(backend: IBMBackend,
-                                       pulse_model: Pulse,
-                                       channel: int = 0,
-                                       name: str = '') -> ScheduleBlock:
+    def x_amp_gaussian(
+            backend: IBMBackend,
+            x_amp: float,
+            pulse_model: Pulse,
+            qubit: int,
+    ) -> ScheduleBlock:
         """
 
         Args:
             backend:
+            x_amp:
             pulse_model:
-            channel:
-            name:
+            qubit:
 
         Returns:
 
         """
-        with pulse.build(backend=backend) as drive_schedule:
-            drive_chan = pulse.drive_channel(channel)
+        with pulse.build(backend=backend) as gaussian_schedule:
+            drive_chan = pulse.drive_channel(qubit)
             pulse.set_frequency(pulse_model.frequency, drive_chan)
-            pulse.play(pulse.Gaussian(duration=pulse_model.duration, amp=pulse_model.x_amp,
-                                      sigma=pulse_model.duration / 4, name=name), drive_chan)
-        return drive_schedule
-
+            pulse.play(pulse.Gaussian(duration=pulse_model.duration,
+                                      sigma=pulse_model.sigma, amp=x_amp), drive_chan)
+        return gaussian_schedule
 
 class Shift:
     """
