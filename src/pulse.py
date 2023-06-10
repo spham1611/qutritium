@@ -50,8 +50,7 @@ class Pulse_List(list["Pulse"]):
                        'frequency': [],
                        'x_amp': [],
                        'sx_amp': [],
-                       'beta_dephase': [],
-                       'beta_leakage': [],
+                       'drag_coefficient': [],
                        'sigma': [],
                        'pulse_pointer': [],
                        }
@@ -73,8 +72,7 @@ class Pulse_List(list["Pulse"]):
             dict_pulses['frequency'].append(pulse.frequency)
             dict_pulses['x_amp'].append(pulse.x_amp)
             dict_pulses['sx_amp'].append(pulse.sx_amp)
-            dict_pulses['beta_dephase'].append(pulse.beta_dephase)
-            dict_pulses['beta_leakage'].append(pulse.beta_leakage)
+            dict_pulses['drag_coefficient'].append(pulse.drag_coeff)
             dict_pulses['sigma'].append(pulse.sigma)
 
         return dict_pulses
@@ -126,8 +124,7 @@ class Pulse(ABC):
         * frequency:
         * x_amp:
         * sx_amp:
-        * beta_dephase:
-        * beta_leakage:
+        * drag_coeff:
         * duration:
         * sigma: duration / 4
         * id: unique id of pulse
@@ -136,8 +133,9 @@ class Pulse(ABC):
     """
     pulse_list = Pulse_List()
 
-    def __init__(self, frequency: float, x_amp: float, sx_amp: float,
-                 beta_dephase: float, beta_leakage: float, duration: int) -> None:
+    def __init__(self, frequency: float,
+                 x_amp: float, sx_amp: float,
+                 drag_coeff: float, duration: int) -> None:
         """
         Initiate pulse and add it to the list
         Args:
@@ -145,8 +143,7 @@ class Pulse(ABC):
                        Users should set the frequency from TR protocol instead of self initializing.
             x_amp:
             sx_amp:
-            beta_dephase:
-            beta_leakage:
+            drag_coeff:
             duration: in milliseconds
         Raises:
             ValueError: raise if pulse has invalid frequency, time and x_amp
@@ -158,8 +155,7 @@ class Pulse(ABC):
         self.frequency: float = frequency
         self.x_amp: float = x_amp
         self.sx_amp: float = sx_amp if sx_amp else self.x_amp / 2
-        self.beta_leakage: float = beta_leakage
-        self.beta_dephase: float = beta_dephase
+        self.drag_coeff: float = drag_coeff
         self.duration: int = duration
         self.sigma = duration / 4 if duration else 0
         self.id = uuid.uuid4()
@@ -206,10 +202,12 @@ class Pulse01(Pulse):
     Here is a list of attributes available in ''Pulse01'' class (except from the one we have with ''Pulse'' class):
         * pulse12: related Pulse12 model
         * is_pulse12_there(): check if Pulse12 exists
+        * All attributes of abstract class ''Pulse''
     """
 
-    def __init__(self, frequency: float = 0, x_amp: float = 0.2, sx_amp: float = 0,
-                 beta_dephase: float = 0, beta_leakage: float = 0, duration: int = 144,
+    def __init__(self, frequency: float = 0.,
+                 x_amp: float = 0.2, sx_amp: float = 0.,
+                 drag_coeff: float = 0., duration: int = 144,
                  pulse12: Pulse12 = None) -> None:
         """
         It depends on types of quantum computer that the frequency may vary.
@@ -218,13 +216,13 @@ class Pulse01(Pulse):
             frequency:
             x_amp:
             sx_amp:
-            beta_dephase:
-            beta_leakage:
+            drag_coeff:
             duration:
             pulse12:
         """
-        super().__init__(frequency=frequency, x_amp=x_amp, sx_amp=sx_amp,
-                         beta_dephase=beta_dephase, beta_leakage=beta_leakage, duration=duration)
+        super().__init__(frequency=frequency, x_amp=x_amp,
+                         sx_amp=sx_amp, drag_coeff=drag_coeff,
+                         duration=duration)
         self.pulse12 = pulse12
 
     def __str__(self) -> str:
@@ -234,7 +232,7 @@ class Pulse01(Pulse):
         return (
             f"Pulse01: id={self.id}, frequency={self.frequency}, "
             f"x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
-            f"beta_dephase={self.beta_dephase}, beta_leakage={self.beta_leakage}, "
+            f"drag_coeff={self.drag_coeff}, "
             f"duration={self.duration}, sigma={self.sigma}"
         )
 
@@ -245,7 +243,7 @@ class Pulse01(Pulse):
         return (
             f"Pulse01: id={self.id}, frequency={self.frequency}, "
             f"x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
-            f"beta_dephase={self.beta_dephase}, beta_leakage={self.beta_leakage}, "
+            f"drag_coeff={self.drag_coeff}, "
             f"duration={self.duration}, sigma={self.sigma}"
         )
 
@@ -261,8 +259,7 @@ class Pulse01(Pulse):
                 self.frequency == other.frequency
                 and self.x_amp == other.x_amp
                 and self.sx_amp == other.sx_amp
-                and self.beta_leakage == other.beta_leakage
-                and self.beta_dephase == other.beta_dephase
+                and self.drag_coeff == other.drag_coeff
                 and self.duration == other.duration
         )
 
@@ -289,10 +286,13 @@ class Pulse12(Pulse):
 
     Here is list of attributes that available in ''Pulse12'' class:
         * pulse01: related Pulse01
+        * All attributes of abstract class ''Pulse''
     """
 
-    def __init__(self, pulse01: Pulse01, frequency: float = 0, x_amp: float = 0.2, sx_amp: float = 0,
-                 beta_dephase: float = 0, beta_leakage: float = 0, duration: int = 144,
+    def __init__(self, pulse01: Pulse01,
+                 frequency: float = 0., x_amp: float = 0.2,
+                 sx_amp: float = 0., drag_coeff: float = 0.,
+                 duration: int = 144,
                  ) -> None:
         """
         It depends on types of quantum computer that the frequency may vary.
@@ -304,12 +304,12 @@ class Pulse12(Pulse):
             frequency:
             x_amp:
             sx_amp:
-            beta_dephase:
-            beta_leakage:
+            drag_coeff:
             duration:
         """
-        super().__init__(frequency=frequency, x_amp=x_amp, sx_amp=sx_amp,
-                         beta_dephase=beta_dephase, beta_leakage=beta_leakage, duration=duration)
+        super().__init__(frequency=frequency, x_amp=x_amp,
+                         sx_amp=sx_amp, drag_coeff=drag_coeff,
+                         duration=duration)
         self.pulse01 = pulse01
         self.pulse01.pulse12 = self
 
@@ -320,7 +320,7 @@ class Pulse12(Pulse):
         return (
             f"Pulse12: id={self.id}, frequency={self.frequency}, "
             f"x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
-            f"beta_dephase={self.beta_dephase}, beta_leakage={self.beta_leakage}, "
+            f"drag_coeff={self.drag_coeff}, "
             f"duration={self.duration}, sigma={self.sigma}"
         )
 
@@ -331,7 +331,7 @@ class Pulse12(Pulse):
         return (
             f"Pulse12: id={self.id}, frequency={self.frequency},"
             f" x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
-            f"beta_dephase={self.beta_dephase}, beta_leakage={self.beta_leakage}, "
+            f"drag_coeff={self.drag_coeff}, "
             f"duration={self.duration}, sigma={self.sigma}"
         )
 
@@ -345,7 +345,6 @@ class Pulse12(Pulse):
                 and self.frequency == other.frequency
                 and self.x_amp == other.x_amp
                 and self.sx_amp == other.sx_amp
-                and self.beta_leakage == other.beta_leakage
-                and self.beta_dephase == other.beta_dephase
+                and self.drag_coeff == other.drag_coeff
                 and self.duration == other.duration
         )
