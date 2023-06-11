@@ -27,7 +27,7 @@ import os.path
 import numpy as np
 import pandas as pd
 
-from qiskit import execute, pulse
+from qiskit import execute
 from qiskit.circuit import Gate, QuantumCircuit
 from qiskit.tools.monitor import job_monitor
 
@@ -36,7 +36,7 @@ from src.pulse import Pulse01, Pulse12
 from src.analyzer import DataAnalysis
 from src.constant import QUBIT_PARA
 from src.utility import fit_function
-from src.calibration.technique_basic import SharedAttr
+from src.calibration.mutual_attr import SharedAttr
 from src.pulse_creation import GateSchedule
 
 from numpy.typing import NDArray
@@ -88,7 +88,8 @@ class _TR(SharedAttr, ABC):
     """
 
     def __init__(self, pulse_model: Union[Pulse01, Pulse12],
-                 eff_provider: EffProvider, num_shots: int) -> None:
+                 eff_provider: EffProvider, backend_name: str,
+                 num_shots: int) -> None:
         """ _TR constructor
 
          Notes:
@@ -100,10 +101,12 @@ class _TR(SharedAttr, ABC):
             pulse_model: Either Pulse01 or Pulse12
             eff_provider: EffProvider instance
             num_shots: number of shots
+            backend_name:
 
         """
         super().__init__(pulse_model=pulse_model,
                          eff_provider=eff_provider,
+                         backend_name=backend_name,
                          num_shots=num_shots)
         # Need to be modified by the constructor of children classes
         self.default_frequency: float = 0.
@@ -163,10 +166,13 @@ class _TR(SharedAttr, ABC):
 
         """
         self.num_shots = num_shots if num_shots != 0 else self.num_shots
-        submitted_job = execute(experiments=self._package, backend=self.backend,
-                                shots=self.num_shots, meas_level=meas_level,
+        submitted_job = execute(experiments=self._package,
+                                backend=self.backend,
+                                shots=self.num_shots,
+                                meas_level=meas_level,
                                 meas_return=meas_return, **kwargs)
         self.submitted_job = submitted_job.job_id()
+        print(self.submitted_job)
         job_monitor(submitted_job)
 
     def analyze(self, job_id: Optional[str]) -> float:
@@ -221,18 +227,23 @@ class TR01(_TR):
     """
 
     def __init__(self, pulse_model: Pulse01,
-                 eff_provider: EffProvider, num_shots: int = 4096) -> None:
+                 eff_provider: EffProvider, backend_name: str = "ibmq_manila",
+                 num_shots: int = 4096) -> None:
         """ TR_01 constructor
 
         Args:
             eff_provider: EffProvider instance
             pulse_model: Pulse01
-            num_shots: default 20000 shots
+            num_shots: default 4096 shots
+            backend_name: default = 'ibmq_manila'
 
         Returns:
             * Instance of TR01
         """
-        super().__init__(pulse_model=pulse_model, eff_provider=eff_provider, num_shots=num_shots)
+        super().__init__(pulse_model=pulse_model,
+                         eff_provider=eff_provider,
+                         backend_name=backend_name,
+                         num_shots=num_shots)
         self.lambda_list = [10, 4.9, 1, -2]
         self.default_frequency = self.backend.defaults().qubit_freq_est[self.qubit]
         self.freq_sweeping_range_ghz: NDArray = set_up_freq(center_freq=self.default_frequency)
@@ -295,14 +306,21 @@ class TR12(_TR):
     """
 
     def __init__(self, pulse_model: Pulse12,
-                 eff_provider: EffProvider, num_shots: int = 4096) -> None:
+                 eff_provider: EffProvider, backend_name: str = "ibmq_manila",
+                 num_shots: int = 4096) -> None:
         """
 
         Args:
             pulse_model: Pulse12
-            num_shots: default 20000 shots
+            eff_provider:
+            num_shots: default 4096 shots
+            backend_name: default = 'ibmq_manila'
+
         """
-        super().__init__(pulse_model=pulse_model, eff_provider=eff_provider, num_shots=num_shots)
+        super().__init__(pulse_model=pulse_model,
+                         eff_provider=eff_provider,
+                         backend_name=backend_name,
+                         num_shots=num_shots)
         self.lambda_list = [10, 5, 1.5, -2]
         self.default_frequency = self.backend.defaults().qubit_freq_est[self.qubit] \
                                  + self.backend.properties().qubits[self.qubit][3].value * ghz_unit
@@ -317,7 +335,7 @@ class TR12(_TR):
 
         # Sweeping
         for freq in self.freq_sweeping_range_ghz:
-            qc_sweep = QuantumCircuit(self.qubit + 1, self.cbit)
+            qc_sweep = QuantumCircuit(self.qubit + 1, self.cbit + 1)
             qc_sweep.x(self.qubit)
             # noinspection DuplicatedCode
             qc_sweep.append(sweep_gate, [self.qubit])

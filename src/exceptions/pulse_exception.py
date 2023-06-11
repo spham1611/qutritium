@@ -1,5 +1,4 @@
 """Exceptions for pulse model"""
-from src.pulse import Pulse
 
 
 class MissingFrequencyPulse(Exception):

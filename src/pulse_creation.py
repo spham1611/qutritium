@@ -27,8 +27,6 @@ from qiskit import pulse
 
 from src.pulse import Pulse
 
-from typing import Union
-
 
 class GateSchedule:
     """ Provides custom schedules

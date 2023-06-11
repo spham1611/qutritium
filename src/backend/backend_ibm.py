@@ -91,7 +91,7 @@ class EffProvider(IBMProvider):
                              ', or save_account() function')
         self.eff_dict: DefaultDict[str, int] = eff_dict if eff_dict else initiate_eff_dict()
 
-    def backend(self, name: str = 'ibm_nairobi') -> Tuple[IBMBackend, DefaultDict]:
+    def retrieve_backend_info(self, name: str) -> Tuple[IBMBackend, DefaultDict]:
         """
 
         Args:

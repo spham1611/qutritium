@@ -47,20 +47,22 @@ class SharedAttr:
         * submitted_job: job id in string format
     """
     def __init__(self, pulse_model: Union[Pulse01, Pulse12],
-                 eff_provider: EffProvider, num_shots: int) -> None:
+                 eff_provider: EffProvider, backend_name: str,
+                 num_shots: int) -> None:
         """
 
         Args:
             pulse_model: Either Pulse01 or Pulse12
             eff_provider:
             num_shots: number of shots running in execute function
+            backend_name:
 
         Returns:
             SharedAttr instance (do not use!)
         """
         self.pulse_model: Union[Pulse01, Pulse12] = pulse_model
         self.eff_provider: EffProvider = eff_provider
-        self.backend, self.backend_params = self.eff_provider.backend()
+        self.backend, self.backend_params = self.eff_provider.retrieve_backend_info(backend_name)
         self.qubit: int = self.backend_params['effective_qubit']
         self.cbit: int = QUBIT_PARA.CBIT.value
         self.num_shots: int = num_shots

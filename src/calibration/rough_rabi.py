@@ -32,7 +32,7 @@ from src.backend.backend_ibm import EffProvider
 from src.utility import fit_function
 from src.pulse import Pulse01, Pulse12
 from src.analyzer import DataAnalysis
-from src.calibration.technique_basic import SharedAttr
+from src.calibration.mutual_attr import SharedAttr
 from src.exceptions.pulse_exception import MissingFrequencyPulse
 from src.pulse_creation import GateSchedule
 
@@ -157,7 +157,8 @@ class _RoughRabi(SharedAttr, ABC):
 
         """
         self.num_shots = num_shots if num_shots != 0 else self.num_shots
-        submitted_job = execute(self._package,
+        submitted_job = execute(experiments=self._package,
+                                backend=self.backend,
                                 meas_level=meas_level,
                                 meas_return=meas_return,
                                 shots=self.num_shots,
@@ -233,7 +234,8 @@ class RoughRabi01(_RoughRabi):
 
         # Sweeping
         for x_amp in self.x_amp_sweeping_range:
-            qc_rabi01 = QuantumCircuit(self.qubit + 1, 1)
+            qc_rabi01 = QuantumCircuit(self.qubit + 1, self.cbit + 1)
+            # noinspection DuplicatedCode
             qc_rabi01.append(self._rabi_gate, [self.qubit])
             rabi_schedule = GateSchedule.x_amp_gaussian(
                 backend=self.backend,
@@ -242,7 +244,7 @@ class RoughRabi01(_RoughRabi):
                 qubit=self.qubit
             )
             qc_rabi01.add_calibration(self._rabi_gate, [self.qubit], rabi_schedule)
-            qc_rabi01.measure(0, 0)
+            qc_rabi01.measure(self.qubit, self.cbit)
             self._package.append(qc_rabi01)
 
     def modify_pulse_model(self, job_id: str = None) -> None:
@@ -301,8 +303,9 @@ class RoughRabi12(_RoughRabi):
         self.pulse_model: Pulse12
 
         for x_amp in self.x_amp_sweeping_range:
-            qc_rabi12 = QuantumCircuit(self.qubit + 1, self.cbit)
+            qc_rabi12 = QuantumCircuit(self.qubit + 1, self.cbit + 1)
             qc_rabi12.x(self.qubit)
+            # noinspection DuplicatedCode
             qc_rabi12.append(self._rabi_gate, [self.qubit])
             rabi_schedule = GateSchedule.x_amp_gaussian(
                 backend=self.backend,
