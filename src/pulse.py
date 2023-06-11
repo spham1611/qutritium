@@ -274,12 +274,6 @@ class Pulse01(Pulse):
                 and self.duration == other.duration
         )
 
-    def is_pulse12_there(self) -> bool:
-        """
-        if Pulse12 exist
-        """
-        return self.pulse12 is not None
-
 
 class Pulse12(Pulse):
     """ Pulse that represents 1 -> 2 state. The pulse must go with its corresponding Pulse01.

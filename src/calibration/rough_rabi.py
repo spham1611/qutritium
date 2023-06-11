@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 
 from qiskit.circuit import QuantumCircuit, Gate
-from qiskit.tools.monitor import job_monitor
+from qiskit_ibm_provider.job import job_monitor
 from qiskit import execute
 
 from src.backend.backend_ibm import EffProvider
