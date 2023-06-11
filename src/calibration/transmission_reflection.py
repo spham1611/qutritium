@@ -29,7 +29,7 @@ import pandas as pd
 
 from qiskit import execute
 from qiskit.circuit import Gate, QuantumCircuit
-from qiskit.tools.monitor import job_monitor
+from qiskit_ibm_provider.job import job_monitor
 
 from src.backend.backend_ibm import EffProvider
 from src.pulse import Pulse01, Pulse12
@@ -115,6 +115,7 @@ class _TR(SharedAttr, ABC):
 
         # INTERNAL DESIGN: Used for fit_function()
         self._lambda_list = [0, 0, 0, 0]
+        self._sweep_gate = Gate("sweep", 1, [])
 
     @property
     def lambda_list(self) -> List[float]:
@@ -255,21 +256,20 @@ class TR01(_TR):
         """
 
         self.pulse_model: Pulse01
-        sweep_gate = Gate("sweep", 1, [])
 
         # Sweeping
-        frequencies_hz = self.freq_sweeping_range_ghz
+        frequencies_hz = self.freq_sweeping_range_ghz * ghz_unit
         for freq in frequencies_hz:
             qc_sweep = QuantumCircuit(self.qubit + 1, self.cbit + 1)
             # noinspection DuplicatedCode
-            qc_sweep.append(sweep_gate, [self.qubit])
+            qc_sweep.append(self._sweep_gate, [self.qubit])
             freq_schedule = GateSchedule.freq_gaussian(
                 backend=self.backend,
                 frequency=freq,
                 pulse_model=self.pulse_model,
                 qubit=self.qubit
             )
-            qc_sweep.add_calibration(sweep_gate, [self.qubit], freq_schedule)
+            qc_sweep.add_calibration(self._sweep_gate, [self.qubit], freq_schedule)
             qc_sweep.measure(self.qubit, self.cbit)
             self._package.append(qc_sweep)
 
@@ -331,21 +331,20 @@ class TR12(_TR):
         """
 
         self.pulse_model: Pulse12
-        sweep_gate = Gate("sweep", 1, [])
-
+        freq_sweeping_range = self.freq_sweeping_range_ghz * ghz_unit
         # Sweeping
-        for freq in self.freq_sweeping_range_ghz:
+        for freq in freq_sweeping_range:
             qc_sweep = QuantumCircuit(self.qubit + 1, self.cbit + 1)
             qc_sweep.x(self.qubit)
             # noinspection DuplicatedCode
-            qc_sweep.append(sweep_gate, [self.qubit])
+            qc_sweep.append(self._sweep_gate, [self.qubit])
             freq_schedule = GateSchedule.freq_gaussian(
                 backend=self.backend,
                 frequency=freq,
                 pulse_model=self.pulse_model,
                 qubit=self.qubit
             )
-            qc_sweep.add_calibration(sweep_gate, [self.qubit], freq_schedule)
+            qc_sweep.add_calibration(self._sweep_gate, [self.qubit], freq_schedule)
             qc_sweep.measure(self.qubit, self.cbit)
             self._package.append(qc_sweep)
 
