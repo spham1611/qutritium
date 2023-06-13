@@ -29,13 +29,13 @@ from qiskit_ibm_provider.ibm_provider import IBMJob
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import train_test_split
 
-from src.constant import QUBIT_PARA
+from src.constant import QubitParameters
 from src.utility import reshape_complex_vec
 
 from scipy.optimize import minimize
 from typing import List, Iterable, Union
 
-SCALE_FACTOR = QUBIT_PARA.SCALE_FACTOR.value
+SCALE_FACTOR = QubitParameters.SCALE_FACTOR.value
 
 
 class DataAnalysis:
@@ -103,10 +103,15 @@ class DataAnalysis:
         """
         experiment_results = self.experiment.result(timeout=120)
         for i in range(len(experiment_results.results)):
-            if average:
-                self._IQ_data.append(np.real(experiment_results.get_memory(i)[0] * SCALE_FACTOR))
+            check_indices = experiment_results.get_memory(i)
+            if len(check_indices) > 1:
+                data = check_indices[:, 0] * SCALE_FACTOR
             else:
-                self._IQ_data.append(experiment_results.get_memory(i)[:, 0] * SCALE_FACTOR)
+                data = check_indices[0] * SCALE_FACTOR
+            if average:
+                self._IQ_data.append(np.real(data))
+            else:
+                self._IQ_data.append(data)
 
         self._gfs = [self._IQ_data[0], self._IQ_data[1], self._IQ_data[2]]
 
