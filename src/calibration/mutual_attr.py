@@ -23,7 +23,7 @@
 """This abstract class is meant to refactor attr appearing in calibration techniques"""
 from src.backend.backend_ibm import EffProvider
 from src.pulse import Pulse01, Pulse12
-from src.constant import QUBIT_PARA
+from src.constant import QubitParameters
 
 from typing import Union
 
@@ -64,6 +64,6 @@ class SharedAttr:
         self.eff_provider: EffProvider = eff_provider
         self.backend, self.backend_params = self.eff_provider.retrieve_backend_info(backend_name)
         self.qubit: int = self.backend_params['effective_qubit']
-        self.cbit: int = QUBIT_PARA.CBIT.value
+        self.cbit: int = QubitParameters.CBIT.value
         self.num_shots: int = num_shots
         self.submitted_job: str = ''

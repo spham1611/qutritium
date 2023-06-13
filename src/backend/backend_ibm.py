@@ -25,7 +25,7 @@ from qiskit_ibm_provider import IBMProvider, IBMBackend
 from typing import DefaultDict, Tuple, Optional
 from collections import defaultdict
 from src.simple_backend_log import write_log
-from src.constant import QUBIT_PARA
+from src.constant import QubitParameters
 
 
 def initiate_eff_dict() -> DefaultDict:
@@ -37,7 +37,7 @@ def initiate_eff_dict() -> DefaultDict:
         'ibm_nairobi'    6
         ===============  ===============
     """
-    return defaultdict(lambda: 0, {'ibm_nairobi': QUBIT_PARA.QUBIT_CHANGE_TYPE1.value})
+    return defaultdict(lambda: 0, {'ibm_nairobi': QubitParameters.QUBIT_CHANGE_TYPE1.value})
 
 
 class EffProvider(IBMProvider):
@@ -102,8 +102,8 @@ class EffProvider(IBMProvider):
 
         """
         backend = self.backends(name=name)[0]
-        default_freq = backend.defaults().qubit_freq_est[self.eff_dict[name]]
-        anharmonicity = backend.properties().qubits[self.eff_dict[name]][3].value * QUBIT_PARA.GHZ.value
+        default_freq = backend.qubit_properties(self.eff_dict[name]).frequency
+        anharmonicity = backend.qubit_properties(self.eff_dict[name]).__getattribute__('anharmonicity')
         backend_params = defaultdict(lambda: 0,
                                      {'effective_qubit': self.eff_dict[name],
                                       'drive_frequency': default_freq,

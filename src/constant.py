@@ -2,7 +2,7 @@
 from enum import Enum
 
 
-class QUBIT_PARA(Enum):
+class QubitParameters(Enum):
     """
     Qutrit related Parameters
     """
@@ -18,3 +18,4 @@ class QUBIT_PARA(Enum):
 
     # Scale
     SCALE_FACTOR = 1.0e-14
+
