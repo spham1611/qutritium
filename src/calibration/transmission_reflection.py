@@ -23,9 +23,7 @@
 """ Transmission and reflection techniques for state transition 0-1 and 1-2.
 In here TR stands for transmission and reflection
 """
-import os.path
 import numpy as np
-import pandas as pd
 
 from qiskit import execute
 from qiskit.circuit import Gate, QuantumCircuit
@@ -34,7 +32,7 @@ from qiskit_ibm_provider.job import job_monitor
 from src.backend.backend_ibm import EffProvider
 from src.pulse import Pulse01, Pulse12
 from src.analyzer import DataAnalysis
-from src.constant import QUBIT_PARA
+from src.constant import QubitParameters
 from src.utility import fit_function
 from src.calibration.mutual_attr import SharedAttr
 from src.pulse_creation import GateSchedule
@@ -43,8 +41,8 @@ from numpy.typing import NDArray
 from typing import List, Union, Optional
 from abc import ABC, abstractmethod
 
-mhz_unit = QUBIT_PARA.MHZ.value
-ghz_unit = QUBIT_PARA.GHZ.value
+mhz_unit = QubitParameters.MHZ.value
+ghz_unit = QubitParameters.GHZ.value
 
 
 def set_up_freq(center_freq: float,
@@ -60,7 +58,8 @@ def set_up_freq(center_freq: float,
     max_freq = center_freq + freq_span * mhz_unit / 2
     min_freq = center_freq - freq_span * mhz_unit / 2
 
-    return np.arange(min_freq / ghz_unit, max_freq / ghz_unit, freq_step * mhz_unit / ghz_unit)
+    freq_ghz = np.arange(min_freq / ghz_unit, max_freq / ghz_unit, freq_step * mhz_unit / ghz_unit)
+    return freq_ghz
 
 
 class _TR(SharedAttr, ABC):
@@ -110,7 +109,7 @@ class _TR(SharedAttr, ABC):
                          num_shots=num_shots)
         # Need to be modified by the constructor of children classes
         self.default_frequency: float = 0.
-        self._package: List = []
+        self.package: List = []
         self.freq_sweeping_range_ghz = None
 
         # INTERNAL DESIGN: Used for fit_function()
@@ -135,23 +134,6 @@ class _TR(SharedAttr, ABC):
     def modify_pulse_model(self, job_id: str = None) -> None:
         raise NotImplementedError
 
-    def save_data(self, root_path: str, y_values) -> None:
-        """ Save data in csv format
-
-        Args:
-            root_path: path to save the data of the TR experiment
-            y_values:
-        """
-        data = {
-            'freq_range': self.freq_sweeping_range_ghz,
-            'f_val': y_values
-        }
-        if not os.path.exists(root_path):
-            raise ValueError(f'Invalid filepath {root_path}')
-        df = pd.DataFrame(data)
-        full_path = os.path.join(root_path, f'TR of {self.pulse_model.__class__.__name__}.csv')
-        df.to_csv(full_path, index=False)
-
     def run_monitor(self,
                     num_shots: int = 0,
                     meas_return: str = 'avg',
@@ -167,7 +149,7 @@ class _TR(SharedAttr, ABC):
 
         """
         self.num_shots = num_shots if num_shots != 0 else self.num_shots
-        submitted_job = execute(experiments=self._package,
+        submitted_job = execute(experiments=self.package,
                                 backend=self.backend,
                                 shots=self.num_shots,
                                 meas_level=meas_level,
@@ -185,20 +167,19 @@ class _TR(SharedAttr, ABC):
             freq: Frequency after calculation
         """
         if job_id is None:
-            experiment = self.backend.retrieve_job(self.submitted_job)
+            experiment = self.eff_provider.retrieve_job(self.submitted_job)
             analyzer = DataAnalysis(experiment=experiment)
         else:
-            experiment = self.backend.retrieve_job(job_id)
+            experiment = self.eff_provider.retrieve_job(job_id)
             analyzer = DataAnalysis(experiment=experiment)
 
-        # Analyze data -> Save csv and output frequency
+        # Analyze data
         analyzer.retrieve_data(average=True)
         fit_params, _ = fit_function(self.freq_sweeping_range_ghz, analyzer.IQ_data,
                                      lambda x, c1, q_freq, c2, c3:
                                      (c1 / np.pi) * (c2 / ((x - q_freq) ** 2 + c2 ** 2)) + c3,
                                      self.lambda_list)
-        self.save_data(y_values=analyzer.IQ_data, root_path='output')
-        freq = fit_params[1] * QUBIT_PARA.GHZ.value
+        freq = fit_params[1] * QubitParameters.GHZ.value
         return freq
 
     def draw(self) -> None:
@@ -246,7 +227,7 @@ class TR01(_TR):
                          backend_name=backend_name,
                          num_shots=num_shots)
         self.lambda_list = [10, 4.9, 1, -2]
-        self.default_frequency = self.backend.defaults().qubit_freq_est[self.qubit]
+        self.default_frequency = int(self.backend_params['drive_frequency'])
         self.freq_sweeping_range_ghz: NDArray = set_up_freq(center_freq=self.default_frequency)
 
     def prepare_circuit(self) -> None:
@@ -262,16 +243,16 @@ class TR01(_TR):
         for freq in frequencies_hz:
             qc_sweep = QuantumCircuit(self.qubit + 1, self.cbit + 1)
             # noinspection DuplicatedCode
-            qc_sweep.append(self._sweep_gate, [self.qubit])
+            qc_sweep.append(self._sweep_gate, [0])
             freq_schedule = GateSchedule.freq_gaussian(
                 backend=self.backend,
                 frequency=freq,
                 pulse_model=self.pulse_model,
                 qubit=self.qubit
             )
-            qc_sweep.add_calibration(self._sweep_gate, [self.qubit], freq_schedule)
             qc_sweep.measure(self.qubit, self.cbit)
-            self._package.append(qc_sweep)
+            qc_sweep.add_calibration(self._sweep_gate, [self.qubit], freq_schedule)
+            self.package.append(qc_sweep)
 
     def modify_pulse_model(self, job_id: str = None) -> None:
         """ Only used for debugging + getting result from past job
@@ -322,8 +303,7 @@ class TR12(_TR):
                          backend_name=backend_name,
                          num_shots=num_shots)
         self.lambda_list = [10, 5, 1.5, -2]
-        self.default_frequency = self.backend.defaults().qubit_freq_est[self.qubit] \
-                                 + self.backend.properties().qubits[self.qubit][3].value * ghz_unit
+        self.default_frequency = int(self.backend_params['drive_frequency'] + self.backend_params['anharmonicity'])
         self.freq_sweeping_range_ghz: NDArray = set_up_freq(center_freq=self.default_frequency)
 
     def prepare_circuit(self) -> None:
@@ -346,7 +326,7 @@ class TR12(_TR):
             )
             qc_sweep.add_calibration(self._sweep_gate, [self.qubit], freq_schedule)
             qc_sweep.measure(self.qubit, self.cbit)
-            self._package.append(qc_sweep)
+            self.package.append(qc_sweep)
 
     def modify_pulse_model(self, job_id: str = None) -> None:
         """ Only used for debugging + getting result from past job

@@ -22,7 +22,6 @@
 
 """Rough rabi techniques"""
 import numpy as np
-import pandas as pd
 
 from qiskit.circuit import QuantumCircuit, Gate
 from qiskit_ibm_provider.job import job_monitor
@@ -126,22 +125,6 @@ class _RoughRabi(SharedAttr, ABC):
     def modify_pulse_model(self, job_id: str = None) -> None:
         raise NotImplementedError
 
-    def save_data(self, y_values) -> None:
-        """
-
-        Args:
-            y_values:
-
-        Returns:
-
-        """
-        data = {
-            'x_amp': self._x_amp_sweeping_range,
-            'x_amp_val': y_values
-        }
-        df = pd.DataFrame(data)
-        df.to_csv(f'Rabii of {self.pulse_model.__class__.__name__}.csv', index=False)
-
     def run_monitor(self,
                     num_shots: int = 0,
                     meas_level: int = 1,
@@ -175,11 +158,11 @@ class _RoughRabi(SharedAttr, ABC):
         Returns:
 
         """
-        if job_id is None:
-            experiment = self.backend.retrieve_job(self.submitted_job)
+        if not job_id:
+            experiment = self.eff_provider.retrieve_job(self.submitted_job)
             analyzer = DataAnalysis(experiment=experiment)
         else:
-            experiment = self.backend.retrieve_job(job_id)
+            experiment = self.eff_provider.retrieve_job(job_id)
             analyzer = DataAnalysis(experiment=experiment)
 
         analyzer.retrieve_data(average=True)
@@ -187,7 +170,6 @@ class _RoughRabi(SharedAttr, ABC):
                                      lambda x, c1, c2, drive_period, phi:
                                      (c1 * np.cos(2 * np.pi * x / drive_period - phi) + c2),
                                      [5, 0, 0.5, 0])
-        self.save_data(analyzer.IQ_data)
 
         x_amp = (fit_params[2] / 2)
         return x_amp
