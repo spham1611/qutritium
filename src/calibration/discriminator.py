@@ -31,14 +31,14 @@ from qiskit_ibm_provider.job import job_monitor
 from src.pulse import Pulse12
 from src.backend.backend_ibm import EffProvider
 from src.calibration.mutual_attr import SharedAttr
-from src.constant import QUBIT_PARA
+from src.constant import QubitParameters
 from src.analyzer import DataAnalysis
 
 from typing import List
 
 
-mhz_unit = QUBIT_PARA.MHZ.value
-ghz_unit = QUBIT_PARA.GHZ.value
+mhz_unit = QubitParameters.MHZ.value
+ghz_unit = QubitParameters.GHZ.value
 
 
 class DiscriminatorQutrit(SharedAttr):
