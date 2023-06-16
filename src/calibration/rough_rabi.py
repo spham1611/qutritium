@@ -63,7 +63,8 @@ class _RoughRabi(SharedAttr, ABC):
     """
 
     def __init__(self, pulse_model: Union[Pulse01, Pulse12],
-                 eff_provider: EffProvider, num_shots: int) -> None:
+                 eff_provider: EffProvider, backend_name: str,
+                 num_shots: int) -> None:
         """ _RoughRabi Constructor
 
         Notes:
@@ -78,6 +79,7 @@ class _RoughRabi(SharedAttr, ABC):
             raise MissingFrequencyPulse('Need to have frequency. Assign it from TR function or default drive frequency')
         super().__init__(pulse_model=pulse_model,
                          eff_provider=eff_provider,
+                         backend_name=backend_name,
                          num_shots=num_shots)
         self._package: List = []
 
@@ -147,6 +149,7 @@ class _RoughRabi(SharedAttr, ABC):
                                 shots=self.num_shots,
                                 **kwargs)
         self.submitted_job = submitted_job.job_id()
+        print(self.submitted_job)
         job_monitor(submitted_job)
 
     def analyze(self, job_id: str) -> float:
@@ -196,7 +199,8 @@ class RoughRabi01(_RoughRabi):
     """
 
     def __init__(self, pulse_model: Pulse01,
-                 eff_provider, num_shots: int = 4096) -> None:
+                 eff_provider, backend_name='ibmq_manila',
+                 num_shots: int = 4096) -> None:
         """ Ctor
 
         Args:
@@ -204,7 +208,10 @@ class RoughRabi01(_RoughRabi):
             eff_provider
             num_shots:
         """
-        super().__init__(pulse_model=pulse_model, eff_provider=eff_provider, num_shots=num_shots)
+        super().__init__(pulse_model=pulse_model,
+                         eff_provider=eff_provider,
+                         backend_name=backend_name,
+                         num_shots=num_shots)
         self.lambda_list = [5, 0, 0.5, 0]
 
     def prepare_circuit(self) -> None:
@@ -265,7 +272,8 @@ class RoughRabi12(_RoughRabi):
     """
 
     def __init__(self, pulse_model: Pulse12,
-                 eff_provider: EffProvider, num_shots: int = 4096) -> None:
+                 eff_provider: EffProvider, backend_name='ibmq_manila',
+                 num_shots: int = 4096) -> None:
         """ Ctor
 
         Args:
@@ -273,7 +281,10 @@ class RoughRabi12(_RoughRabi):
             eff_provider
             num_shots:
         """
-        super().__init__(pulse_model=pulse_model, eff_provider=eff_provider, num_shots=num_shots)
+        super().__init__(pulse_model=pulse_model,
+                         eff_provider=eff_provider,
+                         backend_name=backend_name,
+                         num_shots=num_shots)
         self.lambda_list = [5, 0, 0.4, 0]
 
     def prepare_circuit(self) -> None:

@@ -26,13 +26,15 @@ import logging
 import datetime
 import os
 
+from qiskit_ibm_provider import IBMBackend
+
 folder_log = "log_files"
 folder_path = os.path.abspath(folder_log)
 if not os.path.exists(folder_path):
     raise NotADirectoryError(folder_path)
 
 
-def write_log(backend) -> None:
+def write_log(backend: IBMBackend) -> None:
     """ Write an info log that contains some information about the accessed quantum computer
     Args:
         backend: IBMBackend
@@ -45,9 +47,9 @@ def write_log(backend) -> None:
     us = 1e6
     ns = 1e9
     GHz = 1e-9
-
+    backend_name = backend.name
     # Configure logging with the timestamped log file name
-    log_filename = os.path.join(folder_path, f"logfile_{timestamp}.log")
+    log_filename = os.path.join(folder_path, f"logfile_{timestamp} {backend_name}.log")
     logging.basicConfig(filename=log_filename, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logging.info(f'Connecting to IBM quantum computer: {config.backend_name} ...')
 

@@ -213,7 +213,7 @@ class Pulse01(Pulse):
     """
 
     def __init__(self, frequency: float = 0.,
-                 x_amp: float = 0.2, sx_amp: float = 0.,
+                 x_amp: float = 0., sx_amp: float = 0.,
                  drag_coeff: float = 0., duration: int = 144,
                  pulse12: Pulse12 = None) -> None:
         """
@@ -295,7 +295,7 @@ class Pulse12(Pulse):
     """
 
     def __init__(self, pulse01: Pulse01,
-                 frequency: float = 0., x_amp: float = 0.2,
+                 frequency: float = 0., x_amp: float = 0.,
                  sx_amp: float = 0., drag_coeff: float = 0.,
                  duration: int = 144,
                  ) -> None:
