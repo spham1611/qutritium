@@ -1,8 +1,28 @@
-"""
+# MIT License
+#
+# Copyright (c) [2023] [son pham, tien nguyen, bach bao]
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
-"""
 import numpy as np
 import copy
+from qiskit_ibm_provider import IBMBackend
 from typing import List, NamedTuple, DefaultDict, Union, Optional, Any
 from collections import namedtuple, defaultdict
 from src.pulse import Pulse01, Pulse12
@@ -168,7 +188,8 @@ class Pulse_Wrapper:
                  pulse12: Pulse12,
                  /,
                  qc: Qutrit_circuit,
-                 native_gates: Optional[List[str]]) -> None:
+                 native_gates: Optional[List[str]],
+                 backend: IBMBackend) -> None:
         """
         :param qc:
         """
@@ -178,6 +199,7 @@ class Pulse_Wrapper:
         self._su3_dictionary: DefaultDict[str, Any] = defaultdict()
         self.pulse01 = pulse01
         self.pulse12 = pulse12
+        self.backend = backend
         self.native_gates = native_gates if native_gates else ['u_d', 'rx', 'ry', 'rz']
         self.pulse_wrapper = []
         self.qiskit_schedule = None
@@ -216,35 +238,41 @@ class Pulse_Wrapper:
                         pulse = copy.deepcopy(self.pulse01)
                         pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter[0]
                         phase_operator = Shift_phase(value=phase_ud[0],
-                                                     channel=instruction.first_qutrit, subspace="01")
+                                                     channel=instruction.first_qutrit, subspace="01",
+                                                     backend=self.backend)
                     elif gate_type[2:4] == "12":
                         pulse = copy.deepcopy(self.pulse12)
                         pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter[0]
                         phase_operator = Shift_phase(value=phase_ud[1],
-                                                     channel=instruction.first_qutrit, subspace="12")
+                                                     channel=instruction.first_qutrit, subspace="12",
+                                                     backend=self.backend)
                     else:
                         raise Exception("The gate can not be decomposed to pulse")
                 elif gate_type[0:2] == "rz":
                     if gate_type[2:4] == "01":
                         pulse = "01"
                         phase_operator = Shift_phase(value=phase_ud[0],
-                                                     channel=instruction.first_qutrit, subspace="01")
+                                                     channel=instruction.first_qutrit, subspace="01",
+                                                     backend=self.backend)
                     elif gate_type[2:4] == "12":
                         pulse = "12"
                         phase_operator = Shift_phase(value=phase_ud[1],
-                                                     channel=instruction.first_qutrit, subspace="12")
+                                                     channel=instruction.first_qutrit, subspace="12",
+                                                     backend=self.backend)
                     else:
                         raise Exception("The gate can not be decomposed to pulse")
                 elif gate_type == 'g01':
                     pulse = copy.deepcopy(self.pulse01)
                     pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter[0]
                     phase_operator = Shift_phase(value=phase_ud[0] + ins.parameter[1],
-                                                 channel=instruction.first_qutrit, subspace="01")
+                                                 channel=instruction.first_qutrit, subspace="01",
+                                                 backend=self.backend)
                 elif gate_type == 'g12':
                     pulse = copy.deepcopy(self.pulse12)
                     pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter[0]
                     phase_operator = Shift_phase(value=phase_ud[1] + ins.parameter[1],
-                                                 channel=instruction.first_qutrit, subspace="12")
+                                                 channel=instruction.first_qutrit, subspace="12",
+                                                 backend=self.backend)
                 else:
                     raise Exception("The gate can not be decomposed to pulse")
                 self.pulse_wrapper.append([pulse, phase_operator, instruction.first_qutrit])
@@ -257,13 +285,14 @@ class Pulse_Wrapper:
         schedule = ScheduleBlock()
         for pul in self.pulse_wrapper:
             if type(pul[0]) in [Pulse01, Pulse12]:
-                tmp_pulse = Pulse_Schedule.single_pulse_gaussian_schedule(pulse_model=pul[0], channel=pul[2])
+                tmp_pulse = Pulse_Schedule.single_pulse_gaussian_schedule(pulse_model=pul[0], channel=pul[2],
+                                                                          backend=self.backend)
                 schedule += pul[1].generate_qiskit_phase_offset(gate_pulse=tmp_pulse)
             else:
                 if pul[1].subspace == "01":
-                    freq_op = Set_frequency(value=self.pulse01.frequency, channel=pul[2])
+                    freq_op = Set_frequency(value=self.pulse01.frequency, channel=pul[2], backend=self.backend)
                 elif pul[1].subspace == "12":
-                    freq_op = Set_frequency(value=self.pulse12.frequency, channel=pul[2])
+                    freq_op = Set_frequency(value=self.pulse12.frequency, channel=pul[2], backend=self.backend)
                 else:
                     raise Exception("The pulse can not be translated to Qiskit pulse")
                 freq_schedule = freq_op.generate_qiskit_freq()
