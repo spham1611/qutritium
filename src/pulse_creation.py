@@ -84,22 +84,6 @@ class GateSchedule:
                                       sigma=pulse_model.sigma, amp=x_amp), drive_chan)
         return gaussian_schedule
 
-class Shift:
-    """
-
-    """
-
-    def __init__(self, shift_type: str, value: float, channel: int) -> None:
-        """
-
-        Args:
-            shift_type:
-            value:
-            channel:
-        """
-        self.type = shift_type
-
-
 class Shift_phase:
     """
 

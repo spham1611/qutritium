@@ -8,7 +8,6 @@ from src.pulse import Pulse01, Pulse12
 from qiskit import QuantumCircuit
 from qiskit.circuit import Gate
 from qiskit_ibm_provider.ibm_provider import IBMProvider
-
 pi = np.pi
 '''
 Simple example to test VM 
@@ -70,7 +69,7 @@ qc.add_gate("hdm", first_qutrit_set=0)
 pulse_wrap = Pulse_Wrapper(pulse01, pulse12, qc=qc, native_gates=['x12', 'x01',
                                                                   'rx12', 'rx01',
                                                                   'rz01', 'rz12',
-                                                                  'z01', 'z12'])
+                                                                  'z01', 'z12'], backend=backend)
 pulse_wrap.decompose()
 pulse_wrap.print_decompose_ins()
 pulse_wrap.convert_to_pulse_model()
