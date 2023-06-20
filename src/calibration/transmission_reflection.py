@@ -31,11 +31,11 @@ from qiskit_ibm_provider.job import job_monitor
 
 from src.backend.backend_ibm import EffProvider
 from src.pulse import Pulse01, Pulse12
-from src.analyzer import DataAnalysis
 from src.constant import QubitParameters
 from src.utility import fit_function
-from src.calibration.mutual_attr import SharedAttr
+from src.calibration.shared_attr import SharedAttr
 from src.pulse_creation import GateSchedule
+from src.analyzer import DataAnalysis
 
 from numpy.typing import NDArray
 from typing import List, Union, Optional
@@ -111,10 +111,12 @@ class _TR(SharedAttr, ABC):
         self.default_frequency: float = 0.
         self.package: List = []
         self.freq_sweeping_range_ghz = None
+        self.analyzer: Optional[DataAnalysis] = None
 
         # INTERNAL DESIGN: Used for fit_function()
         self._lambda_list = [0, 0, 0, 0]
         self._sweep_gate = Gate("sweep", 1, [])
+        self._tr_fit: Optional[NDArray] = None
 
     @property
     def lambda_list(self) -> List[float]:
@@ -125,6 +127,10 @@ class _TR(SharedAttr, ABC):
         if len(val_list) != 4:
             raise ValueError("Lambda list does not have sufficient elements")
         self._lambda_list = val_list
+
+    @property
+    def tr_fit(self) -> NDArray:
+        return self._tr_fit
 
     @abstractmethod
     def prepare_circuit(self) -> None:
@@ -168,17 +174,16 @@ class _TR(SharedAttr, ABC):
         """
         if job_id is None:
             experiment = self.eff_provider.retrieve_job(self.submitted_job)
-            analyzer = DataAnalysis(experiment=experiment)
         else:
             experiment = self.eff_provider.retrieve_job(job_id)
-            analyzer = DataAnalysis(experiment=experiment)
+        self.analyzer = DataAnalysis(experiment)
 
         # Analyze data
-        analyzer.retrieve_data(average=True)
-        fit_params, _ = fit_function(self.freq_sweeping_range_ghz, analyzer.IQ_data,
-                                     lambda x, c1, q_freq, c2, c3:
-                                     (c1 / np.pi) * (c2 / ((x - q_freq) ** 2 + c2 ** 2)) + c3,
-                                     self.lambda_list)
+        self.analyzer.retrieve_data(average=True)
+        fit_params, self._tr_fit = fit_function(self.freq_sweeping_range_ghz, self.analyzer.IQ_data,
+                                                lambda x, c1, q_freq, c2, c3:
+                                                (c1 / np.pi) * (c2 / ((x - q_freq) ** 2 + c2 ** 2)) + c3,
+                                                self.lambda_list)
         freq = fit_params[1] * QubitParameters.GHZ.value
         return freq
 
@@ -302,7 +307,7 @@ class TR12(_TR):
                          eff_provider=eff_provider,
                          backend_name=backend_name,
                          num_shots=num_shots)
-        self.lambda_list = [10, 5, 1.5, -2]
+        self.lambda_list = [10, 4.8, 1, -2]
         self.default_frequency = int(self.backend_params['drive_frequency'] + self.backend_params['anharmonicity'])
         self.freq_sweeping_range_ghz: NDArray = set_up_freq(center_freq=self.default_frequency)
 
@@ -324,8 +329,8 @@ class TR12(_TR):
                 pulse_model=self.pulse_model,
                 qubit=self.qubit
             )
-            qc_sweep.add_calibration(self._sweep_gate, [self.qubit], freq_schedule)
             qc_sweep.measure(self.qubit, self.cbit)
+            qc_sweep.add_calibration(self._sweep_gate, [self.qubit], freq_schedule)
             self.package.append(qc_sweep)
 
     def modify_pulse_model(self, job_id: str = None) -> None:

@@ -30,10 +30,10 @@ from qiskit import execute
 from src.backend.backend_ibm import EffProvider
 from src.utility import fit_function
 from src.pulse import Pulse01, Pulse12
-from src.analyzer import DataAnalysis
-from src.calibration.mutual_attr import SharedAttr
+from src.calibration.shared_attr import SharedAttr
 from src.exceptions.pulse_exception import MissingFrequencyPulse
 from src.pulse_creation import GateSchedule
+from src.analyzer import DataAnalysis
 
 from abc import ABC, abstractmethod
 from typing import Optional, List, Union
@@ -81,12 +81,14 @@ class _RoughRabi(SharedAttr, ABC):
                          eff_provider=eff_provider,
                          backend_name=backend_name,
                          num_shots=num_shots)
+        self.analyzer: Optional[DataAnalysis] = None
         self._package: List = []
 
         # INTERNAL DESIGN ONLY
         self._lambda_list: Optional[List] = None
         self._x_amp_sweeping_range = np.linspace(-1., 1., 100)
         self._rabi_gate = Gate("Rabi", 1, [])
+        self._rr_fit: Optional[NDArray] = None
 
     @property
     def lambda_list(self) -> List[float]:
@@ -109,6 +111,10 @@ class _RoughRabi(SharedAttr, ABC):
     @property
     def x_amp_sweeping_range(self) -> NDArray:
         return self._x_amp_sweeping_range
+
+    @property
+    def rr_fit(self) -> NDArray:
+        return self._rr_fit
 
     def reset_sweeping_range(self, min_val: float, max_val: float, steps: int) -> None:
         """
@@ -163,16 +169,15 @@ class _RoughRabi(SharedAttr, ABC):
         """
         if not job_id:
             experiment = self.eff_provider.retrieve_job(self.submitted_job)
-            analyzer = DataAnalysis(experiment=experiment)
         else:
             experiment = self.eff_provider.retrieve_job(job_id)
-            analyzer = DataAnalysis(experiment=experiment)
+        self.analyzer = DataAnalysis(experiment)
 
-        analyzer.retrieve_data(average=True)
-        fit_params, _ = fit_function(self._x_amp_sweeping_range, analyzer.IQ_data,
-                                     lambda x, c1, c2, drive_period, phi:
-                                     (c1 * np.cos(2 * np.pi * x / drive_period - phi) + c2),
-                                     [5, 0, 0.5, 0])
+        self.analyzer.retrieve_data(average=True)
+        fit_params, self._rr_fit = fit_function(self._x_amp_sweeping_range, self.analyzer.IQ_data,
+                                                lambda x, c1, c2, drive_period, phi:
+                                                (c1 * np.cos(2 * np.pi * x / drive_period - phi) + c2),
+                                                [5, 0, 0.5, 0])
 
         x_amp = (fit_params[2] / 2)
         return x_amp

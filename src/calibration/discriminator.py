@@ -30,7 +30,7 @@ from qiskit_ibm_provider.job import job_monitor
 
 from src.pulse import Pulse12
 from src.backend.backend_ibm import EffProvider
-from src.calibration.mutual_attr import SharedAttr
+from src.calibration.shared_attr import SharedAttr
 from src.constant import QubitParameters
 from src.analyzer import DataAnalysis
 
@@ -79,8 +79,8 @@ class DiscriminatorQutrit(SharedAttr):
         """
         super().__init__(eff_provider=eff_provider, pulse_model=pulse_model,
                          backend_name=backend_name, num_shots=num_shots)
-        self.ramsey_frequency01 = self.pulse_model.pulse01.frequency
-        self.ramsey_frequency12 = self.pulse_model.frequency
+        self.ramsey_frequency01 = self.pulse_model.pulse01.frequency + (4 - 3.2160804020100504) * mhz_unit
+        self.ramsey_frequency12 = self.pulse_model.frequency + (5 - (5.2612+4.5226)/2) * mhz_unit
         self._delay_gate = Gate('5mus_delay', 1, [])
         self._x12 = Gate('X12', 1, [])
 

@@ -70,7 +70,7 @@ class DataAnalysis:
         """ Takes IBMJob and collect its data
 
         Args:
-            experiment:
+            experiment: can be None if user runs independent tools
         """
         self.experiment = experiment
         self.num_shots = self.experiment.backend_options().get('shots')

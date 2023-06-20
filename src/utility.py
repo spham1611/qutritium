@@ -38,13 +38,13 @@ def fit_function(x_values: Iterable[float], y_values: Iterable[float],
         x_values:
         y_values:
         function: Evaluating function
-        init_params: coefficient calibration
+        init_params: coefficient guess
 
     Returns:
         fit_params: optimal values for the least squared
         y_fit: fit line
     """
-    fit_parameters, *_ = curve_fit(function, x_values, y_values, init_params)
+    fit_parameters, *_ = curve_fit(function, x_values, y_values, init_params, maxfev=5000)
     y_fit = function(x_values, *fit_parameters)
     return fit_parameters, y_fit
 
