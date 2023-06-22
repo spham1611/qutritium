@@ -99,7 +99,7 @@ class DiscriminatorQutrit(SharedAttr):
         self._x12_schedule = x12_schedule
 
         # Package
-        self._package: List = []
+        self.package: List = []
 
     def prepare_circuit(self) -> None:
         """ Ground state + 2 excited states """
@@ -125,14 +125,14 @@ class DiscriminatorQutrit(SharedAttr):
         second_excited_state_prep.add_calibration(self._x12, [self.qubit], self._x12_schedule)
         second_excited_state_prep.measure(self.qubit, self.cbit)
 
-        self._package = [ground_state_prep, first_excited_state_prep, second_excited_state_prep]
+        self.package = [ground_state_prep, first_excited_state_prep, second_excited_state_prep]
 
     def run_monitor(self,
                     num_shots: int = 4096,
                     meas_return='single',
                     meas_level=1) -> None:
         self.num_shots = num_shots if num_shots != 0 else self.num_shots
-        discriminator_job = execute(experiments=self._package,
+        discriminator_job = execute(experiments=self.package,
                                     backend=self.backend,
                                     shots=self.num_shots,
                                     meas_return=meas_return,

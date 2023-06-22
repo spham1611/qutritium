@@ -141,7 +141,7 @@ class _TR(SharedAttr, ABC):
         raise NotImplementedError
 
     def run_monitor(self,
-                    num_shots: int = 0,
+                    num_shots: Optional[int] = 0,
                     meas_return: str = 'avg',
                     meas_level: int = 1,
                     **kwargs) -> None:
@@ -159,7 +159,8 @@ class _TR(SharedAttr, ABC):
                                 backend=self.backend,
                                 shots=self.num_shots,
                                 meas_level=meas_level,
-                                meas_return=meas_return, **kwargs)
+                                meas_return=meas_return,
+                                **kwargs)
         self.submitted_job = submitted_job.job_id()
         print(self.submitted_job)
         job_monitor(submitted_job)

@@ -26,7 +26,7 @@ from qiskit_ibm_provider import IBMBackend
 from typing import List, NamedTuple, DefaultDict, Union, Optional, Any
 from collections import namedtuple, defaultdict
 from src.pulse import Pulse01, Pulse12
-from src.pulse_creation import Pulse_Schedule, Shift_phase, Set_frequency
+from src.pulse_creation import GateSchedule, Shift_phase, Set_frequency
 from src.quantumcircuit.qc_elementary_matrices import u_d, r01, r12
 from src.quantumcircuit.instruction_structure import Instruction
 from src.quantumcircuit.QC import Qutrit_circuit
@@ -285,8 +285,8 @@ class Pulse_Wrapper:
         schedule = ScheduleBlock()
         for pul in self.pulse_wrapper:
             if type(pul[0]) in [Pulse01, Pulse12]:
-                tmp_pulse = Pulse_Schedule.single_pulse_gaussian_schedule(pulse_model=pul[0], channel=pul[2],
-                                                                          backend=self.backend)
+                tmp_pulse = GateSchedule.single_pulse_gaussian_schedule(pulse_model=pul[0], channel=pul[2],
+                                                                        backend=self.backend)
                 schedule += pul[1].generate_qiskit_phase_offset(gate_pulse=tmp_pulse)
             else:
                 if pul[1].subspace == "01":
