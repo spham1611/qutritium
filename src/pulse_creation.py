@@ -34,6 +34,7 @@ class GateSchedule:
         * freq_gaussian(): sweep over frequency
         * x_amp_gaussian(): sweep over x_amp
     """
+
     @staticmethod
     def freq_gaussian(
             backend: IBMBackend,
@@ -83,6 +84,7 @@ class GateSchedule:
             pulse.play(pulse.Gaussian(duration=pulse_model.duration,
                                       sigma=pulse_model.sigma, amp=x_amp), drive_chan)
         return gaussian_schedule
+
 
 class Shift_phase:
     """

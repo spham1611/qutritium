@@ -26,7 +26,7 @@ from qiskit_ibm_provider import IBMBackend
 from typing import List, NamedTuple, DefaultDict, Union, Optional, Any
 from collections import namedtuple, defaultdict
 from src.pulse import Pulse01, Pulse12
-from src.pulse_creation import GateSchedule, Shift_phase, Set_frequency
+from src.pulse_creation import Shift_phase, Set_frequency, GateSchedule
 from src.quantumcircuit.qc_elementary_matrices import u_d, r01, r12
 from src.quantumcircuit.instruction_structure import Instruction
 from src.quantumcircuit.QC import Qutrit_circuit
@@ -42,51 +42,105 @@ class Parameter:
     @classmethod
     def get_parameters(cls, su3: NDArray) -> NamedTuple:
         """
+        Decompose su3 matrices to parameters of selected gates
+        Args:
+            su3: SU3 Matrix
 
-        :param su3:
-        :return:
+        Returns: Parameters constructing the gates
+
         """
+        pi = np.pi
         params = namedtuple('params', 'theta1 theta2 theta3 phi1 phi2 phi3 phi4 phi5 phi6')
         if abs(np.absolute(su3[2, 2]) - 1) < 1e-6:
             theta1 = phi1 = theta2 = phi2 = 0
             phi4 = np.angle(su3[2, 2])
             phi5 = np.angle(su3[1, 1])
             phi6 = np.angle(su3[0, 0])
-            phi3 = np.angle(su3[1, 0]) - phi5 + np.pi / 2
+            # phi3 = phi6 - pi/2 - np.angle(U[0, 1])
+            phi3 = np.angle(su3[1, 0]) - phi5 + pi / 2
             theta3 = 2 * np.arccos(np.round(np.absolute(su3[1, 1]), 6))
-        elif abs(2 * np.arccos(np.round(np.absolute(su3[2, 2]), 6)) - np.pi) < 1e-6:
-            theta1 = theta3 = 0
-            theta2 = np.pi
-            phi2 = 0
-            phi6 = np.angle(su3[0, 0])
-            phi4 = -phi2 + np.angle(su3[2, 1]) + np.pi / 2
-            phi5 = phi2 + np.angle(su3[1, 2]) + np.pi / 2
-            phi1 = phi3 = 0
         else:
-            phi4 = np.angle(su3[2, 2])
             theta2 = 2 * np.arccos(np.round(np.absolute(su3[2, 2]), 6))
-            phi2 = np.angle(su3[2, 1]) - phi4 + np.pi / 2
-            phi1 = np.angle(-su3[2, 0]) - phi2 - phi4
             theta1 = 2 * np.arccos(np.round(np.absolute(su3[2, 1]) / np.sin(theta2 / 2), 6))
             theta3 = 2 * np.arccos(np.round(np.absolute(su3[1, 2]) / np.sin(theta2 / 2), 6))
-            phi5 = np.angle(su3[1, 2]) + phi2 + np.pi / 2
-            phi3 = np.angle(np.cos(theta1 / 2) * np.cos(theta2 / 2) * np.cos(theta3 / 2)
-                            - su3[1, 1] * np.exp(-1j * phi5)) + phi1
-            phi6 = np.angle(-su3[0, 2]) + phi3 + phi2
-
+            phi1 = phi2 = phi3 = phi4 = phi5 = phi6 = 0
+            if abs(theta2 - pi) < 1e-6 and theta1 < 1e-6 and theta3 < 1e-6:
+                theta1 = theta3 = 0
+                theta2 = pi
+                phi2 = 0
+                phi6 = np.angle(su3[0, 0])
+                phi4 = -phi2 + np.angle(su3[2, 1]) + pi / 2
+                phi5 = phi2 + np.angle(su3[1, 2]) + pi / 2
+                phi1 = phi3 = 0
+            elif abs(theta1) < 1e-6:
+                if abs(theta2) < 1e-6:
+                    theta1 = theta2 = 0
+                    theta3 = pi
+                    phi5 = phi1 = phi2 = 0
+                    phi4 = np.angle(su3[2, 2])
+                    phi3 = np.angle(su3[1, 0]) + pi / 2
+                    phi6 = np.angle(su3[0, 1]) + np.angle(su3[1, 0]) + pi
+                elif abs(theta2 - pi) < 1e-6:
+                    theta1 = 0
+                    theta2 = theta3 = pi
+                    phi1 = phi4 = phi5 = 0
+                    phi3 = np.angle(su3[1, 0]) + pi / 2
+                    phi2 = np.angle(su3[2, 1]) + pi / 2
+                    phi6 = np.angle(su3[1, 0]) + np.angle(su3[2, 1]) + np.angle(su3[0, 2])
+            elif abs(theta1 - pi) < 1e-6:
+                theta1 = theta2 = pi
+                theta3 = 0
+                phi3 = phi5 = phi6 = 0
+                phi1 = -np.angle(su3[0, 1]) - pi / 2
+                phi2 = -np.angle(su3[1, 2]) - pi / 2
+                phi4 = np.angle(su3[0, 1]) + np.angle(su3[1, 2]) + np.angle(su3[2, 0])
+            else:
+                phi4 = np.angle(su3[2, 2])
+                phi2 = np.angle(su3[2, 1]) - phi4 + pi / 2
+                phi1 = np.angle(-su3[2, 0]) - phi2 - phi4
+                phi5 = np.angle(su3[1, 2]) + phi2 + pi / 2
+                phi3 = np.angle(np.cos(theta1 / 2) * np.cos(theta2 / 2) * np.cos(theta3 / 2)
+                                - su3[1, 1] * np.exp(-1j * phi5)) + phi1
+                phi6 = np.angle(-su3[0, 2]) + phi3 + phi2
+        # if abs(np.absolute(su3[2, 2]) - 1) < 1e-6:
+        #     theta1 = phi1 = theta2 = phi2 = 0
+        #     phi4 = np.angle(su3[2, 2])
+        #     phi5 = np.angle(su3[1, 1])
+        #     phi6 = np.angle(su3[0, 0])
+        #     phi3 = np.angle(su3[1, 0]) - phi5 + np.pi / 2
+        #     theta3 = 2 * np.arccos(np.round(np.absolute(su3[1, 1]), 6))
+        # elif abs(2 * np.arccos(np.round(np.absolute(su3[2, 2]), 6)) - np.pi) < 1e-6:
+        #     theta1 = theta3 = 0
+        #     theta2 = np.pi
+        #     phi2 = 0
+        #     phi6 = np.angle(su3[0, 0])
+        #     phi4 = -phi2 + np.angle(su3[2, 1]) + np.pi / 2
+        #     phi5 = phi2 + np.angle(su3[1, 2]) + np.pi / 2
+        #     phi1 = phi3 = 0
+        # else:
+        #     phi4 = np.angle(su3[2, 2])
+        #     theta2 = 2 * np.arccos(np.round(np.absolute(su3[2, 2]), 6))
+        #     phi2 = np.angle(su3[2, 1]) - phi4 + np.pi / 2
+        #     phi1 = np.angle(-su3[2, 0]) - phi2 - phi4
+        #     theta1 = 2 * np.arccos(np.round(np.absolute(su3[2, 1]) / np.sin(theta2 / 2), 6))
+        #     theta3 = 2 * np.arccos(np.round(np.absolute(su3[1, 2]) / np.sin(theta2 / 2), 6))
+        #     phi5 = np.angle(su3[1, 2]) + phi2 + np.pi / 2
+        #     phi3 = np.angle(np.cos(theta1 / 2) * np.cos(theta2 / 2) * np.cos(theta3 / 2)
+        #                     - su3[1, 1] * np.exp(-1j * phi5)) + phi1
+        #     phi6 = np.angle(-su3[0, 2]) + phi3 + phi2
         paras = params(theta1, theta2, theta3, phi1, phi2, phi3, phi4, phi5, phi6)
         return paras
 
 
 class SU3_matrices:
-    """
-
-    """
 
     def __init__(self, su3: NDArray, qutrit_index: int, n_qutrits: int) -> None:
         """
 
-        :param su3:
+        Args:
+            su3:
+            qutrit_index:
+            n_qutrits:
         """
         # Check dimensions
         assert su3.shape[0] == 3
@@ -157,6 +211,19 @@ class SU3_matrices:
                                                            parameter=[getattr(self.parameters, 'theta3'),
                                                                       getattr(self.parameters,
                                                                               'phi3')])]]
+
+    def decomposed_into_qc(self):
+        decomposed_qc = Qutrit_circuit(n_qutrit=self.n_qutrits, initial_state=None)
+        decomposed_qc.add_gate("g01", first_qutrit_set=self.qutrit_index, parameter=[getattr(self.parameters, 'theta1'),
+                                                                                     getattr(self.parameters, 'phi1')])
+        decomposed_qc.add_gate("g12", first_qutrit_set=self.qutrit_index, parameter=[getattr(self.parameters, 'theta2'),
+                                                                                     getattr(self.parameters, 'phi2')])
+        decomposed_qc.add_gate("g01", first_qutrit_set=self.qutrit_index, parameter=[getattr(self.parameters, 'theta3'),
+                                                                                     getattr(self.parameters, 'phi3')])
+        decomposed_qc.add_gate("u_d", first_qutrit_set=self.qutrit_index, parameter=[getattr(self.parameters, 'phi4'),
+                                                                                     getattr(self.parameters, 'phi5'),
+                                                                                     getattr(self.parameters, 'phi6')])
+        return decomposed_qc
 
     def __str__(self) -> str:
         """
@@ -285,8 +352,8 @@ class Pulse_Wrapper:
         schedule = ScheduleBlock()
         for pul in self.pulse_wrapper:
             if type(pul[0]) in [Pulse01, Pulse12]:
-                tmp_pulse = GateSchedule.single_pulse_gaussian_schedule(pulse_model=pul[0], channel=pul[2],
-                                                                        backend=self.backend)
+                tmp_pulse = GateSchedule.x_amp_gaussian(pulse_model=pul[0], qubit=pul[2],
+                                                        backend=self.backend, x_amp=pul[0].x_amp)
                 schedule += pul[1].generate_qiskit_phase_offset(gate_pulse=tmp_pulse)
             else:
                 if pul[1].subspace == "01":

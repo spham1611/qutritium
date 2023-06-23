@@ -1,3 +1,24 @@
+# MIT License
+#
+# Copyright (c) [2023] [son pham, tien nguyen, bach bao]
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 """
 Backend of the VM that can be used to simulate the Quantum Circuit
 """
@@ -29,7 +50,7 @@ class QASM_Simulator:
         self._SPAM_error = None
         self._error_meas: List = []
         self._measurement_result: List = []
-        self._error_meas = None
+        self._simulation_flag = False
 
     def add_SPAM_noise(self, p_prep: float, p_meas: float, error_type: str = 'Pauli_error') -> None:
         """
@@ -66,13 +87,15 @@ class QASM_Simulator:
         else:
             for i in self._operation_set:
                 self.state = np.einsum('ij,jk', i.effect_matrix, self.state)
+        self._simulation_flag = True
 
     def run(self, num_shots: int = 1024) -> None:
         """
         :param num_shots: Number of shots
         Performs the defined amount of shots.
         """
-        self._simulation()
+        if self._simulation_flag is False:
+            self._simulation()
         if self._measurement_flag:
             if self._SPAM_error:
                 probs_prep = [self._error_meas[i][1] for i in range(len(self._error_meas))]
@@ -103,7 +126,8 @@ class QASM_Simulator:
         """
         :return: Final state of the quantum circuit
         """
-        self._simulation()
+        if self._simulation_flag is False:
+            self._simulation()
         return self.state
 
     def result(self) -> List:
@@ -119,7 +143,8 @@ class QASM_Simulator:
         """
         :return: Density matrix of the current state of the quantum circuit
         """
-        self._simulation()
+        if self._simulation_flag is False:
+            self._simulation()
         return self.state @ np.transpose(self.state)
 
     def plot(self, plot_type: str) -> None:
