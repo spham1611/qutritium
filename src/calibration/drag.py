@@ -21,21 +21,18 @@
 # SOFTWARE.
 
 """Drag Coefficient circuit"""
-import qiskit.pulse as pulse
 import numpy as np
-import pandas as pd
 
-from qiskit.circuit import Parameter, Gate, QuantumCircuit
+from qiskit.circuit import Gate, QuantumCircuit
 from qiskit.tools.monitor import job_monitor
-from qiskit.pulse.schedule import ScheduleBlock
 from qiskit import execute
 from qiskit_ibm_provider import IBMJob
 
-from src.analyzer import DataAnalysis
+# from src.analyzer import DataAnalysis
 from src.pulse import Pulse01, Pulse12
 from src.backend.backend_ibm import EffProvider
 from src.pulse_creation import GateSchedule
-from src.calibration.shared_attr import SharedAttr
+from src.calibration.shared_attr import _SharedAttr
 from src.calibration.discriminator import DiscriminatorQutrit
 from src.exceptions.pulse_exception import (
     MissingDurationPulse,
@@ -43,11 +40,10 @@ from src.exceptions.pulse_exception import (
     MissingAmplitudePulse
 )
 
-from abc import ABC, abstractmethod
-from typing import List, Union, Optional
+from typing import Union, Optional
 
 
-class _DRAG(SharedAttr, ABC):
+class _DRAG(_SharedAttr):
     """
     The class act as provider + regulator for Drag Leakage.
     Drag Leakage flow: set up -> create circuit -> submit job to IBM -> get the result
@@ -87,14 +83,7 @@ class _DRAG(SharedAttr, ABC):
 
         # INTERNAL DESIGN ONLY
         self._drag_gate = Gate('DRAG', 1, [])
-
-    @abstractmethod
-    def prepare_circuit(self) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def modify_pulse_model(self, job_id: str = None) -> None:
-        raise NotImplementedError
+        self._delay_gate = Gate('5mus_delay', 1, [])
 
     def run_monitor(self,
                     num_shots: Optional[int] = 0,
@@ -131,8 +120,10 @@ class _DRAG(SharedAttr, ABC):
         ...
 
 
+# noinspection DuplicatedCode
 class DRAG01(_DRAG):
-    """ Used specifically for pulse01 model
+
+    """
 
     """
     def __init__(self, pulse_model: Pulse01,
@@ -157,4 +148,95 @@ class DRAG01(_DRAG):
         """
 
         """
-        for beta in
+        for beta in self.drag_sweeping_range:
+            beta_circ = QuantumCircuit(self.qubit + 1, self.cbit + 1)
+            beta_circ.append(self._delay_gate, [self.qubit])
+            beta_sweep_schedule = GateSchedule.drag(
+                backend=self.backend,
+                pulse_model=self.pulse_model,
+                beta=beta,
+                qubit=self.qubit
+            )
+            beta_circ.append(self._drag_gate, [self.qubit])
+            beta_circ.add_calibration(self._drag_gate, [self.qubit], beta_sweep_schedule)
+            beta_circ.add_calibration(self._delay_gate, [self.qubit], GateSchedule.delay(
+                backend=self.backend,
+                qubit=self.qubit,
+            ))
+            beta_circ.measure(self.qubit, self.cbit)
+            self.package.append(beta_circ)
+
+    def modify_pulse_model(self, job_id: str = None) -> None:
+        """
+
+        Args:
+            job_id:
+
+        Returns:
+
+        """
+        self.pulse_model: Pulse01
+        # Add Drag coefficient
+        drag = self.analyze(job_id)
+        self.pulse_model.drag_coeff = drag
+
+
+# noinspection DuplicatedCode
+class DRAG12(_DRAG):
+    """
+
+    """
+    def __init__(self, pulse_model: Pulse12,
+                 eff_provider: EffProvider, discriminator_package: DiscriminatorQutrit,
+                 backend_name: str = 'ibmq_manila', num_shots: int = 4096) -> None:
+        """
+
+        Args:
+            pulse_model:
+            eff_provider:
+            discriminator_package:
+            backend_name:
+            num_shots:
+        """
+        super().__init__(pulse_model=pulse_model,
+                         eff_provider=eff_provider,
+                         discriminator_package=discriminator_package,
+                         backend_name=backend_name,
+                         num_shots=num_shots)
+
+    def prepare_circuit(self) -> None:
+        """
+
+        """
+        # noinspection DuplicatedCode
+        for beta in self.drag_sweeping_range:
+            beta_circ = QuantumCircuit(self.qubit + 1, self.cbit + 1)
+            beta_circ.append(self._delay_gate, [self.qubit])
+            beta_sweep_schedule = GateSchedule.drag(
+                backend=self.backend,
+                qubit=self.qubit,
+                beta=beta,
+                pulse_model=self.pulse_model
+            )
+            beta_circ.append(self._drag_gate, [self.qubit])
+            beta_circ.add_calibration(self._drag_gate, [self.qubit], beta_sweep_schedule)
+            beta_circ.add_calibration(self._delay_gate, [self.qubit], GateSchedule.delay(
+                backend=self.backend,
+                qubit=self.qubit,
+            ))
+            beta_circ.measure(self.qubit, self.cbit)
+            self.package.append(beta_circ)
+
+    def modify_pulse_model(self, job_id: str = None) -> None:
+        """
+
+        Args:
+            job_id:
+
+        Returns:
+
+        """
+        self.pulse_model: Pulse12
+        # Add Drag coefficient
+        drag = self.analyze(job_id)
+        self.pulse_model.drag_coeff = drag
