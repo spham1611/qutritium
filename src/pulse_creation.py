@@ -85,6 +85,52 @@ class GateSchedule:
                                       sigma=pulse_model.sigma, amp=x_amp), drive_chan)
         return gaussian_schedule
 
+    @staticmethod
+    def drag(
+            backend: IBMBackend,
+            beta: float,
+            pulse_model: Pulse,
+            qubit: int
+    ) -> ScheduleBlock:
+        """
+
+        Args:
+            backend:
+            beta:
+            pulse_model:
+            qubit:
+
+        Returns:
+
+        """
+        with pulse.build(backend=backend) as beta_sweep:
+            drive_chan = pulse.drive_channel(qubit)
+            pulse.set_frequency(pulse_model.frequency, drive_chan)
+            pulse.play(pulse.Drag(duration=pulse_model.duration, sigma=pulse_model.sigma, amp=pulse_model.x_amp,
+                                  beta=beta), drive_chan)
+        return beta_sweep
+
+    @staticmethod
+    def delay(
+            backend: IBMBackend,
+            qubit: int,
+            delay_time: int = 22496
+    ) -> ScheduleBlock:
+        """
+
+        Args:
+            backend:
+            qubit:
+            delay_time:
+
+        Returns:
+
+        """
+        with pulse.build(backend=backend) as delay_schedule:
+            drive_chan = pulse.drive_channel(qubit)
+            pulse.delay(delay_time, drive_chan)
+        return delay_schedule
+
 
 class Shift_phase:
     """
