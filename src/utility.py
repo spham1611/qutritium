@@ -272,3 +272,12 @@ def plot_tomography(
         return fig
     else:
         return fig.savefig(file_name)
+
+
+def deprecate_function():
+    ...
+
+
+def deprecate_arguments():
+    ...
+
