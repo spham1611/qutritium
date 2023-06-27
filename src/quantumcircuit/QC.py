@@ -33,11 +33,12 @@ class Qutrit_circuit:
     """
     This class defines the wrapper for Virtual Machine which can be treated as a Quantum Circuit
     """
-
     def __init__(self, n_qutrit: int, initial_state: Union[NDArray, None]) -> None:
         """
-        :param n_qutrit: Number of qutrit
-        :param initial_state: The initial state of the quantum circuit
+
+        Args:
+            n_qutrit: Number of qutrit
+            initial_state: The initial state of the quantum circuit
         """
         self.n_qutrit = n_qutrit
         self.state = []
@@ -61,20 +62,32 @@ class Qutrit_circuit:
     def add_gate(self, gate_type: str,
                  first_qutrit_set: int,
                  second_qutrit_set: int = None,
-                 parameter: List[float] = None) -> None:
+                 parameter: List[float] = None,
+                 to_all: bool = False) -> None:
         """
-        :param gate_type: quantum gate type as define in gate_set
-        :param first_qutrit_set: acting qubits
-        :param second_qutrit_set: control qubits
-        :param parameter: parameter of rotation gate (if needed)
-        :return:
+        Args:
+            gate_type: the type of qutrit gate
+            first_qutrit_set: the index of first qutrit that the gate has effect on
+            second_qutrit_set: the index of second qutrit that the gate has effect on (for multi-qutrit gate)
+            parameter: the parameter of the gate
+            to_all: apply the gate to all qutrit in the circuit or not?
+        Returns:
         """
-        ins = Instruction(gate_type, self.n_qutrit,
-                          first_qutrit_set, second_qutrit_set,
-                          parameter)
-        self.operation_set = [ins]
+        if to_all is True and second_qutrit_set is None:
+            for i in range(self.n_qutrit):
+                ins = Instruction(gate_type, self.n_qutrit,
+                                  i, second_qutrit_set, parameter)
+                self.operation_set = [ins]
+
+        else:
+            ins = Instruction(gate_type, self.n_qutrit,
+                              first_qutrit_set, second_qutrit_set, parameter)
+            self.operation_set = [ins]
 
     def measure_all(self):
+        """
+        Adding measurement in the qutrit circuit
+        """
         if self._measurement_flag is True:
             raise Exception("A measurement has already been added to the circuit.")
         else:
@@ -96,7 +109,6 @@ class Qutrit_circuit:
     def reset_circuit(self) -> None:
         """
         Delete all the elements of the operation set
-        :return:
         """
         self._operation_set.clear()
 

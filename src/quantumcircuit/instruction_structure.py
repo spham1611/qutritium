@@ -86,7 +86,9 @@ class Instruction:
 
     def _effect(self) -> NDArray:
         """
-        Return the matrix form effect of gate on the quantum state
+
+        Returns: the matrix form effect of gate on the quantum state
+
         """
         if not self._is_two_qutrit_gate:
             if self.n_qutrit == 1:
@@ -134,6 +136,9 @@ class Instruction:
         return self._type
 
     def print(self):
+        """
+        Support printing out the instruction description
+        """
         if not self._is_two_qutrit_gate:
             if self.parameter is None:
                 print("Gate " + str(self._type) + ", acting qutrit: " + str(self.first_qutrit))

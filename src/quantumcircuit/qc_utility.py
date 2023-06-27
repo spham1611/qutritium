@@ -37,10 +37,13 @@ state_2 = [[0], [0], [1]]
 
 def single_matrix_form(gate_type: str, parameter: List[float] = None, omega=np.exp(1j * 2 * pi / 3)):
     """
-    :param gate_type: quantum gate type as define in gate_set
-    :param parameter: parameter of rotation gate (if needed)
-    :param omega: omega for phase gate
-    :return: matrix form of the qutrit gate
+
+    Args:
+        gate_type: quantum gate type as define in gate_set
+        parameter: parameter of rotation gate (if needed)
+        omega: omega for phase gate
+    Returns: matrix form of the qutrit gate
+
     """
     if gate_type == 'x01':
         return np.array([[0, 1, 0],
@@ -133,11 +136,16 @@ def single_matrix_form(gate_type: str, parameter: List[float] = None, omega=np.e
 
 def multi_matrix_form(gate_type: str, first_index: int, second_index: int):
     """
-    :param gate_type: quantum gate type as define in gate_set
-    :param first_index: acting qubit
-    :param second_index: control qubit
-    :return: matrix form of the control-qutrit gate
+
+    Args:
+        gate_type: quantum gate type as define in gate_set
+        first_index: acting qubit
+        second_index: control qubit
+
+    Returns: matrix form of the control-qutrit gate
+
     """
+
     if gate_type == 'CNOT':
         if second_index == first_index:
             raise Exception("Control qutrit and acting qutrit can not be the same")
@@ -164,10 +172,15 @@ def multi_matrix_form(gate_type: str, first_index: int, second_index: int):
 
 def statevector_to_state(state: np.array, n_qutrit: int):
     """
-    :param state: State vector of qutrits
-    :param n_qutrit: number of qutrit
-    :return: state coefficient and state in ket form
+
+    Args:
+        state: State vector of qutrits
+        n_qutrit: number of qutrit
+
+    Returns: state coefficient and state in ket form
+
     """
+
     if state.shape != (3 ** n_qutrit, 1):
         raise Exception("The dimension of the state is not align with given qubits")
     state_basis = []
@@ -189,10 +202,12 @@ def statevector_to_state(state: np.array, n_qutrit: int):
 
 def print_statevector(state: np.array, n_qutrit: int):
     """
-    Print the state vector of qutrits to ket form
-    :param state: State vector of qutrits
-    :param n_qutrit: number of qutrit
 
+    Args:
+        state: State vector of qutrits
+        n_qutrit: number of qutrit
+
+    Print the state vector of qutrits to ket form
     """
     state_coeff, state_cons = statevector_to_state(state, n_qutrit)
     print("State: ")
@@ -205,8 +220,12 @@ def print_statevector(state: np.array, n_qutrit: int):
 
 def checking_unitary(u: ndarray):
     """
-    :param u: Matrix to check for unitary
-    :return: True if matrix is unitary, False otherwise
+
+    Args:
+        u: Matrix to check
+
+    Returns: True if matrix is unitary, False otherwise
+
     """
     try:
         p = u @ inv(u)

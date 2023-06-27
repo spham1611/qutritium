@@ -21,22 +21,30 @@ Test adding function
 """
 Test decomposition function
 """
-qc_1 = Qutrit_circuit(1, None)
-qc_1.add_gate("hdm", first_qutrit_set=0)
-tmp_matrix = np.array([[0.0, 1.0, 0.0],
-                       [0.0, 0.0, 1.0],
-                       [1.0, 0.0, 0.0]], dtype=complex)
-decomposer = SU3_matrices(su3=tmp_matrix, qutrit_index=0, n_qutrits=1)
-qc_sub = decomposer.decomposed_into_qc()
-qc_sub.draw()
-qc = qc_1 + qc_sub
-qc.add_gate("hdm", first_qutrit_set=0)
-qc.measure_all()
-qc.draw()
+# qc_1 = Qutrit_circuit(1, None)
+# qc_1.add_gate("hdm", first_qutrit_set=0)
+# tmp_matrix = np.array([[0.0, 1.0, 0.0],
+#                        [0.0, 0.0, 1.0],
+#                        [1.0, 0.0, 0.0]], dtype=complex)
+# decomposer = SU3_matrices(su3=tmp_matrix, qutrit_index=0, n_qutrits=1)
+# qc_sub = decomposer.decomposed_into_qc()
+# qc_sub.draw()
+# qc = qc_1 + qc_sub
+# qc.add_gate("hdm", first_qutrit_set=0)
+# qc.measure_all()
+# qc.draw()
+
+"""
+Test to_all function
+"""
+qc_1 = Qutrit_circuit(5, None)
+qc_1.add_gate("hdm", first_qutrit_set=0, to_all=True)
+qc_1.draw()
+
 """
 Simulation
 """
-backend = QASM_Simulator(qc=qc)
-backend.run(num_shots=2048)
-print(backend.return_final_state())
-backend.plot(plot_type="histogram")
+# backend = QASM_Simulator(qc=qc)
+# backend.run(num_shots=2048)
+# print(backend.return_final_state())
+# backend.plot(plot_type="histogram")

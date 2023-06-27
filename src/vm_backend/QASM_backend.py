@@ -36,6 +36,7 @@ class QASM_Simulator:
     The class is used to represent a vm_backend simulator in VM,
     A Quantum Circuit is given as input to the vm_backend and the final result is returned.
     """
+
     def __init__(self, qc: Qutrit_circuit) -> None:
         """
 
@@ -54,9 +55,14 @@ class QASM_Simulator:
 
     def add_SPAM_noise(self, p_prep: float, p_meas: float, error_type: str = 'Pauli_error') -> None:
         """
-        :param p_prep:  Probability of preparation error
-        :param p_meas:  Probability of measurement error
-        :param error_type: The type of error
+
+        Args:
+            p_prep: Probability of preparation error
+            p_meas: Probability of measurement error
+            error_type: The type of error
+
+        Adding State Preparation and Measurement noise to the backend
+
         """
         if error_type == 'Pauli_error':
             self._error_meas = [('x+', p_meas / 2), ('x-', p_meas / 2), ('I', 1 - p_meas)]
@@ -79,8 +85,11 @@ class QASM_Simulator:
 
     def _simulation(self) -> None:
         """
+
         The simulation process of the vm_backend
+
         """
+
         if self._measurement_flag:
             for i in range(len(self._operation_set)-1):
                 self.state = np.einsum('ij,jk', self._operation_set[i].effect_matrix, self.state)
@@ -91,9 +100,14 @@ class QASM_Simulator:
 
     def run(self, num_shots: int = 1024) -> None:
         """
-        :param num_shots: Number of shots
-        Performs the defined amount of shots.
+
+        Args:
+            num_shots: Number of shots
+
+        Performs measurement through the defined amount of shots.
+
         """
+
         if self._simulation_flag is False:
             self._simulation()
         if self._measurement_flag:
@@ -115,7 +129,9 @@ class QASM_Simulator:
 
     def get_counts(self) -> Dict:
         """
-        :return: count of each state
+
+        Returns: count of each state
+
         """
         if self._measurement_result is not None:
             return dict((x, self._measurement_result.count(x)) for x in set(self._measurement_result))
@@ -124,7 +140,9 @@ class QASM_Simulator:
 
     def return_final_state(self) -> NDArray:
         """
-        :return: Final state of the quantum circuit
+
+        Returns: Final state of the quantum circuit
+
         """
         if self._simulation_flag is False:
             self._simulation()
@@ -132,7 +150,9 @@ class QASM_Simulator:
 
     def result(self) -> List:
         """
-        :return: Measurement result
+
+        Returns: Measurement result
+
         """
         if self._measurement_result is not None:
             return self._measurement_result
@@ -141,7 +161,9 @@ class QASM_Simulator:
 
     def density_matrix(self) -> NDArray:
         """
-        :return: Density matrix of the current state of the quantum circuit
+
+        Returns: Density matrix of the current state of the quantum circuit
+
         """
         if self._simulation_flag is False:
             self._simulation()
@@ -149,8 +171,12 @@ class QASM_Simulator:
 
     def plot(self, plot_type: str) -> None:
         """
-        :param plot_type: Type of plotting
-        Draw graph
+
+        Args:
+            plot_type: Type of plotting
+
+        Returns: Draw graph
+
         """
         result_dict = self.get_counts()
         if plot_type == "histogram":
