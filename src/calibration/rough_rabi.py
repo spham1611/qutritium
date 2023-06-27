@@ -30,17 +30,16 @@ from qiskit import execute
 from src.backend.backend_ibm import EffProvider
 from src.utility import fit_function
 from src.pulse import Pulse01, Pulse12
-from src.calibration.shared_attr import SharedAttr
+from src.calibration.shared_attr import _SharedAttr
 from src.exceptions.pulse_exception import MissingFrequencyPulse
 from src.pulse_creation import GateSchedule
 from src.analyzer import DataAnalysis
 
-from abc import ABC, abstractmethod
 from typing import Optional, List, Union
 from numpy.typing import NDArray
 
 
-class _RoughRabi(SharedAttr, ABC):
+class _RoughRabi(_SharedAttr):
     """ Provides basic attributes of RoughRabi technique and inherits SharedAttr available attributes
     A typical flow would be prepare_circuit -> run_monitor -> analyze IBMJob::
 
@@ -125,13 +124,6 @@ class _RoughRabi(SharedAttr, ABC):
             steps:
         """
         self._x_amp_sweeping_range = np.linspace(min_val, max_val, steps)
-
-    @abstractmethod
-    def prepare_circuit(self) -> None:
-        raise NotImplementedError
-
-    def modify_pulse_model(self, job_id: str = None) -> None:
-        raise NotImplementedError
 
     def run_monitor(self,
                     num_shots: int = 0,

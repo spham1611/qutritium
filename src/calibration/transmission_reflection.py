@@ -33,13 +33,12 @@ from src.backend.backend_ibm import EffProvider
 from src.pulse import Pulse01, Pulse12
 from src.constant import QubitParameters
 from src.utility import fit_function
-from src.calibration.shared_attr import SharedAttr
+from src.calibration.shared_attr import _SharedAttr
 from src.pulse_creation import GateSchedule
 from src.analyzer import DataAnalysis
 
 from numpy.typing import NDArray
 from typing import List, Union, Optional
-from abc import ABC, abstractmethod
 
 mhz_unit = QubitParameters.MHZ.value
 ghz_unit = QubitParameters.GHZ.value
@@ -62,7 +61,7 @@ def set_up_freq(center_freq: float,
     return freq_ghz
 
 
-class _TR(SharedAttr, ABC):
+class _TR(_SharedAttr):
     """ The class act as an abstract class for transmission and reflection technique used in pulse model
     TR typical flow: set up pulse and gates -> submit job to IBM -> Analyze the resulted pulse
     -> return Pulse model and save job_id.
@@ -131,14 +130,6 @@ class _TR(SharedAttr, ABC):
     @property
     def tr_fit(self) -> NDArray:
         return self._tr_fit
-
-    @abstractmethod
-    def prepare_circuit(self) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def modify_pulse_model(self, job_id: str = None) -> None:
-        raise NotImplementedError
 
     def run_monitor(self,
                     num_shots: Optional[int] = 0,
@@ -266,9 +257,7 @@ class TR01(_TR):
             job_id: string representation of submitted job
         """
         self.pulse_model: Pulse01
-        # Add frequency to pulse01
-        f01 = self.analyze(job_id=job_id)
-        self.pulse_model.frequency = f01
+        self.pulse_model.frequency = self.analyze(job_id=job_id)
 
 
 class TR12(_TR):

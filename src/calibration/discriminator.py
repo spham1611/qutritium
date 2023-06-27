@@ -21,27 +21,22 @@
 # SOFTWARE.
 
 """ Discriminator circuit and iq plot function """
-import matplotlib.pyplot as plt
-
-from qiskit import pulse, QuantumCircuit
+from qiskit import QuantumCircuit
 from qiskit.circuit import Gate
-from qiskit import execute
-from qiskit_ibm_provider.job import job_monitor
 
 from src.pulse import Pulse12
+from src.pulse_creation import GateSchedule
 from src.backend.backend_ibm import EffProvider
-from src.calibration.shared_attr import SharedAttr
+from src.calibration.shared_attr import _SharedAttr
 from src.constant import QubitParameters
-from src.analyzer import DataAnalysis
 
 from typing import List
 
 
-mhz_unit = QubitParameters.MHZ.value
 ghz_unit = QubitParameters.GHZ.value
 
 
-class DiscriminatorQutrit(SharedAttr):
+class DiscriminatorQutrit(_SharedAttr):
     """ A Simple Discriminator class that set up circuit and plot the iq graph
     An example of using this class::
 
@@ -64,6 +59,9 @@ class DiscriminatorQutrit(SharedAttr):
         * prepare_circuit(): prepares a discriminator with different QuantumCircuits
         * run_monitor(): run custom execute
         * plot_iq(): plot iq 012 graph
+
+    To see more details, visit:
+    ...
     """
     def __init__(self, eff_provider: EffProvider, pulse_model: Pulse12,
                  backend_name: str = 'ibmq_manila', num_shots=4096,
@@ -71,38 +69,37 @@ class DiscriminatorQutrit(SharedAttr):
         """ ctor
 
         Args:
-            eff_provider:
-            pulse_model:
-            backend_name:
-            num_shots:
-            delay_time:
+            eff_provider: EffProvider instance which contains necessary information
+            pulse_model: Pulse12 model only
+            backend_name: name to choose which backend running on IBM server
+            num_shots: number of experiments
+            delay_time: sending a time delay pulse
         """
         super().__init__(eff_provider=eff_provider, pulse_model=pulse_model,
                          backend_name=backend_name, num_shots=num_shots)
-        self.ramsey_frequency01 = self.pulse_model.pulse01.frequency + (4 - 3.2160804020100504) * mhz_unit
-        self.ramsey_frequency12 = self.pulse_model.frequency + (5 - (5.2612+4.5226)/2) * mhz_unit
+        self.ramsey_frequency01 = self.pulse_model.pulse01.frequency
+        self.ramsey_frequency12 = self.pulse_model.frequency
         self._delay_gate = Gate('5mus_delay', 1, [])
         self._x12 = Gate('X12', 1, [])
 
-        # Delay schedule
-        with pulse.build(backend=self.backend) as delay_schedule:
-            drive_chan = pulse.drive_channel(self.qubit)
-            pulse.delay(delay_time, drive_chan)
-        self._delay_schedule = delay_schedule
+        # Schedules
+        self._delay_schedule = GateSchedule.delay(backend=self.backend,
+                                                  qubit=self.qubit,
+                                                  delay_time=delay_time)
 
-        # x12_schedule
-        with pulse.build(backend=self.backend) as x12_schedule:
-            drive_chan = pulse.drive_channel(self.qubit)
-            pulse.set_frequency(self.ramsey_frequency12, drive_chan)
-            pulse.play(pulse.Gaussian(duration=self.pulse_model.duration,
-                                      sigma=self.pulse_model.sigma, amp=self.pulse_model.x_amp), drive_chan)
-        self._x12_schedule = x12_schedule
+        self._x12_schedule = GateSchedule.x_amp_gaussian(backend=self.backend,
+                                                         qubit=self.qubit,
+                                                         pulse_model=self.pulse_model,
+                                                         x_amp=self.pulse_model.x_amp)
 
         # Package
         self.package: List = []
 
     def prepare_circuit(self) -> None:
-        """ Ground state + 2 excited states """
+        """
+        Creating a circuit that can represent a single qutrit state in IBM superconducting quantum computer.
+        This helps us to visualize qutrit state with calibrated parameters.
+        """
 
         ground_state_prep = QuantumCircuit(self.qubit + 1, self.cbit + 1)
         ground_state_prep.append(self._delay_gate, [self.qubit])
@@ -127,16 +124,30 @@ class DiscriminatorQutrit(SharedAttr):
 
         self.package = [ground_state_prep, first_excited_state_prep, second_excited_state_prep]
 
+    # noinspection DuplicatedCode
     def run_monitor(self,
                     num_shots: int = 4096,
                     meas_return='single',
-                    meas_level=1) -> None:
+                    meas_level=1,
+                    **kwargs) -> None:
+        """
+        Run custom execute()
+        Args:
+            num_shots: number of experiments
+            meas_return: (See execute() documentation)
+            meas_level: (See execute() documentation)
+            **kwargs: Please See execute() documentation as it contains valid kwargs
+        """
+        from qiskit import execute
+        from qiskit_ibm_provider.job import job_monitor
+
         self.num_shots = num_shots if num_shots != 0 else self.num_shots
         discriminator_job = execute(experiments=self.package,
                                     backend=self.backend,
                                     shots=self.num_shots,
                                     meas_return=meas_return,
-                                    meas_level=meas_level)
+                                    meas_level=meas_level,
+                                    **kwargs)
         self.submitted_job = discriminator_job.job_id()
         print(self.submitted_job)
         job_monitor(discriminator_job)
@@ -146,14 +157,17 @@ class DiscriminatorQutrit(SharedAttr):
                 x_max: int = 30,
                 y_min: int = -30,
                 y_max: int = 30) -> None:
-        """ Plot iq 012 state
+        """ Plot iq qutrit state
 
         Args:
-            x_min:
-            x_max:
-            y_min:
-            y_max:
+            x_min: Min x-value of the plot
+            x_max: Max x-value of the plot
+            y_min: Min y-value of the plot
+            y_max: Max y-value of the plot
         """
+        import matplotlib.pyplot as plt
+        from src.analyzer import DataAnalysis
+
         discriminator_job = self.backend.retrieve_job(self.submitted_job)
         discriminator_data = DataAnalysis(discriminator_job)
         discriminator_data.retrieve_data(True)

@@ -21,14 +21,16 @@
 # SOFTWARE.
 
 """This abstract class is meant to refactor attr appearing in calibration techniques"""
+from abc import ABC, abstractmethod
+
 from src.backend.backend_ibm import EffProvider
 from src.pulse import Pulse01, Pulse12
 from src.constant import QubitParameters
 
-from typing import Union
+from typing import Union, Optional
 
 
-class SharedAttr:
+class _SharedAttr(ABC):
     """
     Notes:
         * This is an abstract class and should not be instantiated
@@ -67,3 +69,17 @@ class SharedAttr:
         self.cbit: int = QubitParameters.CBIT.value
         self.num_shots: int = num_shots
         self.submitted_job: str = ''
+
+    def prepare_circuit(self) -> None:
+        pass
+
+    def modify_pulse_model(self, job_id: str = None) -> None:
+        pass
+
+    @abstractmethod
+    def run_monitor(self,
+                    num_shots: Optional[int],
+                    meas_return: str,
+                    meas_level: int,
+                    **kwargs) -> None:
+        raise NotImplementedError

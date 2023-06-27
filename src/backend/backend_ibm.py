@@ -22,10 +22,10 @@
 
 """List all the available backends and assign their empirically effective qubit"""
 from qiskit_ibm_provider import IBMProvider, IBMBackend
+
 from typing import DefaultDict, Tuple, Optional
+
 from collections import defaultdict
-from src.simple_backend_log import write_log
-from src.constant import QubitParameters
 
 
 def initiate_eff_dict() -> DefaultDict:
@@ -37,6 +37,8 @@ def initiate_eff_dict() -> DefaultDict:
         'ibm_nairobi'    6
         ===============  ===============
     """
+    from src.constant import QubitParameters
+
     return defaultdict(lambda: 0, {'ibm_nairobi': QubitParameters.QUBIT_CHANGE_TYPE1.value})
 
 
@@ -108,6 +110,8 @@ class EffProvider(IBMProvider):
                                      {'effective_qubit': self.eff_dict[name],
                                       'drive_frequency': default_freq,
                                       'anharmonicity': anharmonicity})
+        from src.simple_backend_log import write_log
+
         write_log(backend)
         return backend, backend_params
 
