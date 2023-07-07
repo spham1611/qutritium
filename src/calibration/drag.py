@@ -24,9 +24,6 @@
 import numpy as np
 
 from qiskit.circuit import Gate, QuantumCircuit
-from qiskit.tools.monitor import job_monitor
-from qiskit import execute
-from qiskit_ibm_provider import IBMJob
 
 # from src.analyzer import DataAnalysis
 from src.pulse import Pulse01, Pulse12
@@ -99,6 +96,10 @@ class _DRAG(_SharedAttr):
             **kwargs:
 
         """
+        from qiskit.tools.monitor import job_monitor
+        from qiskit import execute
+        from qiskit_ibm_provider import IBMJob
+
         self.num_shots = num_shots if num_shots != 0 else self.num_shots
         submitted_job: IBMJob = execute(experiments=self.package,
                                         backend=self.backend,

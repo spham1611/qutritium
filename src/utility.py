@@ -28,9 +28,6 @@ import numpy as np
 from typing import Callable, Tuple, Iterable
 from numpy.typing import NDArray
 
-from qiskit.visualization.state_visualization import generate_facecolors
-from qiskit.visualization.utils import matplotlib_close_if_inline
-
 
 # Fitting functions
 def fit_function(x_values: Iterable[float], y_values: Iterable[float],
@@ -116,6 +113,8 @@ def plot_tomography(
     """
     from matplotlib import pyplot as plt
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+    from qiskit.visualization.utils import matplotlib_close_if_inline
+    from qiskit.visualization.state_visualization import generate_facecolors
 
     # Get the number of qutrits
     if su3_matrix.ndim != 2 \
@@ -280,4 +279,3 @@ def deprecate_function():
 
 def deprecate_arguments():
     ...
-

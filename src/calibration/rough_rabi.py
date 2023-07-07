@@ -22,21 +22,17 @@
 
 """Rough rabi techniques"""
 import numpy as np
+from numpy.typing import NDArray
 
 from qiskit.circuit import QuantumCircuit, Gate
-from qiskit_ibm_provider.job import job_monitor
-from qiskit import execute
 
 from src.backend.backend_ibm import EffProvider
-from src.utility import fit_function
 from src.pulse import Pulse01, Pulse12
 from src.calibration.shared_attr import _SharedAttr
 from src.exceptions.pulse_exception import MissingFrequencyPulse
 from src.pulse_creation import GateSchedule
-from src.analyzer import DataAnalysis
 
 from typing import Optional, List, Union
-from numpy.typing import NDArray
 
 
 class _RoughRabi(_SharedAttr):
@@ -80,7 +76,7 @@ class _RoughRabi(_SharedAttr):
                          eff_provider=eff_provider,
                          backend_name=backend_name,
                          num_shots=num_shots)
-        self.analyzer: Optional[DataAnalysis] = None
+        self.analyzer = None
         self._package: List = []
 
         # INTERNAL DESIGN ONLY
@@ -139,6 +135,9 @@ class _RoughRabi(_SharedAttr):
             **kwargs:
 
         """
+        from qiskit_ibm_provider.job import job_monitor
+        from qiskit import execute
+
         self.num_shots = num_shots if num_shots != 0 else self.num_shots
         submitted_job = execute(experiments=self._package,
                                 backend=self.backend,
@@ -159,6 +158,9 @@ class _RoughRabi(_SharedAttr):
         Returns:
 
         """
+        from src.utility import fit_function
+        from src.analyzer import DataAnalysis
+
         if not job_id:
             experiment = self.eff_provider.retrieve_job(self.submitted_job)
         else:

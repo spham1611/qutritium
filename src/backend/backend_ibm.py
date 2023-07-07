@@ -37,9 +37,7 @@ def initiate_eff_dict() -> DefaultDict:
         'ibm_nairobi'    6
         ===============  ===============
     """
-    from src.constant import QubitParameters
-
-    return defaultdict(lambda: 0, {'ibm_nairobi': QubitParameters.QUBIT_CHANGE_TYPE1.value})
+    return defaultdict(lambda: 0)
 
 
 class EffProvider(IBMProvider):

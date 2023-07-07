@@ -230,7 +230,7 @@ class TR01(_TR):
     def prepare_circuit(self) -> None:
         """ Calibrate single qubit state with custom pulse_model
         Notes:
-            * The syntax is subject change but the idea stays the same for every update
+            * The syntax is contingent but the idea stays the same for every update
         """
 
         self.pulse_model: Pulse01

@@ -29,6 +29,7 @@ import json
 import numpy as np
 import pandas as pd
 import uuid
+
 from abc import ABC
 from typing import Dict
 from src.exceptions.pulse_exception import MissingDurationPulse, MissingAmplitudePulse

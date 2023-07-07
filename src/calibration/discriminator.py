@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 """ Discriminator circuit and iq plot function """
-from qiskit import QuantumCircuit
 from qiskit.circuit import Gate
 
 from src.pulse import Pulse12
@@ -100,6 +99,7 @@ class DiscriminatorQutrit(_SharedAttr):
         Creating a circuit that can represent a single qutrit state in IBM superconducting quantum computer.
         This helps us to visualize qutrit state with calibrated parameters.
         """
+        from qiskit import QuantumCircuit
 
         ground_state_prep = QuantumCircuit(self.qubit + 1, self.cbit + 1)
         ground_state_prep.append(self._delay_gate, [self.qubit])

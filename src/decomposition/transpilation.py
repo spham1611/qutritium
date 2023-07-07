@@ -347,7 +347,9 @@ class Pulse_Wrapper:
 
     def pulse_model_to_qiskit(self):
         """
-        :return:
+
+        Returns:
+
         """
         schedule = ScheduleBlock()
         for pul in self.pulse_wrapper:
