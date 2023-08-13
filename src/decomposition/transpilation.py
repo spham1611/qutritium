@@ -38,7 +38,6 @@ class Parameter:
     """
     Static class
     """
-
     @classmethod
     def get_parameters(cls, su3: NDArray) -> NamedTuple:
         """
@@ -194,6 +193,7 @@ class SU3_matrices:
 
     def native_list(self) -> List[Union[List[float], List[Instruction]]]:
         """
+
         :return:
         """
         phase01 = float(getattr(self.parameters, 'phi6') - getattr(self.parameters, 'phi5'))
@@ -220,9 +220,9 @@ class SU3_matrices:
                                                                                      getattr(self.parameters, 'phi2')])
         decomposed_qc.add_gate("g01", first_qutrit_set=self.qutrit_index, parameter=[getattr(self.parameters, 'theta3'),
                                                                                      getattr(self.parameters, 'phi3')])
-        decomposed_qc.add_gate("u_d", first_qutrit_set=self.qutrit_index, parameter=[getattr(self.parameters, 'phi4'),
+        decomposed_qc.add_gate("u_d", first_qutrit_set=self.qutrit_index, parameter=[getattr(self.parameters, 'phi6'),
                                                                                      getattr(self.parameters, 'phi5'),
-                                                                                     getattr(self.parameters, 'phi6')])
+                                                                                     getattr(self.parameters, 'phi4')])
         return decomposed_qc
 
     def __str__(self) -> str:
@@ -274,8 +274,9 @@ class Pulse_Wrapper:
 
     def decompose(self) -> None:
         """
+
         Convert to SU3_matrices for further decomposition
-        :return:
+
         """
         operation_set = self.ins_list
         n_qutrit = self.qc.n_qutrit
@@ -291,10 +292,13 @@ class Pulse_Wrapper:
 
     def convert_to_pulse_model(self):
         """
-        Convert to l
-        :return:
+        Convert to internal Pulse Model
         """
         cnt = 0
+        alpha = 0.0
+        beta = 0.0
+        gamma = 0.0
+        advance_phase = np.array([0.0, 0.0])  # Implementation of phase advance
         for instruction in self.ins_list:
             ins_type = instruction.type()
             phase_ud = self.accumulated_phase[cnt]
@@ -331,15 +335,22 @@ class Pulse_Wrapper:
                 elif gate_type == 'g01':
                     pulse = copy.deepcopy(self.pulse01)
                     pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter[0]
-                    phase_operator = Shift_phase(value=phase_ud[0] + ins.parameter[1],
+                    phase_operator = Shift_phase(value=phase_ud[0] + ins.parameter[1] + advance_phase[0],
+                                                 # Adding
+                                                 # phase advance
                                                  channel=instruction.first_qutrit, subspace="01",
                                                  backend=self.backend)
+                    advance_phase[1] += alpha  # Accumulate phase advance
                 elif gate_type == 'g12':
                     pulse = copy.deepcopy(self.pulse12)
                     pulse.x_amp = (pulse.x_amp / np.pi) * ins.parameter[0]
-                    phase_operator = Shift_phase(value=phase_ud[1] + ins.parameter[1],
+                    phase_operator = Shift_phase(value=phase_ud[1] + ins.parameter[1] + advance_phase[1],
+                                                 # Adding
+                                                 # phase advance
                                                  channel=instruction.first_qutrit, subspace="12",
                                                  backend=self.backend)
+                    advance_phase[0] += beta
+                    advance_phase[1] += gamma  # Accumulate phase advance
                 else:
                     raise Exception("The gate can not be decomposed to pulse")
                 self.pulse_wrapper.append([pulse, phase_operator, instruction.first_qutrit])
@@ -347,9 +358,7 @@ class Pulse_Wrapper:
 
     def pulse_model_to_qiskit(self):
         """
-
-        Returns:
-
+        Returns: Convert to Qiskit Pulse Model
         """
         schedule = ScheduleBlock()
         for pul in self.pulse_wrapper:
@@ -372,8 +381,9 @@ class Pulse_Wrapper:
 
     def print_decompose_ins(self):
         """
+
         Check the ins after decomposition
-        :return:
+
         """
         cnt = 1
         for ins in self.ins_list:
@@ -384,17 +394,20 @@ class Pulse_Wrapper:
 
     def print_decompose_pulse(self):
         """
+
         Check the pulses after decomposition
-        :return:
+
         """
         for pul in self.pulse_wrapper:
             print(pul)
 
     def print_qiskit_schedule(self):
         """
+
         Check the ins after decomposition
-        :return:
+
         """
+
         if self.qiskit_schedule is not None:
             print(self.qiskit_schedule)
             self.qiskit_schedule.draw()

@@ -130,6 +130,10 @@ def single_matrix_form(gate_type: str, parameter: List[float] = None, omega=np.e
         return np.array([[np.exp(1j*parameter[0]), 0, 0],
                          [0, np.exp(1j*parameter[1]), 0],
                          [0, 0, np.exp(1j*parameter[2])]], dtype=complex)
+    elif gate_type == 'u_ft':
+        return (1 / np.sqrt(3)) * np.array([[omega, 1, np.conj(omega)],
+                                            [1, 1, 1],
+                                            [np.conj(omega), 1, omega]], dtype=complex)
     else:
         raise Exception("This gate is not implemented yet.")
 

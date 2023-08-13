@@ -52,7 +52,8 @@ gate_set: list[Union[str, Any]] = ['Identity',
                                    'rz01',
                                    'rz12',
                                    'u_d',
-                                   'hdm']
+                                   'hdm',
+                                   'u_ft']
 
 
 class Instruction:
@@ -63,7 +64,9 @@ class Instruction:
 
     def __init__(self, gate_type: str,
                  n_qutrit: int, first_qutrit_set: int,
-                 second_qutrit_set: int | None = 0, parameter: List[float] = None) -> None:
+                 second_qutrit_set: int | None = 0,
+                 parameter: List[float] = None,
+                 inverse: bool = False) -> None:
         self._type = gate_type
         self._verify_gate()
         self.n_qutrit: int = n_qutrit
@@ -72,16 +75,24 @@ class Instruction:
         self.first_qutrit: int = first_qutrit_set
         self.second_qutrit: int = second_qutrit_set
         self._is_two_qutrit_gate: bool = False
+        self._is_inverse = inverse
         if first_qutrit_set > (self.n_qutrit - 1):
             raise Exception("Acting qutrit is not defined")
         if second_qutrit_set is not None:
             self._is_two_qutrit_gate = True
             # if self._type in parameterless_set: eval(self._type)
-            self.gate_matrix = multi_matrix_form(gate_type=self._type, first_index=self.first_qutrit,
-                                                 second_index=self.second_qutrit)
+            if self._is_inverse is False:
+                self.gate_matrix = multi_matrix_form(gate_type=self._type, first_index=self.first_qutrit,
+                                                     second_index=self.second_qutrit)
+            else:
+                self.gate_matrix = np.matrix(multi_matrix_form(gate_type=self._type, first_index=self.first_qutrit,
+                                                               second_index=self.second_qutrit)).getH()
         else:
             self._is_two_qutrit_gate = False
-            self.gate_matrix = single_matrix_form(gate_type=self._type, parameter=self.parameter)
+            if self._is_inverse is False:
+                self.gate_matrix = single_matrix_form(gate_type=self._type, parameter=self.parameter)
+            else:
+                self.gate_matrix = np.matrix(single_matrix_form(gate_type=self._type, parameter=self.parameter)).getH()
         self._effect_matrix = self._effect()
 
     def _effect(self) -> NDArray:

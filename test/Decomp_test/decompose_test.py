@@ -3,7 +3,7 @@ import pickle
 import matplotlib.pyplot as plt
 from qiskit import *
 from src.quantumcircuit import QC
-from transpilation import Pulse_Wrapper
+from src.decomposition.transpilation import Pulse_Wrapper
 from src.pulse import Pulse01, Pulse12
 from qiskit import QuantumCircuit
 from qiskit.circuit import Gate

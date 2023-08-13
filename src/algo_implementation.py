@@ -71,15 +71,15 @@ Theoretically implementation
 final_value = []
 for i in range(6):
     qc = Qutrit_circuit(1, None)
-    qc.add_gate("hdm", first_qutrit_set=0)
+    qc.add_gate("u_ft", first_qutrit_set=0)
     decomposer = SU3_matrices(su3=matrix_array[i], qutrit_index=0, n_qutrits=1)
     qc_sub = decomposer.decomposed_into_qc()
     qc += qc_sub
-    qc.add_gate("hdm", first_qutrit_set=0)
+    qc.add_gate("u_ft", first_qutrit_set=0, is_dagger=True)
     qc.measure_all()
     backend = QASM_Simulator(qc=qc)
     backend.run(num_shots=2048)
-    final_value.append(backend.return_final_state())
+    final_value.append(backend.get_counts())
 print(final_value)
 """
 Hardware implementation

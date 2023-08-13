@@ -33,6 +33,7 @@ class Qutrit_circuit:
     """
     This class defines the wrapper for Virtual Machine which can be treated as a Quantum Circuit
     """
+
     def __init__(self, n_qutrit: int, initial_state: Union[NDArray, None]) -> None:
         """
 
@@ -63,7 +64,8 @@ class Qutrit_circuit:
                  first_qutrit_set: int,
                  second_qutrit_set: int = None,
                  parameter: List[float] = None,
-                 to_all: bool = False) -> None:
+                 to_all: bool = False,
+                 is_dagger: bool = False) -> None:
         """
         Args:
             gate_type: the type of qutrit gate
@@ -71,17 +73,20 @@ class Qutrit_circuit:
             second_qutrit_set: the index of second qutrit that the gate has effect on (for multi-qutrit gate)
             parameter: the parameter of the gate
             to_all: apply the gate to all qutrit in the circuit or not?
+            is_dagger: complex conjugate of the given gate
         Returns:
         """
         if to_all is True and second_qutrit_set is None:
             for i in range(self.n_qutrit):
-                ins = Instruction(gate_type, self.n_qutrit,
-                                  i, second_qutrit_set, parameter)
+                ins = Instruction(gate_type=gate_type, n_qutrit=self.n_qutrit,
+                                  first_qutrit_set=i, second_qutrit_set=second_qutrit_set,
+                                  parameter=parameter, inverse=is_dagger)
                 self.operation_set = [ins]
 
         else:
-            ins = Instruction(gate_type, self.n_qutrit,
-                              first_qutrit_set, second_qutrit_set, parameter)
+            ins = Instruction(gate_type=gate_type, n_qutrit=self.n_qutrit,
+                              first_qutrit_set=first_qutrit_set, second_qutrit_set=second_qutrit_set,
+                              parameter=parameter, inverse=is_dagger)
             self.operation_set = [ins]
 
     def measure_all(self):
