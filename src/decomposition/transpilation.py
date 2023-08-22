@@ -39,7 +39,7 @@ class Parameter:
     Static class
     """
     @classmethod
-    def get_parameters(cls, su3: NDArray) -> NamedTuple:
+    def get_parameters(cls, U: NDArray) -> NamedTuple:
         """
         Decompose su3 matrices to parameters of selected gates
         Args:
@@ -50,84 +50,54 @@ class Parameter:
         """
         pi = np.pi
         params = namedtuple('params', 'theta1 theta2 theta3 phi1 phi2 phi3 phi4 phi5 phi6')
-        if abs(np.absolute(su3[2, 2]) - 1) < 1e-6:
-            theta1 = phi1 = theta2 = phi2 = 0
-            phi4 = np.angle(su3[2, 2])
-            phi5 = np.angle(su3[1, 1])
-            phi6 = np.angle(su3[0, 0])
-            # phi3 = phi6 - pi/2 - np.angle(U[0, 1])
-            phi3 = np.angle(su3[1, 0]) - phi5 + pi / 2
-            theta3 = 2 * np.arccos(np.round(np.absolute(su3[1, 1]), 6))
-        else:
-            theta2 = 2 * np.arccos(np.round(np.absolute(su3[2, 2]), 6))
-            theta1 = 2 * np.arccos(np.round(np.absolute(su3[2, 1]) / np.sin(theta2 / 2), 6))
-            theta3 = 2 * np.arccos(np.round(np.absolute(su3[1, 2]) / np.sin(theta2 / 2), 6))
-            phi1 = phi2 = phi3 = phi4 = phi5 = phi6 = 0
-            if abs(theta2 - pi) < 1e-6 and theta1 < 1e-6 and theta3 < 1e-6:
-                theta1 = theta3 = 0
-                theta2 = pi
-                phi2 = 0
-                phi6 = np.angle(su3[0, 0])
-                phi4 = -phi2 + np.angle(su3[2, 1]) + pi / 2
-                phi5 = phi2 + np.angle(su3[1, 2]) + pi / 2
-                phi1 = phi3 = 0
-            elif abs(theta1) < 1e-6:
-                if abs(theta2) < 1e-6:
-                    theta1 = theta2 = 0
-                    theta3 = pi
-                    phi5 = phi1 = phi2 = 0
-                    phi4 = np.angle(su3[2, 2])
-                    phi3 = np.angle(su3[1, 0]) + pi / 2
-                    phi6 = np.angle(su3[0, 1]) + np.angle(su3[1, 0]) + pi
-                elif abs(theta2 - pi) < 1e-6:
-                    theta1 = 0
-                    theta2 = theta3 = pi
-                    phi1 = phi4 = phi5 = 0
-                    phi3 = np.angle(su3[1, 0]) + pi / 2
-                    phi2 = np.angle(su3[2, 1]) + pi / 2
-                    phi6 = np.angle(su3[1, 0]) + np.angle(su3[2, 1]) + np.angle(su3[0, 2])
-            elif abs(theta1 - pi) < 1e-6:
-                theta1 = theta2 = pi
-                theta3 = 0
-                phi3 = phi5 = phi6 = 0
-                phi1 = -np.angle(su3[0, 1]) - pi / 2
-                phi2 = -np.angle(su3[1, 2]) - pi / 2
-                phi4 = np.angle(su3[0, 1]) + np.angle(su3[1, 2]) + np.angle(su3[2, 0])
+        if np.round(abs(np.absolute(U[2, 2])), 6) == 1:
+            if np.round(abs(np.absolute(U[0, 0])), 6) != 0:
+                theta_1 = phi_1 = theta_2 = phi_2 = 0
+                phi_4 = np.angle(U[2, 2])
+                phi_5 = np.angle(U[1, 1])
+                phi_6 = np.angle(U[0, 0])
+                # phi_3 = phi_6 - pi/2 - np.angle(U[0, 1])
+                phi_3 = np.angle(U[1, 0]) - phi_5 + pi / 2
+                theta_3 = 2 * np.arccos(np.round(np.absolute(U[1, 1]), 6))
             else:
-                phi4 = np.angle(su3[2, 2])
-                phi2 = np.angle(su3[2, 1]) - phi4 + pi / 2
-                phi1 = np.angle(-su3[2, 0]) - phi2 - phi4
-                phi5 = np.angle(su3[1, 2]) + phi2 + pi / 2
-                phi3 = np.angle(np.cos(theta1 / 2) * np.cos(theta2 / 2) * np.cos(theta3 / 2)
-                                - su3[1, 1] * np.exp(-1j * phi5)) + phi1
-                phi6 = np.angle(-su3[0, 2]) + phi3 + phi2
-        # if abs(np.absolute(su3[2, 2]) - 1) < 1e-6:
-        #     theta1 = phi1 = theta2 = phi2 = 0
-        #     phi4 = np.angle(su3[2, 2])
-        #     phi5 = np.angle(su3[1, 1])
-        #     phi6 = np.angle(su3[0, 0])
-        #     phi3 = np.angle(su3[1, 0]) - phi5 + np.pi / 2
-        #     theta3 = 2 * np.arccos(np.round(np.absolute(su3[1, 1]), 6))
-        # elif abs(2 * np.arccos(np.round(np.absolute(su3[2, 2]), 6)) - np.pi) < 1e-6:
-        #     theta1 = theta3 = 0
-        #     theta2 = np.pi
-        #     phi2 = 0
-        #     phi6 = np.angle(su3[0, 0])
-        #     phi4 = -phi2 + np.angle(su3[2, 1]) + np.pi / 2
-        #     phi5 = phi2 + np.angle(su3[1, 2]) + np.pi / 2
-        #     phi1 = phi3 = 0
-        # else:
-        #     phi4 = np.angle(su3[2, 2])
-        #     theta2 = 2 * np.arccos(np.round(np.absolute(su3[2, 2]), 6))
-        #     phi2 = np.angle(su3[2, 1]) - phi4 + np.pi / 2
-        #     phi1 = np.angle(-su3[2, 0]) - phi2 - phi4
-        #     theta1 = 2 * np.arccos(np.round(np.absolute(su3[2, 1]) / np.sin(theta2 / 2), 6))
-        #     theta3 = 2 * np.arccos(np.round(np.absolute(su3[1, 2]) / np.sin(theta2 / 2), 6))
-        #     phi5 = np.angle(su3[1, 2]) + phi2 + np.pi / 2
-        #     phi3 = np.angle(np.cos(theta1 / 2) * np.cos(theta2 / 2) * np.cos(theta3 / 2)
-        #                     - su3[1, 1] * np.exp(-1j * phi5)) + phi1
-        #     phi6 = np.angle(-su3[0, 2]) + phi3 + phi2
-        paras = params(theta1, theta2, theta3, phi1, phi2, phi3, phi4, phi5, phi6)
+                theta_1 = phi_1 = theta_2 = phi_2 = phi_3 = 0
+                theta_3 = 2 * np.arccos(np.round(np.absolute(U[1, 1]), 6))
+                phi_4 = np.angle(U[2, 2])
+                phi_6 = np.angle(U[0, 1]) + phi_3 + pi / 2
+                phi_5 = np.angle(U[1, 0]) - phi_3 + pi / 2
+        elif np.round(abs(np.absolute(U[2, 2])), 6) == 0:
+            theta_1 = 2 * np.arccos(np.round(np.absolute(U[2, 1]), 6))
+            theta_2 = pi
+            theta_3 = 2 * np.arccos(np.round(np.absolute(U[1, 2]), 6))
+            phi_1 = phi_2 = phi_3 = 0
+            if np.round(abs(np.absolute(U[2, 0])), 6) != 0:
+                phi_4 = np.angle(-U[2, 0])
+                if np.round(abs(np.absolute(U[0, 2])), 6) != 0:
+                    phi_5 = np.angle(-U[1, 1])
+                    phi_6 = np.angle(-U[0, 2])
+                else:
+                    phi_5 = np.angle(U[1, 2]) + pi / 2
+                    phi_6 = np.angle(U[0, 1]) + pi / 2
+            if np.round(abs(np.absolute(U[1, 0])), 6) != 0:
+                phi_4 = np.angle(U[2, 1]) + pi / 2
+                phi_5 = np.angle(U[1, 0]) + pi / 2
+                phi_6 = np.angle(-U[0, 2])
+            if np.round(abs(np.absolute(U[0, 0])), 6) != 0:
+                phi_4 = np.angle(U[2, 1]) + pi / 2
+                phi_5 = np.angle(U[1, 2]) + pi / 2
+                phi_6 = np.angle(U[1, 1])
+        else:
+            phi_4 = np.angle(U[2, 2])
+            theta_2 = 2 * np.arccos(np.round(np.absolute(U[2, 2]), 6))
+            phi_2 = np.angle(U[2, 1]) - phi_4 + pi / 2
+            phi_1 = np.angle(-U[2, 0]) - phi_2 - phi_4
+            theta_1 = 2 * np.arccos(np.round(np.absolute(U[2, 1]) / np.sin(theta_2 / 2), 6))
+            theta_3 = 2 * np.arccos(np.round(np.absolute(U[1, 2]) / np.sin(theta_2 / 2), 6))
+            phi_5 = np.angle(U[1, 2]) + phi_2 + pi / 2
+            phi_3 = np.angle(np.cos(theta_1 / 2) * np.cos(theta_2 / 2) * np.cos(theta_3 / 2) - U[1, 1] * np.exp(
+                -1j * phi_5)) + phi_1
+            phi_6 = np.angle(-U[0, 2]) + phi_3 + phi_2
+        paras = params(theta_1, theta_2, theta_3, phi_1, phi_2, phi_3, phi_4, phi_5, phi_6)
         return paras
 
 
@@ -147,7 +117,7 @@ class SU3_matrices:
         self.su3: NDArray = su3
         self.qutrit_index = qutrit_index
         self.n_qutrits = n_qutrits
-        self.parameters: NamedTuple = Parameter.get_parameters(su3=self.su3)
+        self.parameters: NamedTuple = Parameter.get_parameters(U=self.su3)
 
     def unitary_diagonal(self) -> NDArray:
         """
