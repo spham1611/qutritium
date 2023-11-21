@@ -169,14 +169,17 @@ class SU3_matrices:
         phase01 = float(getattr(self.parameters, 'phi6') - getattr(self.parameters, 'phi5'))
         phase12 = float(getattr(self.parameters, 'phi5') - getattr(self.parameters, 'phi4'))
         return [np.array([phase01, phase12]), [Instruction(gate_type='g01', first_qutrit_set=self.qutrit_index,
+                                                           second_qutrit_set=None,
                                                            n_qutrit=self.n_qutrits,
                                                            parameter=[getattr(self.parameters, 'theta1'),
                                                                       getattr(self.parameters, 'phi1')]),
                                                Instruction(gate_type='g12', first_qutrit_set=self.qutrit_index,
+                                                           second_qutrit_set=None,
                                                            n_qutrit=self.n_qutrits,
                                                            parameter=[getattr(self.parameters, 'theta2'),
                                                                       getattr(self.parameters, 'phi2')]),
                                                Instruction(gate_type='g01', first_qutrit_set=self.qutrit_index,
+                                                           second_qutrit_set=None,
                                                            n_qutrit=self.n_qutrits,
                                                            parameter=[getattr(self.parameters, 'theta3'),
                                                                       getattr(self.parameters,
@@ -252,6 +255,8 @@ class Pulse_Wrapper:
         n_qutrit = self.qc.n_qutrit
 
         for instruction in operation_set:
+            if type(instruction) == str:
+                continue
             if (ins_type := instruction.type()) not in self.native_gates:
                 decomposed_res = SU3_matrices(instruction.gate_matrix,
                                               qutrit_index=0, n_qutrits=n_qutrit).native_list()
@@ -270,6 +275,8 @@ class Pulse_Wrapper:
         gamma = 0.0
         advance_phase = np.array([0.0, 0.0])  # Implementation of phase advance
         for instruction in self.ins_list:
+            if type(instruction) == str:
+                continue
             ins_type = instruction.type()
             phase_ud = self.accumulated_phase[cnt]
             for ins in self._su3_dictionary[ins_type]:
@@ -355,8 +362,10 @@ class Pulse_Wrapper:
         Check the ins after decomposition
 
         """
-        cnt = 1
+        cnt = 0
         for ins in self.ins_list:
+            if type(ins) == str:
+                continue
             print("Phase accumulated: " + str(self.accumulated_phase[cnt]))
             for i in self._su3_dictionary[ins.type()]:
                 i.print()
