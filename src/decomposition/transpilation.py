@@ -32,6 +32,7 @@ from src.quantumcircuit.instruction_structure import Instruction
 from src.quantumcircuit.QC import Qutrit_circuit
 from qiskit.pulse.schedule import ScheduleBlock
 from numpy.typing import NDArray
+import matplotlib.pyplot as plt
 
 
 class Parameter:
@@ -390,6 +391,8 @@ class Pulse_Wrapper:
         if self.qiskit_schedule is not None:
             print(self.qiskit_schedule)
             self.qiskit_schedule.draw()
+            plt.savefig('Qiskit_schedule.png', bbox_inches='tight')
+            plt.show()
         else:
             raise Exception("Required conversion to Qiskit ScheduleBlock")
 

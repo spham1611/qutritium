@@ -54,7 +54,7 @@ class GateSchedule:
             ScheduleBlock: object
         """
         with pulse.build(backend=backend) as gaussian_schedule:
-            drive_chan = pulse.drive_channel(qubit)
+            drive_chan = pulse.channels.DriveChannel(qubit)
             pulse.set_frequency(frequency, drive_chan)
             pulse.play(pulse.Gaussian(duration=pulse_model.duration,
                                       sigma=pulse_model.sigma, amp=pulse_model.x_amp), drive_chan)
@@ -79,7 +79,7 @@ class GateSchedule:
 
         """
         with pulse.build(backend=backend) as gaussian_schedule:
-            drive_chan = pulse.drive_channel(qubit)
+            drive_chan = pulse.channels.DriveChannel(qubit)
             pulse.set_frequency(pulse_model.frequency, drive_chan)
             pulse.play(pulse.Gaussian(duration=pulse_model.duration,
                                       sigma=pulse_model.sigma, amp=x_amp), drive_chan)
@@ -104,7 +104,7 @@ class GateSchedule:
 
         """
         with pulse.build(backend=backend) as beta_sweep:
-            drive_chan = pulse.drive_channel(qubit)
+            drive_chan = pulse.channels.DriveChannel(qubit)
             pulse.set_frequency(pulse_model.frequency, drive_chan)
             pulse.play(pulse.Drag(duration=pulse_model.duration, sigma=pulse_model.sigma, amp=pulse_model.x_amp,
                                   beta=beta), drive_chan)
@@ -127,7 +127,7 @@ class GateSchedule:
 
         """
         with pulse.build(backend=backend) as delay_schedule:
-            drive_chan = pulse.drive_channel(qubit)
+            drive_chan = pulse.channels.DriveChannel(qubit)
             pulse.delay(delay_time, drive_chan)
         return delay_schedule
 
@@ -156,7 +156,7 @@ class Shift_phase:
         :return:
         """
         with pulse.build(backend=self.backend) as schedule:
-            pulse.shift_phase(phase=self.value * coeff, channel=pulse.drive_channel(self.channel))
+            pulse.shift_phase(phase=self.value * coeff, channel=pulse.channels.DriveChannel(self.channel))
         return schedule
 
     def generate_qiskit_phase_offset(self, gate_pulse: ScheduleBlock) -> ScheduleBlock:
@@ -200,5 +200,5 @@ class Set_frequency:
         :return:
         """
         with pulse.build(backend=self.backend) as schedule:
-            pulse.set_frequency(frequency=self.value, channel=pulse.drive_channel(self.channel))
+            pulse.set_frequency(frequency=self.value, channel=pulse.channels.DriveChannel(self.channel))
         return schedule
