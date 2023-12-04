@@ -271,9 +271,9 @@ class Pulse_Wrapper:
         Convert to internal Pulse Model
         """
         cnt = 0
-        alpha = 0.0
-        beta = 0.0
-        gamma = 0.0
+        alpha = 4.55047476
+        beta = 0.22474651
+        gamma = 0.03502484
         advance_phase = np.array([0.0, 0.0])  # Implementation of phase advance
         for instruction in self.ins_list:
             if type(instruction) == str:

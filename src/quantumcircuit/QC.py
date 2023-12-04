@@ -89,6 +89,37 @@ class Qutrit_circuit:
                               parameter=parameter, inverse=is_dagger)
             self.operation_set = [ins]
 
+    def add_customized_gate(self, gate_type: str,
+                            first_qutrit_set: int,
+                            second_qutrit_set: int = None,
+                            parameter: List[float] = None,
+                            to_all: bool = False,
+                            is_dagger: bool = False,
+                            custom_matrix: NDArray = None) -> None:
+        """
+        Args:
+            gate_type: the type of qutrit gate
+            first_qutrit_set: the index of first qutrit that the gate has effect on
+            second_qutrit_set: the index of second qutrit that the gate has effect on (for multi-qutrit gate)
+            parameter: the parameter of the gate
+            to_all: apply the gate to all qutrit in the circuit or not?
+            is_dagger: complex conjugate of the given gate
+            custom_matrix: gate_matrix for the customized gate
+        Returns:
+        """
+        if to_all is True and second_qutrit_set is None:
+            for i in range(self.n_qutrit):
+                ins = Instruction(gate_type=gate_type, n_qutrit=self.n_qutrit,
+                                  first_qutrit_set=i, second_qutrit_set=second_qutrit_set,
+                                  parameter=parameter, inverse=is_dagger, custom=True, custom_matrix=custom_matrix)
+                self.operation_set = [ins]
+
+        else:
+            ins = Instruction(gate_type=gate_type, n_qutrit=self.n_qutrit,
+                              first_qutrit_set=first_qutrit_set, second_qutrit_set=second_qutrit_set,
+                              parameter=parameter, inverse=is_dagger, custom=True, custom_matrix=custom_matrix)
+            self.operation_set = [ins]
+
     def measure_all(self):
         """
         Adding measurement in the qutrit circuit

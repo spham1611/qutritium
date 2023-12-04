@@ -66,9 +66,12 @@ class Instruction:
                  n_qutrit: int, first_qutrit_set: int,
                  second_qutrit_set: int | None = 0,
                  parameter: List[float] = None,
-                 inverse: bool = False) -> None:
+                 inverse: bool = False,
+                 custom: bool = False,
+                 custom_matrix: NDArray = None) -> None:
         self._type = gate_type
-        self._verify_gate()
+        if custom is False:
+            self._verify_gate()
         self.n_qutrit: int = n_qutrit
         self.qutrit_dimension: int = 3 ** self.n_qutrit
         self.parameter: List[float] = parameter
@@ -76,6 +79,7 @@ class Instruction:
         self.second_qutrit: int = second_qutrit_set
         self._is_two_qutrit_gate: bool = False
         self._is_inverse = inverse
+        self._is_custom = custom
         if first_qutrit_set > (self.n_qutrit - 1):
             raise Exception("Acting qutrit is not defined")
         if second_qutrit_set is not None:
@@ -89,10 +93,14 @@ class Instruction:
                                                                second_index=self.second_qutrit)).getH()
         else:
             self._is_two_qutrit_gate = False
-            if self._is_inverse is False:
+            # Check if the gate is custom
+            if self._is_custom is False:
                 self.gate_matrix = single_matrix_form(gate_type=self._type, parameter=self.parameter)
             else:
-                self.gate_matrix = np.matrix(single_matrix_form(gate_type=self._type, parameter=self.parameter)).getH()
+                self.gate_matrix = custom_matrix
+            # Check if we want the inverse of this gate
+            if self._is_inverse is True:
+                self.gate_matrix = np.matrix(self.gate_matrix).getH()
         self._effect_matrix = self._effect()
 
     def _effect(self) -> NDArray:
