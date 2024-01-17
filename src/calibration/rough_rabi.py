@@ -26,16 +26,16 @@ from numpy.typing import NDArray
 
 from qiskit.circuit import QuantumCircuit, Gate
 
-from src.backend.backend_ibm import EffProvider
+from src.backend.backend_ibm import CustomProvider
 from src.pulse import Pulse01, Pulse12
-from src.calibration.shared_attr import _SharedAttr
+from src.calibration.utility import _SetAttribute
 from src.exceptions.pulse_exception import MissingFrequencyPulse
 from src.pulse_creation import GateSchedule
 
 from typing import Optional, List, Union
 
 
-class _RoughRabi(_SharedAttr):
+class _RoughRabi(_SetAttribute):
     """ Provides basic attributes of RoughRabi technique and inherits SharedAttr available attributes
     A typical flow would be prepare_circuit -> run_monitor -> analyze IBMJob::
 
@@ -58,7 +58,7 @@ class _RoughRabi(_SharedAttr):
     """
 
     def __init__(self, pulse_model: Union[Pulse01, Pulse12],
-                 eff_provider: EffProvider, backend_name: str,
+                 custom_provider: CustomProvider, backend_name: str,
                  num_shots: int) -> None:
         """ _RoughRabi Constructor
 
@@ -67,13 +67,13 @@ class _RoughRabi(_SharedAttr):
 
         Args:
             pulse_model:
-            eff_provider:
+            custom_provider:
             num_shots:
         """
         if pulse_model.frequency == 0:
             raise MissingFrequencyPulse('Need to have frequency. Assign it from TR function or default drive frequency')
         super().__init__(pulse_model=pulse_model,
-                         eff_provider=eff_provider,
+                         custom_provider=custom_provider,
                          backend_name=backend_name,
                          num_shots=num_shots)
         self.analyzer = None

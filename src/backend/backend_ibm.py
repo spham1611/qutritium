@@ -23,25 +23,27 @@
 """List all the available backends and assign their empirically effective qubit"""
 from qiskit_ibm_provider import IBMProvider, IBMBackend
 
+from src.constant import  QubitParameters
+
 from typing import DefaultDict, Tuple, Optional
 
 from collections import defaultdict
 
 
-def initiate_eff_dict() -> DefaultDict:
-    """ Creates a default dictionary in which ibm_nairobi effective qubit: 6
+def set_qubit_dict() -> DefaultDict:
+    """ Set initiated qubit for each ibm quantum computers
     Returns:
         Dictionary that has the following format
         ===============  ===============
         IBMBackend Name  Effective Qubit
-        'ibm_nairobi'    6
+        'ibm_brisbane'    0
         ===============  ===============
     """
     return defaultdict(lambda: 0)
 
 
-class EffProvider(IBMProvider):
-    """ Provides default attributes and functions of IBMProvider + effective qubit + other parameters for qutrit process
+class CustomProvider(IBMProvider):
+    """ Customize IBMProvider
     An example of this flow::
 
         from qutritium.backend.backend_ibm import EffProvider
@@ -68,7 +70,7 @@ class EffProvider(IBMProvider):
             instance: Optional[str] = None,
             proxies: Optional[dict] = None,
             verify: Optional[bool] = None,
-            eff_dict: Optional[DefaultDict] = None,
+            custom_dict: Optional[DefaultDict] = None,
     ) -> None:
         """ Refer to the IBMProvider doc
         Args:
@@ -78,9 +80,9 @@ class EffProvider(IBMProvider):
             instance:
             proxies:
             verify:
-            eff_dict: Dictionary contains name of the backend and their effective qubits. For example:
-                    dict_eff = {'ibmq_lima': 2,
-                                'ibm_nairobi': 6,}
+            custom_dict: Dictionary contains name of the backend and their effective qubits. For example:
+                        dict_eff = {'ibmq_lima': 2,
+                                    'ibm_nairobi': 6,}
 
         Returns:
             An instance of EffBackends
@@ -89,7 +91,7 @@ class EffProvider(IBMProvider):
         if not self.active_account():
             raise ValueError('Can not find account saved on disk. Please provide token via constructor'
                              ', or save_account() function')
-        self.eff_dict: DefaultDict[str, int] = eff_dict if eff_dict else initiate_eff_dict()
+        self.custom_dict: DefaultDict[str, int] = custom_dict if custom_dict else set_qubit_dict()
 
     def retrieve_backend_info(self, name: str) -> Tuple[IBMBackend, DefaultDict]:
         """
@@ -102,15 +104,15 @@ class EffProvider(IBMProvider):
 
         """
         backend = self.backends(name=name)[0]
-        default_freq = backend.qubit_properties(self.eff_dict[name]).frequency
-        anharmonicity = backend.qubit_properties(self.eff_dict[name]).__getattribute__('anharmonicity')
+        default_freq = backend.defaults().qubit_freq_est[self.custom_dict[name]]
+        anharmonicity = backend.properties().qubits[self.custom_dict[name]][3].value * QubitParameters.GHZ.value
         backend_params = defaultdict(lambda: 0,
-                                     {'effective_qubit': self.eff_dict[name],
+                                     {'effective_qubit': self.custom_dict[name],
                                       'drive_frequency': default_freq,
                                       'anharmonicity': anharmonicity})
-        from src.simple_backend_log import write_log
-
-        write_log(backend)
+        # from src.simple_backend_log import write_log
+        #
+        # write_log(backend)
         return backend, backend_params
 
     def show(self) -> None:
@@ -120,4 +122,10 @@ class EffProvider(IBMProvider):
         print(f"{'Backend name:':<30}{'# Qubit used:':<40}")
         for available_backend in self.backends():
             name = available_backend.name
-            print(f"{name:<30}{self.eff_dict[name]:<40}")
+            print(f"{name:<30}{self.custom_dict[name]:<40}")
+
+    def qubit_optimization(self):
+        ...
+
+    def customize_qubit(self):
+        ...

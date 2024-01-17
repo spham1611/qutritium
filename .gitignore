@@ -46,3 +46,4 @@ node_modules/
 # Ignore pycache
 __pycache__/
 
+/log_files/

@@ -21,19 +21,21 @@
 # SOFTWARE.
 
 """ Transmission and reflection techniques for state transition 0-1 and 1-2.
-In here TR stands for transmission and reflection
+In here TR stands for transmission and reflection, and we derive the ideas of doing such method in space
+01 and 12 based on Qiskit documents of doing calibration. Users can find it here:
+https://qiskit.org/textbook/ch-quantum-hardware/calibrating-qubits-pulse.html
 """
 import numpy as np
 
+from qiskit.circuit import Gate, QuantumCircuit, Parameter
 from qiskit import execute
-from qiskit.circuit import Gate, QuantumCircuit
 from qiskit_ibm_provider.job import job_monitor
 
-from src.backend.backend_ibm import EffProvider
+from src.backend.backend_ibm import CustomProvider
 from src.pulse import Pulse01, Pulse12
 from src.constant import QubitParameters
 from src.utility import fit_function
-from src.calibration.shared_attr import _SharedAttr
+from src.calibration.utility import _SetAttribute
 from src.pulse_creation import GateSchedule
 from src.analyzer import DataAnalysis
 
@@ -61,7 +63,7 @@ def set_up_freq(center_freq: float,
     return freq_ghz
 
 
-class _TR(_SharedAttr):
+class _TR(_SetAttribute):
     """ The class act as an abstract class for transmission and reflection technique used in pulse model
     TR typical flow: set up pulse and gates -> submit job to IBM -> Analyze the resulted pulse
     -> return Pulse model and save job_id.
@@ -86,7 +88,7 @@ class _TR(_SharedAttr):
     """
 
     def __init__(self, pulse_model: Union[Pulse01, Pulse12],
-                 eff_provider: EffProvider, backend_name: str,
+                 custom_provider: CustomProvider, backend_name: str,
                  num_shots: int) -> None:
         """ _TR constructor
 
@@ -97,22 +99,22 @@ class _TR(_SharedAttr):
 
         Args:
             pulse_model: Either Pulse01 or Pulse12
-            eff_provider: EffProvider instance
+            custom_provider: EffProvider instance
             num_shots: number of shots
             backend_name:
 
         """
         super().__init__(pulse_model=pulse_model,
-                         eff_provider=eff_provider,
+                         custom_provider=custom_provider,
                          backend_name=backend_name,
                          num_shots=num_shots)
         # Need to be modified by the constructor of children classes
         self.default_frequency: float = 0.
-        self.package: List = []
         self.freq_sweeping_range_ghz = None
         self.analyzer: Optional[DataAnalysis] = None
+        self.package = []
 
-        # INTERNAL DESIGN: Used for fit_function()
+        # Used for fit_function()
         self._lambda_list = [0, 0, 0, 0]
         self._sweep_gate = Gate("sweep", 1, [])
         self._tr_fit: Optional[NDArray] = None
@@ -131,31 +133,6 @@ class _TR(_SharedAttr):
     def tr_fit(self) -> NDArray:
         return self._tr_fit
 
-    def run_monitor(self,
-                    num_shots: Optional[int] = 0,
-                    meas_return: str = 'avg',
-                    meas_level: int = 1,
-                    **kwargs) -> None:
-        """ Custom run execute()
-        Args:
-            num_shots: modify if needed
-            meas_level:
-            meas_return:
-
-        Returns:
-
-        """
-        self.num_shots = num_shots if num_shots != 0 else self.num_shots
-        submitted_job = execute(experiments=self.package,
-                                backend=self.backend,
-                                shots=self.num_shots,
-                                meas_level=meas_level,
-                                meas_return=meas_return,
-                                **kwargs)
-        self.submitted_job = submitted_job.job_id()
-        print(self.submitted_job)
-        job_monitor(submitted_job)
-
     def analyze(self, job_id: Optional[str]) -> float:
         """ Plots IQ Data given freq_range
         Args:
@@ -165,9 +142,9 @@ class _TR(_SharedAttr):
             freq: Frequency after calculation
         """
         if job_id is None:
-            experiment = self.eff_provider.retrieve_job(self.submitted_job)
+            experiment = self.custom_provider.retrieve_job(self.submitted_job)
         else:
-            experiment = self.eff_provider.retrieve_job(job_id)
+            experiment = self.custom_provider.retrieve_job(job_id)
         self.analyzer = DataAnalysis(experiment)
 
         # Analyze data
@@ -185,16 +162,40 @@ class _TR(_SharedAttr):
         """
         pass
 
+    def run_monitor(self,
+                    num_shots: Optional[int] = 0,
+                    meas_return: str = 'avg',
+                    meas_level: int = 1,
+                    **kwargs) -> None:
+        """ Custom run execute()
+        Args:
+            num_shots: modify if needed
+            meas_level:
+            meas_return:
+
+        Returns:
+
+        """
+        self.num_shots = num_shots if num_shots != 0 else self.num_shots
+        submitted_job = self.backend.run(self.package,
+                                         meas_level=meas_level,
+                                         meas_return=meas_return,
+                                         shots=self.num_shots)
+        self.submitted_job = submitted_job.job_id()
+        print(self.submitted_job)
+        job_monitor(submitted_job)
+
 
 class TR01(_TR):
     """ Used specifically for pulse01 model
     An example of this flow::
-        from qutritium.calibration.transmission_reflection import TR01
+        from qutritium.backend.backend_ibm import CustomProvider
         from qutritium.pulse import Pulse01
+        from qutritium.calibration.transmission_reflection import TR01
 
         pulse01 = Pulse01(duration=144, x_amp=0.2)
-        eff_provider = EffProvider()
-        tr_01 = TR_01(eff_provider=eff_provider, pulse_model=pulse01)
+        custom_provider = CustomProvider()
+        tr_01 = TR01(custom_provider=custom_provider, pulse_model=pulse01)
         tr_01.prepare_circuit()
         tr_01.run_monitor()
         tr_01.modify_pulse_model()
@@ -206,12 +207,12 @@ class TR01(_TR):
     """
 
     def __init__(self, pulse_model: Pulse01,
-                 eff_provider: EffProvider, backend_name: str = "ibmq_manila",
+                 custom_provider: CustomProvider, backend_name: str = "ibm_brisbane",
                  num_shots: int = 4096) -> None:
         """ TR_01 constructor
 
         Args:
-            eff_provider: EffProvider instance
+            custom_provider: EffProvider instance
             pulse_model: Pulse01
             num_shots: default 4096 shots
             backend_name: default = 'ibmq_manila'
@@ -220,7 +221,7 @@ class TR01(_TR):
             * Instance of TR01
         """
         super().__init__(pulse_model=pulse_model,
-                         eff_provider=eff_provider,
+                         custom_provider=custom_provider,
                          backend_name=backend_name,
                          num_shots=num_shots)
         self.lambda_list = [10, 4.9, 1, -2]
@@ -247,8 +248,9 @@ class TR01(_TR):
                 pulse_model=self.pulse_model,
                 qubit=self.qubit
             )
+            freq = Parameter('freq')
             qc_sweep.measure(self.qubit, self.cbit)
-            qc_sweep.add_calibration(self._sweep_gate, [self.qubit], freq_schedule)
+            qc_sweep.add_calibration(self._sweep_gate, (self.qubit,), freq_schedule, [freq])
             self.package.append(qc_sweep)
 
     def modify_pulse_model(self, job_id: str = None) -> None:
@@ -282,19 +284,19 @@ class TR12(_TR):
     """
 
     def __init__(self, pulse_model: Pulse12,
-                 eff_provider: EffProvider, backend_name: str = "ibmq_manila",
+                 custom_provider: CustomProvider, backend_name: str = "ibm_brisbane",
                  num_shots: int = 4096) -> None:
         """
 
         Args:
             pulse_model: Pulse12
-            eff_provider:
+            custom_provider:
             num_shots: default 4096 shots
             backend_name: default = 'ibmq_manila'
 
         """
         super().__init__(pulse_model=pulse_model,
-                         eff_provider=eff_provider,
+                         custom_provider=custom_provider,
                          backend_name=backend_name,
                          num_shots=num_shots)
         self.lambda_list = [10, 4.8, 1, -2]

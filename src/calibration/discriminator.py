@@ -25,8 +25,8 @@ from qiskit.circuit import Gate
 
 from src.pulse import Pulse12
 from src.pulse_creation import GateSchedule
-from src.backend.backend_ibm import EffProvider
-from src.calibration.shared_attr import _SharedAttr
+from src.backend.backend_ibm import CustomProvider
+from src.calibration.utility import _SetAttribute
 from src.constant import QubitParameters
 
 from typing import List
@@ -35,7 +35,7 @@ from typing import List
 ghz_unit = QubitParameters.GHZ.value
 
 
-class DiscriminatorQutrit(_SharedAttr):
+class DiscriminatorQutrit(_SetAttribute):
     """ A Simple Discriminator class that set up circuit and plot the iq graph
     An example of using this class::
 
@@ -62,19 +62,19 @@ class DiscriminatorQutrit(_SharedAttr):
     To see more details, visit:
     ...
     """
-    def __init__(self, eff_provider: EffProvider, pulse_model: Pulse12,
+    def __init__(self, custom_provider: CustomProvider, pulse_model: Pulse12,
                  backend_name: str = 'ibmq_manila', num_shots=4096,
                  delay_time: int = 22496) -> None:
         """ ctor
 
         Args:
-            eff_provider: EffProvider instance which contains necessary information
+            custom_provider: EffProvider instance which contains necessary information
             pulse_model: Pulse12 model only
             backend_name: name to choose which backend running on IBM server
             num_shots: number of experiments
             delay_time: sending a time delay pulse
         """
-        super().__init__(eff_provider=eff_provider, pulse_model=pulse_model,
+        super().__init__(custom_provider=custom_provider, pulse_model=pulse_model,
                          backend_name=backend_name, num_shots=num_shots)
         self.ramsey_frequency01 = self.pulse_model.pulse01.frequency
         self.ramsey_frequency12 = self.pulse_model.frequency
@@ -131,26 +131,20 @@ class DiscriminatorQutrit(_SharedAttr):
                     meas_level=1,
                     **kwargs) -> None:
         """
-        Run custom execute()
+        Run via run_monitor in abstract class
         Args:
-            num_shots: number of experiments
-            meas_return: (See execute() documentation)
-            meas_level: (See execute() documentation)
-            **kwargs: Please See execute() documentation as it contains valid kwargs
-        """
-        from qiskit import execute
-        from qiskit_ibm_provider.job import job_monitor
+            num_shots:
+            meas_return:
+            meas_level:
+            **kwargs:
 
-        self.num_shots = num_shots if num_shots != 0 else self.num_shots
-        discriminator_job = execute(experiments=self.package,
-                                    backend=self.backend,
-                                    shots=self.num_shots,
-                                    meas_return=meas_return,
-                                    meas_level=meas_level,
-                                    **kwargs)
-        self.submitted_job = discriminator_job.job_id()
-        print(self.submitted_job)
-        job_monitor(discriminator_job)
+        Returns:
+
+        """
+        super().run_monitor(num_shots=num_shots,
+                            meas_return=meas_return,
+                            meas_level=meas_level,
+                            **kwargs)
 
     def plot_iq(self,
                 x_min: int = -30,

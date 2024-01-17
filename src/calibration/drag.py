@@ -29,7 +29,7 @@ from qiskit.circuit import Gate, QuantumCircuit
 from src.pulse import Pulse01, Pulse12
 from src.backend.backend_ibm import EffProvider
 from src.pulse_creation import GateSchedule
-from src.calibration.shared_attr import _SharedAttr
+from src.calibration.utility import _SharedAttr
 from src.calibration.discriminator import DiscriminatorQutrit
 from src.exceptions.pulse_exception import (
     MissingDurationPulse,
