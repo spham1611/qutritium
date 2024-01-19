@@ -62,8 +62,11 @@ class DiscriminatorQutrit(_SetAttribute):
     To see more details, visit:
     ...
     """
-    def __init__(self, custom_provider: CustomProvider, pulse_model: Pulse12,
-                 backend_name: str = 'ibmq_manila', num_shots=4096,
+    def __init__(self,
+                 custom_provider: CustomProvider,
+                 pulse_model: Pulse12,
+                 backend_name: str = 'ibm_brisbane',
+                 num_shots=4096,
                  delay_time: int = 22496) -> None:
         """ ctor
 
@@ -73,9 +76,15 @@ class DiscriminatorQutrit(_SetAttribute):
             backend_name: name to choose which backend running on IBM server
             num_shots: number of experiments
             delay_time: sending a time delay pulse
+
+        Notes:
+            * model_space parameter is not necessary as we are discriminating states not processing
         """
-        super().__init__(custom_provider=custom_provider, pulse_model=pulse_model,
-                         backend_name=backend_name, num_shots=num_shots)
+        super().__init__(custom_provider=custom_provider,
+                         pulse_model=pulse_model,
+                         backend_name=backend_name,
+                         num_shots=num_shots,
+                         model_space='01')
         self.ramsey_frequency01 = self.pulse_model.pulse01.frequency
         self.ramsey_frequency12 = self.pulse_model.frequency
         self._delay_gate = Gate('5mus_delay', 1, [])
@@ -141,7 +150,7 @@ class DiscriminatorQutrit(_SetAttribute):
         Returns:
 
         """
-        super().run_monitor(num_shots=num_shots,
+        super().backend.run(num_shots=num_shots,
                             meas_return=meas_return,
                             meas_level=meas_level,
                             **kwargs)

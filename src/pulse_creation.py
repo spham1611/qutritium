@@ -56,7 +56,7 @@ class GateSchedule:
         with pulse.build(backend=backend) as gaussian_schedule:
             drive_chan = pulse.channels.DriveChannel(qubit)
             pulse.set_frequency(frequency, drive_chan)
-            pulse.play(pulse.Gaussian(duration=pulse_model.duration,
+            pulse.play(pulse.Gaussian(duration=pulse_model.drive_duration,
                                       sigma=pulse_model.sigma, amp=pulse_model.x_amp), drive_chan)
         return gaussian_schedule
 
@@ -81,8 +81,9 @@ class GateSchedule:
         with pulse.build(backend=backend) as gaussian_schedule:
             drive_chan = pulse.channels.DriveChannel(qubit)
             pulse.set_frequency(pulse_model.frequency, drive_chan)
-            pulse.play(pulse.Gaussian(duration=pulse_model.duration,
-                                      sigma=pulse_model.sigma, amp=x_amp), drive_chan)
+            pulse.play(pulse.Gaussian(duration=pulse_model.drive_duration,
+                                      sigma=pulse_model.sigma,
+                                      amp=x_amp), drive_chan)
         return gaussian_schedule
 
     @staticmethod
@@ -106,7 +107,9 @@ class GateSchedule:
         with pulse.build(backend=backend) as beta_sweep:
             drive_chan = pulse.channels.DriveChannel(qubit)
             pulse.set_frequency(pulse_model.frequency, drive_chan)
-            pulse.play(pulse.Drag(duration=pulse_model.duration, sigma=pulse_model.sigma, amp=pulse_model.x_amp,
+            pulse.play(pulse.Drag(duration=pulse_model.drive_duration,
+                                  sigma=pulse_model.sigma,
+                                  amp=pulse_model.x_amp,
                                   beta=beta), drive_chan)
         return beta_sweep
 

@@ -28,7 +28,6 @@ https://qiskit.org/textbook/ch-quantum-hardware/calibrating-qubits-pulse.html
 import numpy as np
 
 from qiskit.circuit import Gate, QuantumCircuit, Parameter
-from qiskit import execute
 from qiskit_ibm_provider.job import job_monitor
 
 from src.backend.backend_ibm import CustomProvider
@@ -40,7 +39,7 @@ from src.pulse_creation import GateSchedule
 from src.analyzer import DataAnalysis
 
 from numpy.typing import NDArray
-from typing import List, Union, Optional
+from typing import List, Optional
 
 mhz_unit = QubitParameters.MHZ.value
 ghz_unit = QubitParameters.GHZ.value
@@ -77,6 +76,8 @@ class _TR(_SetAttribute):
 
     Note:
         * You should not instantiate _TR as this is am abstract class. Use TR01 and TR12 instead
+        * Users are recommended to not initialize pulse model 01 and 12 and let the pulse_model parameter = None
+        . This class will instantiate the pulse and return to users for further usage
 
     Here is list of attributes available on the abstract "_TR" class, excluding SharedAttr attr:
         * frequency: in Hz
@@ -87,9 +88,13 @@ class _TR(_SetAttribute):
         * analyze(): get the frequency of pulse after calibration
     """
 
-    def __init__(self, pulse_model: Union[Pulse01, Pulse12],
-                 custom_provider: CustomProvider, backend_name: str,
-                 num_shots: int) -> None:
+    def __init__(self,
+                 custom_provider: CustomProvider,
+                 backend_name: str,
+                 num_shots: int,
+                 model_space: str,
+                 pulse_connected,
+                 pulse_model) -> None:
         """ _TR constructor
 
          Notes:
@@ -98,16 +103,17 @@ class _TR(_SetAttribute):
             * lambda_list: empirical, modified when running multiple experiments
 
         Args:
-            pulse_model: Either Pulse01 or Pulse12
             custom_provider: EffProvider instance
             num_shots: number of shots
             backend_name:
 
         """
-        super().__init__(pulse_model=pulse_model,
-                         custom_provider=custom_provider,
+        super().__init__(custom_provider=custom_provider,
                          backend_name=backend_name,
-                         num_shots=num_shots)
+                         num_shots=num_shots,
+                         model_space=model_space,
+                         pulse_connected=pulse_connected,
+                         pulse_model=pulse_model)
         # Need to be modified by the constructor of children classes
         self.default_frequency: float = 0.
         self.freq_sweeping_range_ghz = None
@@ -180,7 +186,8 @@ class _TR(_SetAttribute):
         submitted_job = self.backend.run(self.package,
                                          meas_level=meas_level,
                                          meas_return=meas_return,
-                                         shots=self.num_shots)
+                                         shots=self.num_shots,
+                                         **kwargs)
         self.submitted_job = submitted_job.job_id()
         print(self.submitted_job)
         job_monitor(submitted_job)
@@ -206,24 +213,26 @@ class TR01(_TR):
         * modify_pulse_model(): implement abstract modify_pulse_model() from ''_TR''
     """
 
-    def __init__(self, pulse_model: Pulse01,
-                 custom_provider: CustomProvider, backend_name: str = "ibm_brisbane",
+    def __init__(self,
+                 custom_provider: CustomProvider,
+                 backend_name: str = "ibm_brisbane",
                  num_shots: int = 4096) -> None:
         """ TR_01 constructor
 
         Args:
             custom_provider: EffProvider instance
-            pulse_model: Pulse01
             num_shots: default 4096 shots
             backend_name: default = 'ibmq_manila'
 
         Returns:
             * Instance of TR01
         """
-        super().__init__(pulse_model=pulse_model,
-                         custom_provider=custom_provider,
+        super().__init__(custom_provider=custom_provider,
                          backend_name=backend_name,
-                         num_shots=num_shots)
+                         num_shots=num_shots,
+                         pulse_connected=None,
+                         pulse_model=None,
+                         model_space='01')
         self.lambda_list = [10, 4.9, 1, -2]
         self.default_frequency = int(self.backend_params['drive_frequency'])
         self.freq_sweeping_range_ghz: NDArray = set_up_freq(center_freq=self.default_frequency)
@@ -241,7 +250,7 @@ class TR01(_TR):
         for freq in frequencies_hz:
             qc_sweep = QuantumCircuit(self.qubit + 1, self.cbit + 1)
             # noinspection DuplicatedCode
-            qc_sweep.append(self._sweep_gate, [0])
+            qc_sweep.append(self._sweep_gate, [self.qubit])
             freq_schedule = GateSchedule.freq_gaussian(
                 backend=self.backend,
                 frequency=freq,
@@ -283,22 +292,25 @@ class TR12(_TR):
         * modify_pulse_model(): implement abstract modify_pulse_model() from _TR
     """
 
-    def __init__(self, pulse_model: Pulse12,
-                 custom_provider: CustomProvider, backend_name: str = "ibm_brisbane",
+    def __init__(self,
+                 pulse_connected: Pulse01,
+                 custom_provider: CustomProvider,
+                 backend_name: str = "ibm_brisbane",
                  num_shots: int = 4096) -> None:
         """
 
         Args:
-            pulse_model: Pulse12
             custom_provider:
             num_shots: default 4096 shots
             backend_name: default = 'ibmq_manila'
 
         """
-        super().__init__(pulse_model=pulse_model,
-                         custom_provider=custom_provider,
+        super().__init__(custom_provider=custom_provider,
                          backend_name=backend_name,
-                         num_shots=num_shots)
+                         num_shots=num_shots,
+                         pulse_connected=pulse_connected,
+                         pulse_model=None,
+                         model_space='12')
         self.lambda_list = [10, 4.8, 1, -2]
         self.default_frequency = int(self.backend_params['drive_frequency'] + self.backend_params['anharmonicity'])
         self.freq_sweeping_range_ghz: NDArray = set_up_freq(center_freq=self.default_frequency)
@@ -321,8 +333,9 @@ class TR12(_TR):
                 pulse_model=self.pulse_model,
                 qubit=self.qubit
             )
+            freq = Parameter('freq')
             qc_sweep.measure(self.qubit, self.cbit)
-            qc_sweep.add_calibration(self._sweep_gate, [self.qubit], freq_schedule)
+            qc_sweep.add_calibration(self._sweep_gate, (self.qubit,), freq_schedule, [freq])
             self.package.append(qc_sweep)
 
     def modify_pulse_model(self, job_id: str = None) -> None:

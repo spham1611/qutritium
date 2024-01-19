@@ -81,7 +81,7 @@ class PulseList(list["Pulse"]):
             else:
                 dict_pulses['mode'].append(None)
                 dict_pulses['pulse_pointer'].append(None)
-            dict_pulses['duration'].append(pulse.duration)
+            dict_pulses['duration'].append(pulse.drive_duration)
             dict_pulses['frequency'].append(pulse.frequency)
             dict_pulses['x_amp'].append(pulse.x_amp)
             dict_pulses['sx_amp'].append(pulse.sx_amp)
@@ -134,16 +134,19 @@ class Pulse(ABC):
         * sx_amp:
         * drag_coeff:
         * duration:
-        * sigma: duration / 4
+        * sigma: duration / 8
         * id: unique id of pulse
         * pulse_list: Pulse_List: class attr - list of pulses that have been initiated
         * draw(): draw sine waveform of the pulse (figurative only)
     """
     pulse_list = PulseList()
 
-    def __init__(self, frequency: float,
-                 x_amp: float, sx_amp: float,
-                 drag_coeff: float, duration: int) -> None:
+    def __init__(self,
+                 frequency: float,
+                 x_amp: float,
+                 sx_amp: float,
+                 drag_coeff: float,
+                 drive_duration: int) -> None:
         """ Initiates pulse and add it to the list
         Args:
             frequency: in Hz and 0 in default.
@@ -152,11 +155,11 @@ class Pulse(ABC):
             x_amp:
             sx_amp:
             drag_coeff:
-            duration: in milliseconds
+            drive_duration: in nanosecond -> be converted to seconds
         Raises:
             ValueError: raise if pulse has invalid frequency, time and x_amp
         """
-        if not duration or duration <= 0:
+        if not drive_duration or drive_duration <= 0:
             raise MissingDurationPulse("Time must be >= 0")
         if not x_amp:
             raise MissingAmplitudePulse("Pulse must have amplitude")
@@ -164,8 +167,8 @@ class Pulse(ABC):
         self.x_amp: float = x_amp
         self.sx_amp: float = sx_amp if sx_amp else self.x_amp / 2
         self.drag_coeff: float = drag_coeff
-        self.duration: int = duration
-        self.sigma = duration / 4 if duration else 0
+        self.drive_duration = drive_duration
+        self.sigma = drive_duration / 8 if drive_duration else 0
         self.id = uuid.uuid4()
         Pulse.pulse_list.append(self)
 
@@ -213,9 +216,12 @@ class Pulse01(Pulse):
         * All attributes of abstract class "Pulse"
     """
 
-    def __init__(self, frequency: float = 0.,
-                 x_amp: float = 0., sx_amp: float = 0.,
-                 drag_coeff: float = 0., duration: int = 144,
+    def __init__(self,
+                 drive_duration: int,
+                 x_amp: float,
+                 frequency: float = 0.,
+                 sx_amp: float = 0.,
+                 drag_coeff: float = 0.,
                  pulse12: Pulse12 = None) -> None:
         """
         It depends on types of quantum computer that the frequency may vary.
@@ -225,16 +231,16 @@ class Pulse01(Pulse):
             x_amp:
             sx_amp:
             drag_coeff:
-            duration:
+            drive_duration:
             pulse12:
         """
-        if duration == 0:
+        if drive_duration == 0:
             raise MissingDurationPulse('Duration should not be 0!')
         if x_amp == 0:
             raise MissingAmplitudePulse('Amplitude should not be 0!')
         super().__init__(frequency=frequency, x_amp=x_amp,
                          sx_amp=sx_amp, drag_coeff=drag_coeff,
-                         duration=duration)
+                         drive_duration=drive_duration)
         self.pulse12 = pulse12
 
     def __str__(self) -> str:
@@ -245,7 +251,7 @@ class Pulse01(Pulse):
             f"Pulse01: id={self.id}, frequency={self.frequency}, "
             f"x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
             f"drag_coeff={self.drag_coeff}, "
-            f"duration={self.duration}, sigma={self.sigma}"
+            f"duration={self.drive_duration}, sigma={self.sigma}"
         )
 
     def __repr__(self) -> str:
@@ -256,7 +262,7 @@ class Pulse01(Pulse):
             f"Pulse01: id={self.id}, frequency={self.frequency}, "
             f"x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
             f"drag_coeff={self.drag_coeff}, "
-            f"duration={self.duration}, sigma={self.sigma}"
+            f"duration={self.drive_duration}, sigma={self.sigma}"
         )
 
     def __eq__(self, other: Pulse01) -> bool:
@@ -272,7 +278,7 @@ class Pulse01(Pulse):
                 and self.x_amp == other.x_amp
                 and self.sx_amp == other.sx_amp
                 and self.drag_coeff == other.drag_coeff
-                and self.duration == other.duration
+                and self.drive_duration == other.drive_duration
         )
 
 
@@ -295,10 +301,13 @@ class Pulse12(Pulse):
         * All attributes of abstract class "Pulse"
     """
 
-    def __init__(self, pulse01: Pulse01,
-                 frequency: float = 0., x_amp: float = 0.,
-                 sx_amp: float = 0., drag_coeff: float = 0.,
-                 duration: int = 144,
+    def __init__(self,
+                 pulse01: Pulse01,
+                 drive_duration: int,
+                 x_amp: float,
+                 frequency: float = 0.,
+                 sx_amp: float = 0.,
+                 drag_coeff: float = 0.,
                  ) -> None:
         """
         It depends on types of quantum computer that the frequency may vary.
@@ -311,15 +320,15 @@ class Pulse12(Pulse):
             x_amp:
             sx_amp:
             drag_coeff:
-            duration:
+            drive_duration:
         """
-        if duration == 0:
+        if drive_duration == 0:
             raise MissingDurationPulse('Duration should not be 0!')
         if x_amp == 0:
             raise MissingAmplitudePulse('Amplitude should not be 0!')
         super().__init__(frequency=frequency, x_amp=x_amp,
                          sx_amp=sx_amp, drag_coeff=drag_coeff,
-                         duration=duration)
+                         drive_duration=drive_duration)
         self.pulse01 = pulse01
         self.pulse01.pulse12 = self
 
@@ -331,7 +340,7 @@ class Pulse12(Pulse):
             f"Pulse12: id={self.id}, frequency={self.frequency}, "
             f"x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
             f"drag_coeff={self.drag_coeff}, "
-            f"duration={self.duration}, sigma={self.sigma}"
+            f"duration={self.drive_duration}, sigma={self.sigma}"
         )
 
     def __repr__(self) -> str:
@@ -342,7 +351,7 @@ class Pulse12(Pulse):
             f"Pulse12: id={self.id}, frequency={self.frequency},"
             f" x_amp={self.x_amp}, sx_amp={self.sx_amp}, "
             f"drag_coeff={self.drag_coeff}, "
-            f"duration={self.duration}, sigma={self.sigma}"
+            f"duration={self.drive_duration}, sigma={self.sigma}"
         )
 
     def __eq__(self, other: Pulse12) -> bool:
@@ -356,5 +365,5 @@ class Pulse12(Pulse):
                 and self.x_amp == other.x_amp
                 and self.sx_amp == other.sx_amp
                 and self.drag_coeff == other.drag_coeff
-                and self.duration == other.duration
+                and self.drive_duration == other.drive_duration
         )

@@ -10,8 +10,9 @@ class QubitParameters(Enum):
     MHZ = 1.0e6
     GHZ = 1.0e9
 
-    # th-Qubit used for running: used for nairobi
-    QUBIT_CHANGE_TYPE1 = 6
+    # Time constants
+    us = 1.0e-6
+    ns = 1.0e-9
 
     # Other constants
     CBIT = 0

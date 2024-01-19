@@ -27,9 +27,9 @@ from qiskit.circuit import Gate, QuantumCircuit
 
 # from src.analyzer import DataAnalysis
 from src.pulse import Pulse01, Pulse12
-from src.backend.backend_ibm import EffProvider
+from src.backend.backend_ibm import CustomProvider
 from src.pulse_creation import GateSchedule
-from src.calibration.utility import _SharedAttr
+from src.calibration.utility import _SetAttribute
 from src.calibration.discriminator import DiscriminatorQutrit
 from src.exceptions.pulse_exception import (
     MissingDurationPulse,
@@ -40,20 +40,26 @@ from src.exceptions.pulse_exception import (
 from typing import Union, Optional
 
 
-class _DRAG(_SharedAttr):
+class _DRAG(_SetAttribute):
     """
     The class act as provider + regulator for Drag Leakage.
     Drag Leakage flow: set up -> create circuit -> submit job to IBM -> get the result
     """
 
-    def __init__(self, pulse_model: Union[Pulse01, Pulse12],
-                 eff_provider: EffProvider, discriminator_package: DiscriminatorQutrit,
-                 backend_name: str, num_shots: int) -> None:
+    def __init__(self,
+                 pulse_model: Union[Pulse01, Pulse12],
+                 custom_provider: CustomProvider,
+                 discriminator_package: DiscriminatorQutrit,
+                 model_space: str,
+                 pulse_connected: Union[Pulse01, Pulse12],
+                 backend_name: str,
+                 num_shots: int) -> None:
         """
 
         Args:
             pulse_model:
-            eff_provider:
+            custom_provider:
+            discriminator_package:
             backend_name:
             num_shots:
 
@@ -63,7 +69,7 @@ class _DRAG(_SharedAttr):
             MissingAmplitudePulse
         """
 
-        if pulse_model.duration == 0:
+        if pulse_model.drive_duration == 0:
             raise MissingDurationPulse
         if pulse_model.frequency == 0:
             raise MissingFrequencyPulse
@@ -71,9 +77,11 @@ class _DRAG(_SharedAttr):
             raise MissingAmplitudePulse
 
         super().__init__(pulse_model=pulse_model,
-                         eff_provider=eff_provider,
+                         custom_provider=custom_provider,
                          backend_name=backend_name,
-                         num_shots=num_shots)
+                         num_shots=num_shots,
+                         model_space=model_space,
+                         pulse_connected=pulse_connected)
 
         self.drag_sweeping_range = np.linspace(-5, 5, 100)
         self.package = discriminator_package.package
@@ -127,23 +135,28 @@ class DRAG01(_DRAG):
     """
 
     """
-    def __init__(self, pulse_model: Pulse01,
-                 eff_provider: EffProvider, discriminator_package: DiscriminatorQutrit,
-                 backend_name: str = 'ibmq_manila', num_shots: int = 4096) -> None:
+    def __init__(self,
+                 pulse_model: Pulse01,
+                 custom_provider: CustomProvider,
+                 discriminator_package: DiscriminatorQutrit,
+                 backend_name: str = 'ibm_brisbane',
+                 num_shots: int = 4096) -> None:
         """
 
         Args:
             pulse_model:
-            eff_provider:
+            custom_provider:
             discriminator_package:
             backend_name:
             num_shots:
         """
         super().__init__(pulse_model=pulse_model,
-                         eff_provider=eff_provider,
+                         custom_provider=custom_provider,
                          discriminator_package=discriminator_package,
                          backend_name=backend_name,
-                         num_shots=num_shots)
+                         num_shots=num_shots,
+                         model_space='01',
+                         pulse_connected=pulse_model.pulse12)
 
     def prepare_circuit(self) -> None:
         """
@@ -187,23 +200,20 @@ class DRAG12(_DRAG):
     """
 
     """
-    def __init__(self, pulse_model: Pulse12,
-                 eff_provider: EffProvider, discriminator_package: DiscriminatorQutrit,
-                 backend_name: str = 'ibmq_manila', num_shots: int = 4096) -> None:
-        """
+    def __init__(self,
+                 pulse_model: Pulse12,
+                 custom_provider: CustomProvider,
+                 discriminator_package: DiscriminatorQutrit,
+                 backend_name: str = 'ibm_brisbane',
+                 num_shots: int = 4096) -> None:
 
-        Args:
-            pulse_model:
-            eff_provider:
-            discriminator_package:
-            backend_name:
-            num_shots:
-        """
         super().__init__(pulse_model=pulse_model,
-                         eff_provider=eff_provider,
+                         custom_provider=custom_provider,
                          discriminator_package=discriminator_package,
                          backend_name=backend_name,
-                         num_shots=num_shots)
+                         num_shots=num_shots,
+                         model_space='12',
+                         pulse_connected=pulse_model.pulse01)
 
     def prepare_circuit(self) -> None:
         """

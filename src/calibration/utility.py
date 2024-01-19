@@ -23,17 +23,19 @@
 """This abstract class is meant to refactor attributes appearing in calibration classes"""
 from abc import ABC
 
-from src.backend.backend_ibm import CustomProvider
-from src.pulse import Pulse01, Pulse12
-from src.constant import QubitParameters
+from typing import Optional
 
-from typing import Union
+from qiskit import pulse
+
+from src.backend.backend_ibm import CustomProvider
+from src.pulse import Pulse, Pulse01, Pulse12
+from src.constant import QubitParameters
 
 
 class _SetAttribute(ABC):
     """
     Notes:
-        * This is an abstract class and should not be instantiated
+        * This is an abstract class and should not be instantiated as it is only meant for programming convenience
     Here is a list of set attributes used in calibration functions:
         * pulse_model: Either Pulse01 or Pulse12
         * eff_provider: CustomProvider instance
@@ -49,25 +51,61 @@ class _SetAttribute(ABC):
         * num_shots: for execute function
         * submitted_job: job id in string format
     """
-    def __init__(self, pulse_model: Union[Pulse01, Pulse12],
-                 custom_provider: CustomProvider, backend_name: str,
-                 num_shots: int) -> None:
+
+    def __init__(self,
+                 custom_provider: CustomProvider,
+                 backend_name: str,
+                 num_shots: int,
+                 model_space: str,
+                 pulse_model: Optional[Pulse],
+                 pulse_connected=None,
+                 drive_duration_ns: float = 120.) -> None:
         """
 
         Args:
-            pulse_model: Either Pulse01 or Pulse12
+            model_space:
             custom_provider:
-            num_shots: number of shots running in execute function
             backend_name:
-
+            num_shots:
+            pulse_model:
+            pulse_connected: User can access the related pulse via Pulse getter, and it is recommended to do so
+            drive_duration_ns:
         """
-        self.pulse_model: Union[Pulse01, Pulse12] = pulse_model
         self.custom_provider: CustomProvider = custom_provider
         self.backend, self.backend_params = self.custom_provider.retrieve_backend_info(backend_name)
+        self.model_space = model_space
+        self.drive_duration_sec = drive_duration_ns * QubitParameters.ns.value
+        self.pulse_connected = pulse_connected
+        self.pulse_model = self.set_pulse_model() if not pulse_model else pulse_model
+
         self.qubit: int = self.backend_params['effective_qubit']
         self.cbit: int = QubitParameters.CBIT.value
         self.num_shots: int = num_shots
         self.submitted_job: str = ''
+
+    def set_pulse_model(self) -> Pulse:
+        """
+        Set pulse model based ok Qiskit pulse -> to run on IBM devices. A number of functions are demonstrated in Qiskit
+        tutorial that users can find here: https://qiskit.org/textbook/ch-quantum-hardware/calibrating-qubits-pulse.html
+        """
+        granularity = self.backend.configuration().timing_constraints['granularity']
+
+        def get_closest_multiple(value, base_number):
+            return int(value + base_number / 2) - (int(value + base_number / 2) % base_number)
+
+        def get_close_multiple_of_granularity(num):
+            return get_closest_multiple(num, granularity)
+
+        if self.model_space == '01':
+            return Pulse01(x_amp=0.1, drive_duration=get_close_multiple_of_granularity(
+                pulse.seconds_to_samples(self.drive_duration_sec)
+            ), pulse12=self.pulse_connected)
+        elif self.model_space == '12':
+            return Pulse12(x_amp=0.1, drive_duration=get_close_multiple_of_granularity(
+                pulse.seconds_to_samples(self.drive_duration_sec)
+            ), pulse01=self.pulse_connected)
+        else:
+            raise ValueError("Invalid quantum space!. Only write either: '01' or '12'")
 
     def prepare_circuit(self) -> None:
         pass

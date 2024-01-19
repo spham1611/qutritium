@@ -57,9 +57,13 @@ class _RoughRabi(_SetAttribute):
         * analyze(): plots iq_data + get x_amp from fit function
     """
 
-    def __init__(self, pulse_model: Union[Pulse01, Pulse12],
-                 custom_provider: CustomProvider, backend_name: str,
-                 num_shots: int) -> None:
+    def __init__(self,
+                 pulse_model: Union[Pulse01, Pulse12],
+                 custom_provider: CustomProvider,
+                 backend_name: str,
+                 num_shots: int,
+                 model_space: str,
+                 pulse_connected: Union[Pulse01, Pulse12]) -> None:
         """ _RoughRabi Constructor
 
         Notes:
@@ -75,7 +79,9 @@ class _RoughRabi(_SetAttribute):
         super().__init__(pulse_model=pulse_model,
                          custom_provider=custom_provider,
                          backend_name=backend_name,
-                         num_shots=num_shots)
+                         num_shots=num_shots,
+                         model_space=model_space,
+                         pulse_connected=pulse_connected)
         self.analyzer = None
         self._package: List = []
 
@@ -162,9 +168,9 @@ class _RoughRabi(_SetAttribute):
         from src.analyzer import DataAnalysis
 
         if not job_id:
-            experiment = self.eff_provider.retrieve_job(self.submitted_job)
+            experiment = self.custom_provider.retrieve_job(self.submitted_job)
         else:
-            experiment = self.eff_provider.retrieve_job(job_id)
+            experiment = self.custom_provider.retrieve_job(job_id)
         self.analyzer = DataAnalysis(experiment)
 
         self.analyzer.retrieve_data(average=True)
@@ -195,22 +201,30 @@ class RoughRabi01(_RoughRabi):
     Here is a list of available functions of "RoughRabi01" class, excluding inheritance attributes
         * prepare_circuit(): override "_RoughRabi"
         * modify_pulse_model(): override "_RoughRabi"
+
+    Notes:
+        * pulse_model should be processed by TR classes
     """
 
-    def __init__(self, pulse_model: Pulse01,
-                 eff_provider, backend_name='ibmq_manila',
+    def __init__(self,
+                 pulse_model: Pulse01,
+                 custom_provider: CustomProvider,
+                 backend_name='ibm_brisbane',
                  num_shots: int = 4096) -> None:
-        """ Ctor
-
+        """
+        Ctor
         Args:
             pulse_model:
-            eff_provider
+            custom_provider:
+            backend_name:
             num_shots:
         """
         super().__init__(pulse_model=pulse_model,
-                         eff_provider=eff_provider,
+                         custom_provider=custom_provider,
                          backend_name=backend_name,
-                         num_shots=num_shots)
+                         num_shots=num_shots,
+                         model_space='01',
+                         pulse_connected=pulse_model.pulse12)
         self.lambda_list = [5, 0, 0.5, 0]
 
     def prepare_circuit(self) -> None:
@@ -231,8 +245,8 @@ class RoughRabi01(_RoughRabi):
                 pulse_model=self.pulse_model,
                 qubit=self.qubit
             )
-            qc_rabi01.add_calibration(self._rabi_gate, [self.qubit], rabi_schedule)
             qc_rabi01.measure(self.qubit, self.cbit)
+            qc_rabi01.add_calibration(self._rabi_gate, (self.qubit,), rabi_schedule, x_amp)
             self._package.append(qc_rabi01)
 
     def modify_pulse_model(self, job_id: str = None) -> None:
@@ -270,20 +284,25 @@ class RoughRabi12(_RoughRabi):
         * modify_pulse_model(): overrides "_RoughRabi"
     """
 
-    def __init__(self, pulse_model: Pulse12,
-                 eff_provider: EffProvider, backend_name='ibmq_manila',
+    def __init__(self,
+                 pulse_model: Pulse12,
+                 custom_provider: CustomProvider,
+                 backend_name='ibm_brisbane',
                  num_shots: int = 4096) -> None:
-        """ Ctor
+        """
 
         Args:
             pulse_model:
-            eff_provider
+            custom_provider:
+            backend_name:
             num_shots:
         """
         super().__init__(pulse_model=pulse_model,
-                         eff_provider=eff_provider,
+                         custom_provider=custom_provider,
                          backend_name=backend_name,
-                         num_shots=num_shots)
+                         num_shots=num_shots,
+                         model_space='12',
+                         pulse_connected=pulse_model.pulse01)
         self.lambda_list = [5, 0, 0.4, 0]
 
     def prepare_circuit(self) -> None:
@@ -305,8 +324,8 @@ class RoughRabi12(_RoughRabi):
                 pulse_model=self.pulse_model,
                 qubit=self.qubit
             )
-            qc_rabi12.add_calibration(self._rabi_gate, [self.qubit], rabi_schedule)
             qc_rabi12.measure(self.qubit, self.cbit)
+            qc_rabi12.add_calibration(self._rabi_gate, (self.qubit,), rabi_schedule, x_amp)
             self._package.append(qc_rabi12)
 
     def modify_pulse_model(self, job_id: str = None) -> None:
