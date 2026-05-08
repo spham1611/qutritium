@@ -1,3 +1,158 @@
+# pyproject.toml -- v1.0.0
+# This is used to replace the old files such as requirements.txt, changes, setup etc
+#
+# Supports Python 3.11 through 3.14 and newest versions of Numpy, Scipy and Matplot
+
 [build-system]
-requires = ['setuptools>=61.0']
-build-backend = 'setuptools.build_meta'
+requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qutritium"
+version = "1.0.0"
+description = "A hardware-agnostic Python library for qutrit (3-level) quantum computing: gates, circuits, simulation, and SU(3) decomposition."
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+requires-python = ">=3.11"
+keywords = ["quantum", "quantum-computing", "qutrit", "qudit", "su3", "decomposition", "simulator"]
+authors = [
+    { name = "Son Pham", email = "sph40@duke.edu" },
+    { name = "Tien Nguyen" },
+    { name = "Bao Bach" },
+]
+maintainers = [
+    { name = "Son Pham", email = "sph40@duke.edu" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Typing :: Typed",
+]
+
+# Runtime dependencies
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.13",
+]
+
+[project.optional-dependencies]
+plot = [
+    "matplotlib>=3.9",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.8.0",
+    "black>=24.0",
+    "mypy>=1.10",
+]
+
+[project.urls]
+Homepage = "https://github.com/spham1611/qutritium"
+Repository = "https://github.com/spham1611/qutritium"
+Issues = "https://github.com/spham1611/qutritium/issues"
+
+# ---------------------------------------------------------------------------
+# Setuptools-specific config
+# ---------------------------------------------------------------------------
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["qutritium*"]
+exclude = ["legacy*", "tests*", "test*"]
+
+[tool.setuptools.package-data]
+qutritium = ["py.typed"]
+
+# ---------------------------------------------------------------------------
+# Ruff (linter + formatter)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["legacy", "site"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "E501",
+    "B008",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["qutritium"]
+
+# ---------------------------------------------------------------------------
+# Black (formatter, secondary -- ruff format is preferred)
+# ---------------------------------------------------------------------------
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312", "py313", "py314"]
+extend-exclude = "/(legacy|site)/"
+
+# ---------------------------------------------------------------------------
+# Mypy (type checker)
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+strict = false
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = false
+exclude = [
+    "legacy/.*",
+    "site/.*",
+]
+
+[[tool.mypy.overrides]]
+module = "matplotlib.*"
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["test"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning:qiskit.*",
+]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["src/qutritium"]
+omit = ["legacy/*", "test/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
