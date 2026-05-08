@@ -1,0 +1,78 @@
+# CITATION File Format -- https://citation-file-format.github.io/
+# This file lets GitHub render a "Cite this repository" sidebar widget and
+# provides machine-readable citation metadata for tools like Zenodo, Zotero,
+# CFF-tools, etc.
+
+cff-version: 1.2.0
+message: "If you use Qutritium in your research, please cite it as below."
+type: software
+title: "Qutritium: a hardware-agnostic Python library for qutrit quantum computing"
+abstract: >-
+  Qutritium provides a Python implementation of qutrit (3-level) quantum
+  gate definitions, circuit construction, an exact statevector simulator,
+  and SU(3) decomposition into native subspace rotations. The v1.0.0
+  release is hardware-agnostic (numpy/scipy only); earlier 0.0.x releases
+  shipped Qiskit-pulse-based calibration routines for IBM quantum hardware
+  and are preserved as a historical record under the legacy/ directory.
+
+authors:
+  - family-names: Pham
+    given-names: Son
+    email: sph40@duke.edu
+    affiliation: "Duke University"
+    orcid: "https://orcid.org/0000-0000-0000-0000"  # TODO: replace with real ORCID
+  - family-names: Nguyen
+    given-names: Tien
+    affiliation: "Vietnam National University, Hanoi"
+  - family-names: Bach
+    given-names: Bao
+    affiliation: "Vietnam National University, Hanoi"
+
+repository-code: "https://github.com/spham1611/qutritium"
+url: "https://github.com/spham1611/qutritium"
+license: MIT
+version: "1.0.0"
+date-released: "2026-05-07"
+
+keywords:
+  - quantum computing
+  - qutrit
+  - qudit
+  - SU(3)
+  - quantum simulation
+  - quantum gate decomposition
+
+# References to related works -- the original Munich poster in particular.
+references:
+  - type: conference-paper
+    title: "Qutritium: A Python package for qutrit calibration on IBM Quantum hardware"
+    authors:
+      - family-names: Pham
+        given-names: Son
+      - family-names: Nguyen
+        given-names: Tien
+      - family-names: Bach
+        given-names: Bao
+    conference:
+      name: "Munich Quantum Software Conference"
+      city: Munich
+      country: DE
+    year: 2023
+    notes: >-
+      Poster presentation. Funded by the Unitary Fund microgrant program.
+      The pulse-level calibration code presented at this conference is
+      preserved under legacy/ in the v1.0.0 release.
+
+  - type: software
+    title: "Qutritium v0.0.1 (Munich poster release)"
+    authors:
+      - family-names: Pham
+        given-names: Son
+      - family-names: Nguyen
+        given-names: Tien
+      - family-names: Bach
+        given-names: Bao
+    year: 2023
+    notes: >-
+      Original Qiskit-pulse-coupled release. Source preserved under the
+      legacy/ directory of the v1.0.0 repository for historical reference.

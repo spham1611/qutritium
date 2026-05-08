@@ -1,63 +1,129 @@
-from src.quantumcircuit.QC import Qutrit_circuit
-from src.vm_backend.QASM_backend import QASM_Simulator
-from src.decomposition.transpilation import SU3_matrices
+"""
+Smoke tests for the v1.0.0 hardware-agnostic core.
+
+Migrated from the v0.0.1 ``test/VM_test/VM_test.py`` (which was a top-level
+script using ``src.X`` imports). Restructured as proper pytest tests.
+"""
+# MODIFIED (v1.0.0):
+# * import paths updated from ``src.X`` to ``qutritium.*``
+# * structured as pytest test functions rather than top-level
+#   print-and-plot scripts.
+# * the U_ft round-trip now uses an explicit reconstruction-fidelity
+#   assertion so the test actually fails on regression rather than
+#   relying on visual inspection.
+from __future__ import annotations
+
 import numpy as np
+import pytest
 
-"""
-Test adding function
-"""
-# qc_1 = Qutrit_circuit(3, None)
-# qc_1.add_gate("hdm", first_qutrit_set=0)
-# qc_1.add_gate("rx01", first_qutrit_set=0, parameter=[np.pi])
-#
-# qc_2 = Qutrit_circuit(3, None)
-# qc_2.add_gate("rx01", first_qutrit_set=0, parameter=[np.pi])
-# qc_2.add_gate("hdm", first_qutrit_set=0)
-# qc_2.measure_all()
-#
-# qc = qc_1 + qc_2
-# qc.draw()
+from qutritium import QASM_Simulator, Qutrit_circuit, SU3_matrices
 
-"""
-Test decomposition function
-"""
-omega = np.exp(1j * 2 * np.pi / 3)
 
-qc_1 = Qutrit_circuit(1, None)
-qc_1.add_gate(gate_type="x01", first_qutrit_set=0)
-qc_1.draw()
-print("-------------")
-U_ft = 1 / np.sqrt(3) * np.array([[omega, 1.0, np.conj(omega)],
-                                  [1.0, 1.0, 1.0],
-                                  [np.conj(omega), 1.0, omega]], dtype=complex)
-decomposer_1 = SU3_matrices(su3=U_ft, qutrit_index=0, n_qutrits=1)
-qc_sub_1 = decomposer_1.decomposed_into_qc()
-qc_sub_1.draw()
-print("-------------")
+# ---------------------------------------------------------------------------
+# Circuit-level tests
+# ---------------------------------------------------------------------------
+def test_circuit_addition_preserves_operations() -> None:
+    """``a + b`` should produce a fresh circuit with concatenated ops."""
+    a = Qutrit_circuit(3, None)
+    a.add_gate("hdm", first_qutrit_set=0)
+    a.add_gate("rx01", first_qutrit_set=0, parameter=[np.pi])
 
-U_ft_dagger = np.matrix(U_ft).getH()
-decomposer_2 = SU3_matrices(su3=U_ft_dagger, qutrit_index=0, n_qutrits=1)
-qc_sub_2 = decomposer_2.decomposed_into_qc()
-qc_sub_2.draw()
-print("-------------")
+    b = Qutrit_circuit(3, None)
+    b.add_gate("rx01", first_qutrit_set=0, parameter=[np.pi])
+    b.add_gate("hdm", first_qutrit_set=0)
+    b.measure_all()
 
-qc = qc_sub_2 + qc_1 + qc_sub_1
-qc.measure_all()
-qc.draw()
-print("-------------")
+    c = a + b
+    assert len(c) == len(a) + len(b)
+    # ``a`` must not have been mutated.
+    assert not a.measurement_flag
+    assert c.measurement_flag
 
-"""
-Test to_all function
-"""
-# qc_1 = Qutrit_circuit(5, None)
-# qc_1.add_gate("hdm", first_qutrit_set=0, to_all=True)
-# qc_1.draw()
 
-"""
-Simulation
-"""
-backend = QASM_Simulator(qc=qc)
-backend.run(num_shots=2048)
-print(backend.return_final_state())
-print("-------------")
-backend.plot(plot_type="histogram")
+def test_circuit_addition_rejects_mismatched_qutrit_count() -> None:
+    a = Qutrit_circuit(2, None)
+    b = Qutrit_circuit(3, None)
+    with pytest.raises(ValueError):
+        _ = a + b
+
+
+def test_double_measurement_raises() -> None:
+    qc = Qutrit_circuit(1, None)
+    qc.measure_all()
+    with pytest.raises(RuntimeError):
+        qc.measure_all()
+
+
+# ---------------------------------------------------------------------------
+# SU(3) decomposition reconstruction
+# ---------------------------------------------------------------------------
+def test_uft_decomposition_roundtrip() -> None:
+    """The discrete Fourier matrix U_ft should round-trip to fidelity ~1."""
+    omega = np.exp(1j * 2 * np.pi / 3)
+    U_ft = (1 / np.sqrt(3)) * np.array(
+        [[omega, 1.0, np.conj(omega)],
+         [1.0, 1.0, 1.0],
+         [np.conj(omega), 1.0, omega]],
+        dtype=complex,
+    )
+    dec = SU3_matrices(U_ft, qutrit_index=0, n_qutrits=1)
+    fidelity = np.abs(np.trace(U_ft.conj().T @ dec.reconstruct())) / 3
+    assert fidelity == pytest.approx(1.0, abs=1e-9)
+
+
+@pytest.mark.parametrize("seed", [0, 1, 7, 42])
+def test_random_su3_decomposition_roundtrip(seed: int) -> None:
+    """Random Haar-ish unitaries should decompose-then-reconstruct cleanly."""
+    rng = np.random.default_rng(seed)
+    A = rng.standard_normal((3, 3)) + 1j * rng.standard_normal((3, 3))
+    Q, _ = np.linalg.qr(A)
+    dec = SU3_matrices(Q, qutrit_index=0, n_qutrits=1)
+    fidelity = np.abs(np.trace(Q.conj().T @ dec.reconstruct())) / 3
+    assert fidelity == pytest.approx(1.0, abs=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# Simulator
+# ---------------------------------------------------------------------------
+def test_two_qutrit_hadamard_cnot_distribution() -> None:
+    """H_q0 + CNOT(q1, q0) should produce a uniform mixture of {00, 11, 22}."""
+    qc = Qutrit_circuit(2, None)
+    qc.add_gate("hdm", first_qutrit_set=0)
+    qc.add_gate("CNOT", first_qutrit_set=1, second_qutrit_set=0)
+    qc.measure_all()
+    sim = QASM_Simulator(qc)
+    sim.run(num_shots=20_000)
+    counts = sim.get_counts()
+    # Expect roughly equal weight on 00, 11, 22 and ~zero on the rest.
+    assert set(counts.keys()) <= {"00", "11", "22"}
+    for outcome in ("00", "11", "22"):
+        # 5-sigma confidence interval on a multinomial is plenty loose.
+        assert 6_000 <= counts[outcome] <= 7_500, counts
+
+
+def test_simulator_run_without_measurement_raises() -> None:
+    qc = Qutrit_circuit(1, None)
+    qc.add_gate("hdm", first_qutrit_set=0)
+    sim = QASM_Simulator(qc)
+    with pytest.raises(RuntimeError):
+        sim.run(num_shots=100)
+
+
+def test_simulator_run_with_invalid_shots_raises() -> None:
+    qc = Qutrit_circuit(1, None)
+    qc.measure_all()
+    sim = QASM_Simulator(qc)
+    with pytest.raises(ValueError):
+        sim.run(num_shots=0)
+
+
+def test_density_matrix_is_hermitian_psd() -> None:
+    """Pure-state density matrix from the simulator must be Hermitian and PSD."""
+    qc = Qutrit_circuit(1, None)
+    qc.add_gate("hdm", first_qutrit_set=0)
+    sim = QASM_Simulator(qc)
+    rho = sim.density_matrix()
+    assert np.allclose(rho, rho.conj().T)
+    eigvals = np.linalg.eigvalsh(rho)
+    assert np.all(eigvals >= -1e-10)
+    assert np.isclose(np.trace(rho).real, 1.0, atol=1e-9)
