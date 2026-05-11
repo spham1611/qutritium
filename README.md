@@ -131,9 +131,9 @@ Conference 2023 and supported by a Unitary Fund microgrant.
 
 ## Authors
 
-- **[Son Pham](https://github.com/spham1611)** — Duke University
-- **[Tien Nguyen](https://github.com/ngdnhtien)** — Vietnam National University, Hanoi
-- **[Bao Bach](https://github.com/bachbao)** — Vietnam National University, Hanoi
+- **[Son Pham](https://github.com/spham1611)** — Duke University, USA
+- **[Tien Nguyen](https://github.com/ngdnhtien)** — École Polytechnique, France
+- **[Bao Bach](https://github.com/bachbao)** — University of Delaware, USA
 
 ## License
 

@@ -20,43 +20,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-Elementary qutrit unitary matrices (SU(3)).
+Elementary qutrit unitary matrices (SU(3)) + Gell-Mann matrices or GGM
 
 This module collects the building-block 3x3 unitary matrices used by the
-:mod:`qutritium.circuit` package: subspace Pauli analogues
-(:func:`x01`, :func:`x12`, ...), single-axis rotations (:func:`rx01`,
-:func:`ry12`, ...), the qutrit Hadamard / discrete-Fourier gate
-(:func:`hdm`), and a generic two-qutrit CNOT (:func:`cnot`).
+qutritium.circuit package. All functions return ``numpy.ndarray`` with ``dtype=complex``.
 
-All functions return ``numpy.ndarray`` with ``dtype=complex``.
+Gell-Mann matrices and SU(3) generators
+----------------------------------------
+The eight Gell-Mann matrices lambda_1 ... lambda_8 are the standard
+generators of the Lie algebra su(3), analogous to the three Pauli matrices
+for su(2). They are traceless, Hermitian, and satisfy
+Tr(lambda_a @ lambda_b) = 2 * delta_{a,b}. They can be used to expand any qutrit density operator.
+
+These 8 generators splits into three families which are:
+    - Symmetric (real): lambda_1, lambda_4, lambda_6
+    - Antisymmetric (imaginary): lambda_2, lambda_5, lambda_7
+    - Off Diagonal: lambda_3, lambda_8
+
+In addition, this module also contains operators that do not belong to GGM, including: Qutrit cyclic-inverse shift,
+Pauli-Z in {1,2}, Qutrit Hadamard, Qutrit S and T gate, Qutrit Identity, Qutrit CNOT, Qutrit composite rotation gates.
+It should be noted these operators can be written in terms of GGM
 
 References
 ----------
 - Bertlmann, R. A. & Krammer, P. (2008). *Bloch vectors for qudits*.
   arXiv:0806.1174.
-- Wikipedia: "Generalized Pauli matrices" and "Gell-Mann matrices".
+- H. Georgi, "Lie Algebras in Particle Physics", 2nd ed., Westview Press, 1999.
 """
-# MODIFIED: added module docstring; replaced bare-list ``state_0/1/2`` constants
-# with ``np.ndarray`` column-vectors (the bare lists silently broadcast in some
-# numpy contexts and behave inconsistently under ``@`` -- ndarray is correct).
-# MODIFIED (v1.0.0, "Option 2A" -- standardize on symmetric Z rotations):
-# * ``rz01`` and ``rz12`` switched from asymmetric ``diag(exp(i*phi), 1, 1)``
-#   to symmetric ``diag(exp(-i*phi/2), exp(i*phi/2), 1)``. This brings them
-#   into agreement with ``single_matrix_form('rz01')`` in ``qc_utility.py``,
-#   the textbook ``exp(-i*phi*Z/2)`` form, and Bertlmann & Krammer
-#   (arXiv:0806.1174). Resolves a pre-existing global-phase inconsistency
-#   from v0.0.1.
-# * ``r01`` and ``r12`` simultaneously had the sign of ``phi`` flipped in
-#   their internal formula, chosen so that the *returned matrix* is
-#   numerically identical to v0.0.1. This means the SU(3) decomposition in
-#   ``qutritium.decomposition`` (which extracts angles by reading off matrix
-#   elements of these composite rotations) requires *no changes* and its
-#   reconstruction fidelity is preserved bit-for-bit.
-# MODIFIED: tightened type hints (float -> float | complex where applicable),
-# added module-level constants ``OMEGA_DEFAULT`` and ``PI`` to remove magic
-# numbers. Renamed ``Identity`` -> ``identity`` to follow PEP 8 (snake_case
-# for functions); a module-level ``Identity`` alias is provided for backward
-# compatibility with the legacy code in ``legacy/``.
 from __future__ import annotations
 
 import numpy as np
@@ -70,6 +60,7 @@ OMEGA_DEFAULT: complex = complex(np.exp(1j * 2 * PI / 3))
 in the qutrit Hadamard, S-, and T-gates."""
 
 # ADDED: explicit ndarray column vectors (formerly nested Python lists).
+# INTERNAL USE ONLY!
 _STATE_0: NDArray[np.complex128] = np.array([[1], [0], [0]], dtype=complex)
 _STATE_1: NDArray[np.complex128] = np.array([[0], [1], [0]], dtype=complex)
 _STATE_2: NDArray[np.complex128] = np.array([[0], [0], [1]], dtype=complex)
@@ -79,7 +70,10 @@ _STATE_2: NDArray[np.complex128] = np.array([[0], [0], [1]], dtype=complex)
 # Subspace Pauli-X analogues
 # ---------------------------------------------------------------------------
 def x_plus() -> NDArray[np.complex128]:
-    """Cyclic shift ``|i> -> |i+1 mod 3>``."""
+    """Cyclic shift ``|i> -> |i+1 mod 3>``.
+
+    Not a Gell-Mann matrix
+    """
     return np.array(
         [[0, 0, 1],
          [1, 0, 0],
@@ -88,7 +82,10 @@ def x_plus() -> NDArray[np.complex128]:
 
 
 def x_minus() -> NDArray[np.complex128]:
-    """Inverse cyclic shift ``|i> -> |i-1 mod 3>``."""
+    """Inverse cyclic shift ``|i> -> |i-1 mod 3>``.
+
+    Not a Gell-Mann matrix
+    """
     return np.array(
         [[0, 1, 0],
          [0, 0, 1],
@@ -97,7 +94,10 @@ def x_minus() -> NDArray[np.complex128]:
 
 
 def x01() -> NDArray[np.complex128]:
-    """Pauli-X restricted to the {|0>, |1>} subspace."""
+    """Pauli-X restricted to the {|0>, |1>} subspace.
+
+    Corresponds to Gell-Mann matrix lambda_1.
+    """
     return np.array(
         [[0, 1, 0],
          [1, 0, 0],
@@ -105,8 +105,23 @@ def x01() -> NDArray[np.complex128]:
     )
 
 
+def x02() -> NDArray[np.complex128]:
+    """Pauli-X restricted to the {|0>, |2>} subspace.
+
+    Corresponds to Gell-Mann matrix lambda_4.
+    """
+    return np.array(
+        [[0, 0, 1],
+         [0, 1, 0],
+         [1, 0, 0]], dtype=complex,
+    )
+
+
 def x12() -> NDArray[np.complex128]:
-    """Pauli-X restricted to the {|1>, |2>} subspace."""
+    """Pauli-X restricted to the {|1>, |2>} subspace.
+
+    Corresponds to Gell-Mann matrix lambda_6.
+    """
     return np.array(
         [[1, 0, 0],
          [0, 0, 1],
@@ -118,7 +133,10 @@ def x12() -> NDArray[np.complex128]:
 # Subspace Pauli-Y analogues
 # ---------------------------------------------------------------------------
 def y01() -> NDArray[np.complex128]:
-    """Pauli-Y restricted to the {|0>, |1>} subspace."""
+    """Pauli-Y restricted to the {|0>, |1>} subspace.
+
+    Corresponds to Gell-Mann matrix lambda_2.
+    """
     return np.array(
         [[0, -1j, 0],
          [1j, 0, 0],
@@ -127,7 +145,10 @@ def y01() -> NDArray[np.complex128]:
 
 
 def y12() -> NDArray[np.complex128]:
-    """Pauli-Y restricted to the {|1>, |2>} subspace."""
+    """Pauli-Y restricted to the {|1>, |2>} subspace.
+
+    Corresponds to Gell-Mann matrix lambda_7.
+    """
     return np.array(
         [[1, 0, 0],
          [0, 0, -1j],
@@ -135,20 +156,40 @@ def y12() -> NDArray[np.complex128]:
     )
 
 
+def y02() -> NDArray[np.complex128]:
+    """Pauli-Y restricted to the {|0>, |2>} subspace.
+
+    Corresponds to Gell-Mann matrix lambda_5.
+    """
+    return np.array(
+        [[0, 0, -1j],
+         [0, 1, 0],
+         [1j, 0, 0]], dtype=complex,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Subspace Pauli-Z analogues
 # ---------------------------------------------------------------------------
 def z01() -> NDArray[np.complex128]:
-    """Pauli-Z restricted to the {|0>, |1>} subspace."""
+    """Pauli-Z restricted to the {|0>, |1>} subspace.
+
+    Corresponds to Gell-Mann matrix lambda_3.
+    """
     return np.array(
         [[1, 0, 0],
          [0, -1, 0],
          [0, 0, 1]], dtype=complex,
     )
 
-
+# ---------------------------------------------------------------------------
+# Off diagonal matrice (we have already included lambda_3 previously)
+# ---------------------------------------------------------------------------
 def z12() -> NDArray[np.complex128]:
-    """Pauli-Z restricted to the {|1>, |2>} subspace."""
+    """Pauli-Z restricted to the {|1>, |2>} subspace.
+
+    Not a Gell-Mann matrix
+    """
     return np.array(
         [[1, 0, 0],
          [0, 1, 0],
@@ -156,11 +197,27 @@ def z12() -> NDArray[np.complex128]:
     )
 
 
+
+def lambda_8() -> NDArray[np.complex128]:
+    """Gell-Mann matrix lambda_8: diag(1, 1, -2) / sqrt(3).
+
+    Corresponds to Gell-Mann matrix lambda_8, off-diagonal
+    """
+    return (1 / np.sqrt(3)) * np.array(
+        [[1, 0, 0],
+         [0, 1, 0],
+         [0, 0, -2]], dtype=complex,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Subspace rotation gates
 # ---------------------------------------------------------------------------
 def rx01(theta: float) -> NDArray[np.complex128]:
-    """Rotation about X in the {|0>, |1>} subspace by angle ``theta``."""
+    """Rotation about X in the {|0>, |1>} subspace by angle ``theta``.
+
+    Not a Gell-Mann matrix
+    """
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
@@ -171,7 +228,10 @@ def rx01(theta: float) -> NDArray[np.complex128]:
 
 
 def rx12(theta: float) -> NDArray[np.complex128]:
-    """Rotation about X in the {|1>, |2>} subspace by angle ``theta``."""
+    """Rotation about X in the {|1>, |2>} subspace by angle ``theta``.
+
+    Not a Gell-Mann matrix
+    """
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
@@ -182,7 +242,10 @@ def rx12(theta: float) -> NDArray[np.complex128]:
 
 
 def ry01(theta: float) -> NDArray[np.complex128]:
-    """Rotation about Y in the {|0>, |1>} subspace by angle ``theta``."""
+    """Rotation about Y in the {|0>, |1>} subspace by angle ``theta``.
+
+    Not a Gell-Mann matrix
+    """
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
@@ -193,7 +256,10 @@ def ry01(theta: float) -> NDArray[np.complex128]:
 
 
 def ry12(theta: float) -> NDArray[np.complex128]:
-    """Rotation about Y in the {|1>, |2>} subspace by angle ``theta``."""
+    """Rotation about Y in the {|1>, |2>} subspace by angle ``theta``.
+
+    Not a Gell-Mann matrix
+    """
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
@@ -206,13 +272,7 @@ def ry12(theta: float) -> NDArray[np.complex128]:
 def rz01(phi: float) -> NDArray[np.complex128]:
     """Rotation about Z in the {|0>, |1>} subspace by angle ``phi``.
 
-    Uses the symmetric (textbook) convention
-    ``diag(exp(-i*phi/2), exp(i*phi/2), 1)``, i.e. ``exp(-i*phi*Z01/2)`` where
-    ``Z01 = diag(1, -1, 0)`` is the subspace Pauli-Z analogue. This matches
-    the convention in
-    :func:`qutritium.circuit.utils.single_matrix_form`,
-    Bertlmann & Krammer (arXiv:0806.1174), Nielsen & Chuang, and the standard
-    physics literature.
+    Not a Gell-Mann matrix
 
     Note
     ----
@@ -223,10 +283,6 @@ def rz01(phi: float) -> NDArray[np.complex128]:
     :mod:`qutritium.decomposition` working without any changes to its
     angle-extraction logic.
     """
-    # MODIFIED (v1.0.0, Option 2A): switched from asymmetric
-    # ``diag(exp(i*phi), 1, 1)`` to symmetric form. ``r01``/``r12`` were
-    # updated in lockstep to preserve the output of the composite rotation
-    # used by the SU(3) decomposition. See module docstring.
     return np.array(
         [[np.exp(-1j * phi / 2), 0, 0],
          [0, np.exp(1j * phi / 2), 0],
@@ -237,11 +293,11 @@ def rz01(phi: float) -> NDArray[np.complex128]:
 def rz12(phi: float) -> NDArray[np.complex128]:
     """Rotation about Z in the {|1>, |2>} subspace by angle ``phi``.
 
+    Not a Gell-Mann matrix
+
     Uses the symmetric convention ``diag(1, exp(-i*phi/2), exp(i*phi/2))``.
     See :func:`rz01` for the convention change rationale.
     """
-    # MODIFIED (v1.0.0, Option 2A): switched from asymmetric form. ``r12``
-    # updated in lockstep.
     return np.array(
         [[1, 0, 0],
          [0, np.exp(-1j * phi / 2), 0],
@@ -254,6 +310,8 @@ def rz12(phi: float) -> NDArray[np.complex128]:
 # ---------------------------------------------------------------------------
 def hdm(omega: complex = OMEGA_DEFAULT) -> NDArray[np.complex128]:
     """Qutrit Hadamard / discrete Fourier gate.
+
+    Not a Gell-Mann matrix; this is the 3x3 DFT matrix ``F_3 / sqrt(3)``.
 
     Parameters
     ----------
@@ -302,42 +360,24 @@ def identity() -> NDArray[np.complex128]:
 def r01(phi: float, theta: float) -> NDArray[np.complex128]:
     """Composite rotation ``Rz01(phi) @ Rx01(theta) @ Rz01(-phi)``.
 
-    The ``phi`` sign convention is chosen so that the returned matrix is
-    numerically identical to the v0.0.1 ``r01(phi, theta)`` (which used the
-    asymmetric ``Rz01`` and the formula ``Rz01(-phi) @ Rx01 @ Rz01(phi)``).
-    This preserves the SU(3) decomposition's angle-extraction guarantees in
-    :class:`qutritium.decomposition.Parameter`.
+    Not a Gell-Mann matrix
     """
-    # MODIFIED (v1.0.0, Option 2A): swapped sign of ``phi`` (from
-    # ``rz01(-phi) @ rx01 @ rz01(phi)`` to ``rz01(phi) @ rx01 @ rz01(-phi)``)
-    # to compensate for the change to symmetric ``rz01``. Net effect on the
-    # returned matrix: zero (verified to machine precision over 100 random
-    # (phi, theta) samples). See ``rz01`` docstring.
     return rz01(phi) @ rx01(theta) @ rz01(-phi)
 
 
 def r12(phi: float, theta: float) -> NDArray[np.complex128]:
     """Composite rotation ``Rz12(phi) @ Rx12(theta) @ Rz12(-phi)``.
 
-    Same sign convention as :func:`r01` (in the v0.0.1 codebase the two
-    differed in sign convention; the symmetric refactor unifies them).
+    Not a Gell-Mann matrix
     """
-    # MODIFIED (v1.0.0, Option 2A): the v0.0.1 ``r12`` was
-    # ``rz12(phi) @ rx12 @ rz12(-phi)`` -- formally identical to the new
-    # form, but the v0.0.1 implementation relied on the asymmetric ``rz12``
-    # to land the phase on the [2,2] diagonal entry. With symmetric
-    # ``rz12``, the same formula now distributes the phase symmetrically
-    # while still producing a numerically identical *composite* matrix
-    # (verified to machine precision). The relative sign convention with
-    # ``r01`` is now unified -- both use ``rz(phi) @ rx @ rz(-phi)``.
     return rz12(phi) @ rx12(theta) @ rz12(-phi)
 
 
 def u_d(phi_1: float, phi_2: float, phi_3: float) -> NDArray[np.complex128]:
-    """Diagonal unitary ``diag(exp(i*phi_1), exp(i*phi_2), exp(i*phi_3))``."""
-    # MODIFIED: added explicit ``dtype=complex`` (the previous version returned
-    # a complex array implicitly via ``np.exp(1j*...)`` but type-checkers
-    # could not infer this).
+    """Diagonal unitary ``diag(exp(i*phi_1), exp(i*phi_2), exp(i*phi_3))``.
+
+    Not a Gell-Mann matrix
+    """
     return np.array(
         [[np.exp(1j * phi_1), 0, 0],
          [0, np.exp(1j * phi_2), 0],
@@ -348,20 +388,19 @@ def u_d(phi_1: float, phi_2: float, phi_3: float) -> NDArray[np.complex128]:
 # ---------------------------------------------------------------------------
 # Two-qutrit gate
 # ---------------------------------------------------------------------------
-def cnot(first_index: int, second_index: int) -> NDArray[np.complex128]:
+def cnot(target: int, control: int) -> NDArray[np.complex128]:
     """Generalized two-qutrit CNOT gate.
 
-    The control qutrit (``second_index``) cycles the target qutrit
-    (``first_index``) through the {|0>, |1>, |2>} basis depending on the
-    control state. ``|0>`` leaves the target alone; ``|1>`` applies
-    ``X01 @ X12``; ``|2>`` applies ``X12 @ X01``.
+    The control qutrit cycles the target qutrit through the {|0>, |1>, |2>}
+    basis depending on the control state. ``|0>`` leaves the target alone;
+    ``|1>`` applies ``X01 @ X12``; ``|2>`` applies ``X12 @ X01``.
 
     Parameters
     ----------
-    first_index : int
+    target : int
         Index of the target qutrit.
-    second_index : int
-        Index of the control qutrit. Must not equal ``first_index``.
+    control : int
+        Index of the control qutrit. Must not equal ``target``.
 
     Returns
     -------
@@ -372,23 +411,22 @@ def cnot(first_index: int, second_index: int) -> NDArray[np.complex128]:
     Raises
     ------
     ValueError
-        If ``first_index == second_index``.
+        If ``target == control``.
     """
-    if second_index == first_index:
-        # MODIFIED: ``Exception`` -> ``ValueError`` (specific exception type).
+    if control == target:
         raise ValueError(
-            "Control qutrit and acting qutrit must differ "
-            f"(got first_index = second_index = {first_index})."
+            "Control qutrit and target qutrit must differ "
+            f"(got target = control = {target})."
         )
 
-    space = int(np.abs(first_index - second_index)) - 1
+    space = int(np.abs(target - control)) - 1
     spacing: NDArray | int = 1 if space == 0 else np.eye(3 ** space)
 
     proj_0 = _STATE_0 @ _STATE_0.T
     proj_1 = _STATE_1 @ _STATE_1.T
     proj_2 = _STATE_2 @ _STATE_2.T
 
-    if second_index < first_index:
+    if control < target:
         matrix = (
             np.kron(np.kron(proj_0, spacing), np.eye(3))
             + np.kron(np.kron(proj_1, spacing), x01() @ x12())
@@ -401,10 +439,3 @@ def cnot(first_index: int, second_index: int) -> NDArray[np.complex128]:
             + np.kron(np.kron(x12() @ x01(), spacing), proj_2)
         )
     return np.array(matrix, dtype=complex)
-
-
-# ---------------------------------------------------------------------------
-# Backward-compatibility aliases
-# ---------------------------------------------------------------------------
-# ADDED: ``Identity`` alias (capital-I) so legacy imports continue to work.
-Identity = identity
