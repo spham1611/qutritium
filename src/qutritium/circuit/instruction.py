@@ -27,29 +27,9 @@ An :class:`Instruction` represents one application of a qutrit gate inside
 target qutrit indices, parameters, and a precomputed effect matrix that the
 simulator can apply to a statevector.
 """
-# MODIFIED: import path ``src.quantumcircuit.qc_utility`` ->
-# ``qutritium.circuit.utils`` (proper package layout).
-# MODIFIED: ``gate_set`` (a module-level mutable list) renamed to ``GATE_SET``
-# (constant naming convention) and made an immutable ``frozenset`` for O(1)
-# membership checks. The legacy name ``gate_set`` is preserved as an alias
-# at module bottom for backward compatibility with any external callers.
-# MODIFIED: type annotation on the gate set changed from
-# ``list[Union[str, Any]]`` (which was meaningless -- ``Any`` subsumes
-# ``str``) to a precise ``frozenset[str]``.
-# MODIFIED: replaced bare ``Exception`` raises with ``ValueError`` /
-# ``IndexError`` as appropriate.
-# MODIFIED: stylistic -- consistent quotation, consistent dataclass-like
-# attribute initialisation grouped at the top of ``__init__``, removed
-# stale commented-out import.
-# MODIFIED: ``np.matrix(...).getH()`` (NumPy ``matrix`` class is deprecated
-# since NumPy 1.x and slated for removal) replaced with ``.conj().T`` on
-# plain ``ndarray``. Behaviour is identical for the 2-D case.
-# MODIFIED: tightened ``second_qutrit_set`` typing -- the v0.0.1 default
-# of ``0`` was a bug (it would silently treat single-qutrit gates as
-# two-qutrit gates with control on qutrit 0). Default is now ``None``.
 from __future__ import annotations
 
-from typing import List, Sequence, Union
+from typing import Sequence
 
 import numpy as np
 from numpy.typing import NDArray
@@ -58,13 +38,14 @@ from qutritium.circuit.utils import multi_matrix_form, single_matrix_form
 
 # ADDED: type alias for the union of valid gate-type names.
 GATE_SET: frozenset[str] = frozenset({
-    "Identity",
+    "identity",
     "x_plus", "x_minus",
-    "sdg", "tdg",
+    "sdg",
+    "tdg",
     "CNOT",
     "g01", "g12",
-    "x01", "x12",
-    "y01", "y12",
+    "x01","x02", "x12",
+    "y01", "y02", "y12",
     "z01", "z12",
     "rx01", "rx12",
     "ry01", "ry12",
@@ -161,19 +142,17 @@ class Instruction:
                 second_index=self.second_qutrit,  # type: ignore[arg-type]
             )
         elif custom:
-            base_matrix = custom_matrix  # type: ignore[assignment]
+            base_matrix = custom_matrix
         else:
             base_matrix = single_matrix_form(
                 gate_type=self._type, parameter=self.parameter,
             )
 
-        # MODIFIED: replaced ``np.matrix(...).getH()`` (deprecated NumPy
-        # ``matrix`` class) with plain ``ndarray`` conjugate-transpose.
         self.gate_matrix: NDArray = (
             np.asarray(base_matrix).conj().T if self._is_inverse
             else np.asarray(base_matrix)
         )
-
+        # Compute local matrix and expands into full-register matrix that acts on all qutrits in our circuit
         self._effect_matrix: NDArray = self._effect()
 
     def _effect(self) -> NDArray:
@@ -201,7 +180,6 @@ class Instruction:
             return effect_matrix
 
         # Two-qutrit gate path.
-        # ``second_qutrit`` is guaranteed non-None here by ``_is_two_qutrit_gate``.
         second = self.second_qutrit  # type: ignore[assignment]
         left = min(self.first_qutrit, second)  # type: ignore[type-var]
         right = max(self.first_qutrit, second)  # type: ignore[type-var]
@@ -214,7 +192,7 @@ class Instruction:
         else:
             effect_matrix = np.einsum(
                 "ik,jl", np.eye(3 ** left), self.gate_matrix,
-            ).reshape(3 ** (self.first_qutrit + 1), 3 ** (self.first_qutrit + 1))
+            ).reshape(3 ** (right + 1), 3 ** (right + 1))
             effect_matrix = np.einsum(
                 "ik,jl",
                 effect_matrix,
@@ -223,9 +201,8 @@ class Instruction:
         return effect_matrix
 
     def _verify_gate(self) -> None:
-        """Verify ``self._type`` is a recognised gate name."""
+        """Verify ``self._type`` is a recognized gate name."""
         if self._type not in GATE_SET:
-            # MODIFIED: ``Exception`` -> ``ValueError`` with the offending name.
             raise ValueError(
                 f"Gate type {self._type!r} is not in GATE_SET. "
                 f"Supported gates: {sorted(GATE_SET)}."
@@ -242,7 +219,6 @@ class Instruction:
 
     def print(self) -> None:
         """Print a one-line human-readable description of this instruction."""
-        # MODIFIED: shortened format strings; no semantic change.
         if not self._is_two_qutrit_gate:
             if self.parameter is None:
                 print(f"Gate {self._type}, acting qutrit: {self.first_qutrit}")
@@ -257,8 +233,15 @@ class Instruction:
                 f"control qutrit: {self.second_qutrit}"
             )
 
-
-# ADDED: backward-compatibility alias for the lowercase legacy name.
-gate_set: List[Union[str, object]] = sorted(GATE_SET)  # type: ignore[assignment]
-
-__all__ = ["GATE_SET", "Instruction", "gate_set"]
+    def inverse(self) -> Instruction:
+        """Return a new Instruction that is the Hermitian conjugate of this one."""
+        return Instruction(
+            gate_type=self._type,
+            n_qutrit=self.n_qutrit,
+            first_qutrit_set=self.first_qutrit,
+            second_qutrit_set=self.second_qutrit,
+            parameter=self.parameter,
+            inverse=not self._is_inverse,
+            custom=self._is_custom,
+            custom_matrix=self.gate_matrix if self._is_custom else None,
+        )

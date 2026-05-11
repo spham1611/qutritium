@@ -64,6 +64,8 @@ decomposition's angle-extraction logic in `Parameter.get_parameters` did
 fidelity test results: `1.0000000000` for the discrete Fourier matrix and
 `0.9999999999` worst-case over 20 random SU(3) samples.
 
+Backward compatibility is not available, please use this new version of API
+
 ---
 
 ### Added
