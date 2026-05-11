@@ -58,3 +58,13 @@ tmp/
 
 # Doc file
 changes_summary.txt
+
+# Image file type
+*.png
+*.svg
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.ico
+*.webp
