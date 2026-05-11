@@ -1,18 +1,17 @@
 """
 Minimal example: build a 2-qutrit Hadamard + CNOT circuit, simulate it,
 and plot the measurement counts.
-
-Updated for qutritium v1.0.0: imports now go through the top-level
-``qutritium`` package rather than ``src.X``.
 """
 # MODIFIED (v1.0.0): import paths updated from ``src.quantumcircuit.QC`` /
 # ``src.vm_backend.QASM_backend`` to the new ``qutritium.*`` package layout.
-import numpy as np
 
 from qutritium import QASM_Simulator, Qutrit_circuit
 
 
 def main() -> None:
+    """
+    Matplotlib package is optional as depending on user preferences. Either use matplotlib, seaborn, etc
+    """
     qc = Qutrit_circuit(n_qutrit=2, initial_state=None)
     qc.add_gate("hdm", first_qutrit_set=0)
     qc.add_gate("CNOT", first_qutrit_set=1, second_qutrit_set=0)

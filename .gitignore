@@ -55,3 +55,6 @@ pip-delete-this-directory.txt
 # Project-specific
 /log_files/
 tmp/
+
+# Doc file
+changes_summary.txt
