@@ -44,7 +44,7 @@ GATE_SET: frozenset[str] = frozenset({
     "tdg",
     "CNOT",
     "g01", "g12",
-    "x01","x02", "x12",
+    "x01", "x02", "x12",
     "y01", "y02", "y12",
     "z01", "z12",
     "rx01", "rx12",
@@ -92,6 +92,8 @@ class Instruction:
     ValueError
         If ``gate_type`` is not in :data:`GATE_SET` (and ``custom`` is
         ``False``), or if a custom gate is requested without a matrix.
+        If ''custom'' and ''custom_matrix'' is not None, the matrix dimensions
+        should be 3x3 or 9x9 for two qutrits.
     IndexError
         If ``first_qutrit_set`` or ``second_qutrit_set`` is out of range.
     """
@@ -107,8 +109,7 @@ class Instruction:
         custom: bool = False,
         custom_matrix: NDArray | None = None,
     ) -> None:
-        # ADDED: validate qutrit indices up front rather than after a
-        # ``raise`` half-way through ``__init__``.
+        # Validate qutrit range
         if not 0 <= first_qutrit_set < n_qutrit:
             raise IndexError(
                 f"first_qutrit_set={first_qutrit_set} is out of range "
@@ -135,6 +136,21 @@ class Instruction:
         elif custom_matrix is None:
             raise ValueError("custom=True requires custom_matrix to be supplied.")
 
+        # Validate custom matrix dimensions
+        if custom and custom_matrix is not None:
+            if self._is_two_qutrit_gate:
+                expected = 9  # two-qutrit gate: 3^2 x 3^2
+            else:
+                expected = 3  # single-qutrit gate: 3 x 3
+            if custom_matrix.shape != (expected, expected):
+                raise ValueError(
+                    f"custom_matrix has shape {custom_matrix.shape}; "
+                    f"expected ({expected}, {expected}) for a "
+                    f"{'two' if self._is_two_qutrit_gate else 'single'}-qutrit gate."
+                )
+
+        base_matrix: NDArray
+
         if self._is_two_qutrit_gate:
             base_matrix = multi_matrix_form(
                 gate_type=self._type,
@@ -142,6 +158,7 @@ class Instruction:
                 second_index=self.second_qutrit,  # type: ignore[arg-type]
             )
         elif custom:
+            assert custom_matrix is not None
             base_matrix = custom_matrix
         else:
             base_matrix = single_matrix_form(
@@ -167,6 +184,8 @@ class Instruction:
                     np.eye(int(self.qutrit_dimension / 3)),
                 ).reshape(self.qutrit_dimension, self.qutrit_dimension)
             else:
+                # Calculate tensor product on the left for example I_left ⊗ gate_of_qutrit, then take
+                # that ⊗ I_right
                 effect_matrix = np.einsum(
                     "ik,jl",
                     np.eye(3 ** self.first_qutrit),
@@ -177,12 +196,13 @@ class Instruction:
                     effect_matrix,
                     np.eye(3 ** (self.n_qutrit - self.first_qutrit - 1)),
                 ).reshape(self.qutrit_dimension, self.qutrit_dimension)
-            return effect_matrix
+            return effect_matrix  # type: ignore[no-any-return]
 
-        # Two-qutrit gate path.
-        second = self.second_qutrit  # type: ignore[assignment]
-        left = min(self.first_qutrit, second)  # type: ignore[type-var]
-        right = max(self.first_qutrit, second)  # type: ignore[type-var]
+        # Two-qutrit gate path. Same calculation as the previous one
+        assert self.second_qutrit is not None
+        second = self.second_qutrit
+        left = min(self.first_qutrit, second)
+        right = max(self.first_qutrit, second)
         if left == 0:
             effect_matrix = np.einsum(
                 "ik,jl",
@@ -198,7 +218,7 @@ class Instruction:
                 effect_matrix,
                 np.eye(3 ** (self.n_qutrit - right - 1)),
             ).reshape(self.qutrit_dimension, self.qutrit_dimension)
-        return effect_matrix
+        return effect_matrix  # type: ignore[no-any-return]
 
     def _verify_gate(self) -> None:
         """Verify ``self._type`` is a recognized gate name."""

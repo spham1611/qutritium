@@ -69,7 +69,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from qutritium.circuit.instruction import Instruction
-from qutritium.circuit.qutrit_circuit import Qutrit_circuit
+from qutritium.circuit.qutrit_circuit import QutritCircuit
 from qutritium.circuit.elementary_matrices import r01, r12, u_d
 
 # ADDED: module-level constant.
@@ -291,9 +291,9 @@ class SU3_matrices:
         ]
         return [np.array([phase01, phase12]), instructions]
 
-    def decomposed_into_qc(self) -> Qutrit_circuit:
-        """Return a fresh :class:`Qutrit_circuit` realising this decomposition."""
-        decomposed_qc = Qutrit_circuit(n_qutrit=self.n_qutrits, initial_state=None)
+    def decomposed_into_qc(self) -> QutritCircuit:
+        """Return a fresh :class:`QutritCircuit` realizing this decomposition."""
+        decomposed_qc = QutritCircuit(n_qutrit=self.n_qutrits, initial_state=None)
         p = self.parameters
         decomposed_qc.add_gate(
             "g01", first_qutrit_set=self.qutrit_index,

@@ -393,7 +393,8 @@ def cnot(target: int, control: int) -> NDArray[np.complex128]:
 
     The control qutrit cycles the target qutrit through the {|0>, |1>, |2>}
     basis depending on the control state. ``|0>`` leaves the target alone;
-    ``|1>`` applies ``X01 @ X12``; ``|2>`` applies ``X12 @ X01``.
+    ``|1>`` applies ``X01 @ X12``; ``|2>`` applies ``X12 @ X01``. It acts only
+    within 2 qutrit subspace
 
     Parameters
     ----------

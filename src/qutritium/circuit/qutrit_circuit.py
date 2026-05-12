@@ -23,27 +23,6 @@
 :class:`Qutrit_circuit` -- the main user-facing container for a sequence of
 qutrit gate instructions, suitable for passing to a simulator backend.
 """
-# MODIFIED: import path ``src.quantumcircuit.X`` -> ``qutritium.circuit.X``.
-# MODIFIED: ``operation_set`` setter previously *extended* the internal list
-# even though Python's ``@property.setter`` semantics imply *replacement*.
-# That made ``circuit.operation_set = [ins]`` silently append rather than
-# overwrite, which is surprising for any reader who has used a Qiskit
-# QuantumCircuit. The append behaviour is actually relied on by
-# ``add_gate``, so the setter is RENAMED internally to a private
-# ``_extend_operation_set`` method (its single caller updated). The
-# property still exists for read access; an explicit
-# ``operation_set.setter`` is added that REPLACES the list, with a
-# deprecation note pointing legacy callers at the new method name.
-# MODIFIED: ``__add__`` previously **mutated** ``self`` and returned it,
-# which violates the invariant that ``a + b`` should leave ``a`` and ``b``
-# unchanged. The new implementation builds a fresh ``Qutrit_circuit`` and
-# returns it.
-# MODIFIED: bare ``Exception`` -> specific exception types
-# (``ValueError`` for shape/initial-state errors, ``RuntimeError`` for
-# the duplicate-measurement guard).
-# MODIFIED: tightened type hints and docstrings throughout. Added
-# ``__len__``, ``__iter__``, and ``__repr__`` (none of which existed
-# previously) so that circuits behave like proper containers.
 from __future__ import annotations
 
 from typing import Iterator, List, Sequence, Union
@@ -55,11 +34,11 @@ from qutritium.circuit.instruction import Instruction
 from qutritium.circuit.utils import print_statevector
 
 # Type alias: an operation is either an Instruction or the literal "measurement"
-# string sentinel.
+# string sentinel. Used for internal QutritCircuit class only
 _Operation = Union[Instruction, str]
 
 
-class Qutrit_circuit:
+class QutritCircuit:
     """A sequence of qutrit gates plus an optional terminating measurement.
 
     The class is a thin container; it does **not** itself simulate the
@@ -85,7 +64,6 @@ class Qutrit_circuit:
     def __init__(
         self, n_qutrit: int, initial_state: NDArray | None,
     ) -> None:
-        # ADDED: validate n_qutrit early.
         if n_qutrit < 1:
             raise ValueError(f"n_qutrit must be >= 1, got {n_qutrit}.")
 
@@ -100,7 +78,6 @@ class Qutrit_circuit:
         if initial_state is not None:
             expected_shape = (self._dimension, 1)
             if initial_state.shape != expected_shape:
-                # MODIFIED: ``Exception`` -> ``ValueError`` with both shapes.
                 raise ValueError(
                     f"initial_state has shape {initial_state.shape}; "
                     f"expected {expected_shape}."
@@ -108,9 +85,6 @@ class Qutrit_circuit:
             self.initial_state = np.asarray(initial_state, dtype=complex)
             self.state = self.initial_state.copy()
         else:
-            # ADDED: dtype=complex (the v0.0.1 ``np.array([[0]*dim]).T`` produced
-            # an integer array, which silently coerced the rest of the
-            # simulation when a complex matrix was first applied).
             ket0 = np.zeros((self._dimension, 1), dtype=complex)
             ket0[0, 0] = 1.0
             self.initial_state = ket0
@@ -119,22 +93,24 @@ class Qutrit_circuit:
     def add_gate(
         self,
         gate_type: str,
-        first_qutrit_set: int,
-        second_qutrit_set: int | None = None,
+        first_qutrit: int,
+        second_qutrit: int | None = None,
         parameter: Sequence[float] | None = None,
         to_all: bool = False,
         is_dagger: bool = False,
     ) -> None:
-        """Append a gate (or, with ``to_all=True``, one gate per qutrit).
+        """Append a gate within GATE_SET (or, with ``to_all=True``, one gate per qutrit).
+        WARNING: This function is not meant to implement multiple two-gate qutrits.
+        It is advised  to implement one at a time.
 
         Parameters
         ----------
         gate_type : str
             Name of the gate. See
             :data:`qutritium.circuit.instruction.GATE_SET`.
-        first_qutrit_set : int
+        first_qutrit : int
             Target qutrit index. Ignored when ``to_all=True``.
-        second_qutrit_set : int, optional
+        second_qutrit : int, optional
             Control qutrit index for two-qutrit gates.
         parameter : sequence of float, optional
             Gate parameters.
@@ -144,7 +120,8 @@ class Qutrit_circuit:
         is_dagger : bool, optional
             If ``True``, the inverse (Hermitian conjugate) is applied.
         """
-        if to_all and second_qutrit_set is None:
+        if to_all and second_qutrit is None:
+            # Implement all a single gate
             for i in range(self.n_qutrit):
                 ins = Instruction(
                     gate_type=gate_type,
@@ -159,8 +136,8 @@ class Qutrit_circuit:
             ins = Instruction(
                 gate_type=gate_type,
                 n_qutrit=self.n_qutrit,
-                first_qutrit_set=first_qutrit_set,
-                second_qutrit_set=second_qutrit_set,
+                first_qutrit_set=first_qutrit,
+                second_qutrit_set=second_qutrit,
                 parameter=parameter,
                 inverse=is_dagger,
             )
@@ -182,6 +159,7 @@ class Qutrit_circuit:
         that is taken as the gate's unitary verbatim. ``gate_type`` is then
         used only as a free-form label.
         """
+
         if to_all and second_qutrit_set is None:
             for i in range(self.n_qutrit):
                 ins = Instruction(
@@ -217,8 +195,6 @@ class Qutrit_circuit:
             If a measurement has already been added.
         """
         if self._measurement_flag:
-            # MODIFIED: ``Exception`` -> ``RuntimeError`` (state-machine
-            # violation, not a programming bug per se).
             raise RuntimeError("A measurement has already been added to this circuit.")
         self._measurement_flag = True
         self._extend_operation_set(["measurement"])
@@ -232,7 +208,7 @@ class Qutrit_circuit:
     def operation_set(self, ops: List[_Operation]) -> None:
         # MODIFIED: in v0.0.1 the setter *extended* the list (clearly a bug
         # given Python's ``@property.setter`` contract). The new setter
-        # *replaces*; internal append-on-add behaviour now goes through
+        # *replaces*; internal append-on-add behavior now goes through
         # ``_extend_operation_set``.
         self._operation_set = list(ops)
 
@@ -270,9 +246,6 @@ class Qutrit_circuit:
             else:
                 print(op)
 
-    # -----------------------------------------------------------------
-    # Container / dunder protocol
-    # -----------------------------------------------------------------
     def __len__(self) -> int:
         """Number of recorded operations (counting the measurement sentinel)."""
         # ADDED: makes ``len(circuit)`` work.
@@ -280,8 +253,6 @@ class Qutrit_circuit:
 
     def __iter__(self) -> Iterator[_Operation]:
         """Iterate over recorded operations in order."""
-        # ADDED: makes ``for op in circuit:`` work without reaching into
-        # ``circuit.operation_set``.
         return iter(self._operation_set)
 
     def __repr__(self) -> str:
@@ -289,7 +260,7 @@ class Qutrit_circuit:
         meas = " (measured)" if self._measurement_flag else ""
         return f"Qutrit_circuit(n_qutrit={self.n_qutrit}, ops={len(self._operation_set)}){meas}"
 
-    def __add__(self, other: "Qutrit_circuit") -> "Qutrit_circuit":
+    def __add__(self, other: "QutritCircuit") -> "QutritCircuit":
         """Concatenate two circuits.
 
         The left operand must not contain a measurement; the right operand
@@ -302,10 +273,6 @@ class Qutrit_circuit:
         RuntimeError
             If ``self`` already contains a measurement.
         """
-        # MODIFIED: rewritten to be a true non-mutating ``__add__``. The
-        # v0.0.1 implementation mutated ``self`` and returned it, which
-        # violates the standard contract for ``__add__`` and made
-        # ``a + b`` indistinguishable in effect from ``a += b``.
         if self.n_qutrit != other.n_qutrit:
             raise ValueError(
                 f"Cannot concatenate circuits with different qutrit counts: "
@@ -315,10 +282,10 @@ class Qutrit_circuit:
             raise RuntimeError(
                 "Left-hand circuit contains a measurement; cannot prepend more gates."
             )
-        result = Qutrit_circuit(self.n_qutrit, self.initial_state)
+        result = QutritCircuit(self.n_qutrit, self.initial_state)
         result._operation_set = list(self._operation_set) + list(other.operation_set)
         result._measurement_flag = other.measurement_flag
         return result
 
 
-__all__ = ["Qutrit_circuit"]
+__all__ = ["QutritCircuit"]

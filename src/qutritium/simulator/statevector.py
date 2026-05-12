@@ -62,7 +62,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from qutritium.circuit.instruction import Instruction
-from qutritium.circuit.qutrit_circuit import Qutrit_circuit
+from qutritium.circuit.qutrit_circuit import QutritCircuit
 from qutritium.circuit.utils import statevector_to_state
 
 if TYPE_CHECKING:

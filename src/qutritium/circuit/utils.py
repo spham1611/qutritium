@@ -33,39 +33,17 @@ This module provides:
 - :func:`checking_unitary` -- verify a 3x3 matrix is unitary to numerical
   tolerance.
 """
-# MODIFIED: replaced ``from src.quantumcircuit.qc_elementary_matrices import *``
-# wildcard import (which made every elementary-matrix function leak into this
-# module's namespace) with explicit named imports for only the symbols this
-# module actually consumes (none, post-cleanup -- the wildcard was unused).
-# MODIFIED: replaced ``state_0/1/2`` Python lists with private ndarray
-# constants -- the lists were never used outside this module.
-# MODIFIED: replaced bare ``Exception`` raises with specific exception types
-# (``ValueError`` for input validation, ``KeyError`` for unknown gate names,
-# ``np.linalg.LinAlgError`` propagation rather than a print + return False
-# in ``checking_unitary``).
-# MODIFIED: ``checking_unitary`` now uses ``np.allclose`` against the identity
-# rather than ``np.absolute(np.sum(p - I)) < 1e-5`` -- the original test
-# could be satisfied by a non-unitary matrix whose deviations from identity
-# happen to sum to (approximately) zero (e.g. ``diag(1+eps, 1-eps, 1)``).
-# MODIFIED: added type hints throughout.
-# MODIFIED: ``single_matrix_form`` now validates that ``parameter`` is supplied
-# and has the correct length for parametrized gates, instead of raising an
-# uninformative ``TypeError``/``IndexError`` deep inside the dispatch.
 from __future__ import annotations
 
 from typing import Sequence
 
 import numpy as np
-from numpy.linalg import LinAlgError, inv
+from numpy.linalg import LinAlgError
 from numpy.typing import NDArray
 
-# ADDED: named module constants (formerly ``pi = np.pi`` shadowed the well-known
-# numpy name).
 _PI: float = float(np.pi)
 _OMEGA_DEFAULT: complex = complex(np.exp(1j * 2 * _PI / 3))
 
-# ADDED: private ndarray basis kets (formerly bare nested lists, never used
-# outside the module).
 _STATE_0: NDArray[np.complex128] = np.array([[1], [0], [0]], dtype=complex)
 _STATE_1: NDArray[np.complex128] = np.array([[0], [1], [0]], dtype=complex)
 _STATE_2: NDArray[np.complex128] = np.array([[0], [0], [1]], dtype=complex)
@@ -111,12 +89,8 @@ def single_matrix_form(
     ValueError
         If a parametrized gate is missing its parameters.
     KeyError
-        If ``gate_type`` is not a recognised gate name.
+        If ``gate_type`` is not a recognized gate name.
     """
-    # MODIFIED: kept the dispatch structure as-is (a long elif-ladder is fine
-    # for a closed gate set), but added parameter validation, tightened
-    # whitespace, and removed double-computation of cos(theta/2)/sin(theta/2)
-    # by binding them to local variables in the rotation cases.
     if gate_type == "x01":
         return np.array(
             [[0, 1, 0],
@@ -161,7 +135,7 @@ def single_matrix_form(
              [0, c, -1j * s * np.exp(-1j * p[1])],
              [0, -1j * s * np.exp(1j * p[1]), c]], dtype=complex,
         )
-    if gate_type == "Identity":
+    if gate_type == "identity":
         return np.eye(3, dtype=complex)
     if gate_type == "x_plus":
         return np.array(
@@ -233,7 +207,7 @@ def single_matrix_form(
              [0, s, c]], dtype=complex,
         )
     if gate_type == "hdm":
-        return (1 / np.sqrt(3)) * np.array(
+        return (1 / np.sqrt(3)) * np.array(  # type: ignore[no-any-return]
             [[1, 1, 1],
              [1, omega, np.conj(omega)],
              [1, np.conj(omega), omega]], dtype=complex,
@@ -258,11 +232,24 @@ def single_matrix_form(
              [0, 0, np.exp(1j * p[2])]], dtype=complex,
         )
     if gate_type == "u_ft":
-        return (1 / np.sqrt(3)) * np.array(
+        return (1 / np.sqrt(3)) * np.array(  # type: ignore[no-any-return]
             [[omega, 1, np.conj(omega)],
              [1, 1, 1],
              [np.conj(omega), 1, omega]], dtype=complex,
         )
+    if gate_type == "x02":
+        return np.array(
+            [[0, 0, 1],
+             [0, 1, 0],
+             [1, 0, 0]], dtype=complex,
+        )
+    if gate_type == "y02":
+        return np.array(
+            [[0, 0, -1j],
+             [0, 1, 0],
+             [1j, 0, 0]], dtype=complex,
+        )
+
     # MODIFIED: ``Exception`` -> ``KeyError`` with the offending name.
     raise KeyError(f"Unknown single-qutrit gate type: {gate_type!r}.")
 
@@ -309,7 +296,11 @@ def multi_matrix_form(
         )
 
     space = int(np.abs(first_index - second_index)) - 1
-    spacing: NDArray[np.complex128] | int = 1 if space == 0 else np.eye(3 ** space)
+    spacing: NDArray[np.complex128] | int
+    if space == 0:
+        spacing = 1
+    else:
+        spacing = np.eye(3 ** space, dtype=complex)
 
     proj_0 = _STATE_0 @ _STATE_0.T
     proj_1 = _STATE_1 @ _STATE_1.T
@@ -432,11 +423,3 @@ __all__ = [
     "single_matrix_form",
     "statevector_to_state",
 ]
-
-
-# REMOVED: top-level import of ``inv`` from ``numpy.linalg`` was used only
-# inside ``checking_unitary`` for an incorrect unitarity test. Kept ``inv``
-# in the import list above as it remains technically available for users
-# extending this module; a future minor release can drop it if no consumers
-# depend on it.
-_ = inv  # silence unused-import warning while preserving the symbol
