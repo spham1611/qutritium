@@ -21,7 +21,8 @@
 # SOFTWARE.
 
 """Decomposition of arbitrary SU(3) unitaries into native qutrit rotations."""
+from qutritium.decomposition.transpilation import SU3Decomposition
 
-from .transpilation import Parameter, SU3_matrices
-
-__all__ = ["Parameter", "SU3_matrices"]
+__all__ = [
+    "SU3Decomposition",
+]

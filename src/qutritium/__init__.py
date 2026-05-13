@@ -47,11 +47,9 @@ record of the work presented at the Munich Quantum Software Conference 2023;
 it is **not** importable from the installed package. See ``legacy/README.md``
 for details.
 """
-
-# ADDED: programmatic version + public re-exports.
-from qutritium.decomposition.transpilation import SU3_matrices
 from qutritium.circuit.instruction import Instruction
-from qutritium.circuit.qutrit_circuit import Qutrit_circuit
+from qutritium.circuit.qutrit_circuit import QutritCircuit
+from qutritium.decomposition.transpilation import SU3Decomposition
 from qutritium.simulator.statevector import QASM_Simulator
 
 __version__ = "1.0.0"
@@ -59,7 +57,7 @@ __version__ = "1.0.0"
 __all__ = [
     "Instruction",
     "QASM_Simulator",
-    "Qutrit_circuit",
-    "SU3_matrices",
+    "QutritCircuit",
+    "SU3Decomposition",
     "__version__",
 ]
