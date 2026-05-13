@@ -182,6 +182,7 @@ def z01() -> NDArray[np.complex128]:
          [0, 0, 1]], dtype=complex,
     )
 
+
 # ---------------------------------------------------------------------------
 # Off diagonal matrice (we have already included lambda_3 previously)
 # ---------------------------------------------------------------------------
@@ -197,13 +198,12 @@ def z12() -> NDArray[np.complex128]:
     )
 
 
-
 def lambda_8() -> NDArray[np.complex128]:
     """Gell-Mann matrix lambda_8: diag(1, 1, -2) / sqrt(3).
 
     Corresponds to Gell-Mann matrix lambda_8, off-diagonal
     """
-    return (1 / np.sqrt(3)) * np.array(
+    return (1 / np.sqrt(3)) * np.array(  # type: ignore[no-any-return]
         [[1, 0, 0],
          [0, 1, 0],
          [0, 0, -2]], dtype=complex,
@@ -305,6 +305,28 @@ def rz12(phi: float) -> NDArray[np.complex128]:
     )
 
 
+def g01(theta: float, phi: float) -> NDArray[np.complex128]:
+    """Generalized rotation in the {|0>, |1>} subspace with phase ``phi``."""
+    c = np.cos(theta / 2)
+    s = np.sin(theta / 2)
+    return np.array(
+        [[c, -1j * s * np.exp(-1j * phi), 0],
+         [-1j * s * np.exp(1j * phi), c, 0],
+         [0, 0, 1]], dtype=complex,
+    )
+
+
+def g12(theta: float, phi: float) -> NDArray[np.complex128]:
+    """Generalized rotation in the {|1>, |2>} subspace with phase ``phi``."""
+    c = np.cos(theta / 2)
+    s = np.sin(theta / 2)
+    return np.array(
+        [[1, 0, 0],
+         [0, c, -1j * s * np.exp(-1j * phi)],
+         [0, -1j * s * np.exp(1j * phi), c]], dtype=complex,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Other single-qutrit gates
 # ---------------------------------------------------------------------------
@@ -318,10 +340,19 @@ def hdm(omega: complex = OMEGA_DEFAULT) -> NDArray[np.complex128]:
     omega : complex, optional
         Primitive cube root of unity. Defaults to ``exp(2*pi*i/3)``.
     """
-    return (1 / np.sqrt(3)) * np.array(
+    return (1 / np.sqrt(3)) * np.array(  # type: ignore[no-any-return]
         [[1, 1, 1],
          [1, omega, omega ** 2],
          [1, omega ** 2, omega]], dtype=complex,
+    )
+
+
+def u_ft(omega: complex = OMEGA_DEFAULT) -> NDArray[np.complex128]:
+    """Fourier-related qutrit gate."""
+    return (1 / np.sqrt(3)) * np.array(  # type: ignore[no-any-return]
+        [[omega, 1, np.conj(omega)],
+         [1, 1, 1],
+         [np.conj(omega), 1, omega]], dtype=complex,
     )
 
 
@@ -429,14 +460,14 @@ def cnot(target: int, control: int) -> NDArray[np.complex128]:
 
     if control < target:
         matrix = (
-            np.kron(np.kron(proj_0, spacing), np.eye(3))
-            + np.kron(np.kron(proj_1, spacing), x01() @ x12())
-            + np.kron(np.kron(proj_2, spacing), x12() @ x01())
+                np.kron(np.kron(proj_0, spacing), np.eye(3))
+                + np.kron(np.kron(proj_1, spacing), x01() @ x12())
+                + np.kron(np.kron(proj_2, spacing), x12() @ x01())
         )
     else:
         matrix = (
-            np.kron(np.kron(np.eye(3), spacing), proj_0)
-            + np.kron(np.kron(x01() @ x12(), spacing), proj_1)
-            + np.kron(np.kron(x12() @ x01(), spacing), proj_2)
+                np.kron(np.kron(np.eye(3), spacing), proj_0)
+                + np.kron(np.kron(x01() @ x12(), spacing), proj_1)
+                + np.kron(np.kron(x12() @ x01(), spacing), proj_2)
         )
     return np.array(matrix, dtype=complex)
