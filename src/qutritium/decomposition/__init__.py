@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# ADDED: explicit public API for the decomposition subpackage (formerly empty).
 """Decomposition of arbitrary SU(3) unitaries into native qutrit rotations."""
 
 from .transpilation import Parameter, SU3_matrices
