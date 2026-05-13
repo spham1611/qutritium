@@ -115,7 +115,7 @@ class QutritCircuit:
         parameter : sequence of float, optional
             Gate parameters.
         to_all : bool, optional
-            If ``True`` and ``second_qutrit_set is None``, the gate is
+            If ``True`` and ``second_qutrit is None``, the gate is
             applied to every qutrit in the register.
         is_dagger : bool, optional
             If ``True``, the inverse (Hermitian conjugate) is applied.
@@ -126,8 +126,8 @@ class QutritCircuit:
                 ins = Instruction(
                     gate_type=gate_type,
                     n_qutrit=self.n_qutrit,
-                    first_qutrit_set=i,
-                    second_qutrit_set=None,
+                    first_qutrit=i,
+                    second_qutrit=None,
                     parameter=parameter,
                     inverse=is_dagger,
                 )
@@ -136,8 +136,8 @@ class QutritCircuit:
             ins = Instruction(
                 gate_type=gate_type,
                 n_qutrit=self.n_qutrit,
-                first_qutrit_set=first_qutrit,
-                second_qutrit_set=second_qutrit,
+                first_qutrit=first_qutrit,
+                second_qutrit=second_qutrit,
                 parameter=parameter,
                 inverse=is_dagger,
             )
@@ -146,8 +146,8 @@ class QutritCircuit:
     def add_customized_gate(
         self,
         gate_type: str,
-        first_qutrit_set: int,
-        second_qutrit_set: int | None = None,
+            first_qutrit: int,
+            second_qutrit: int | None = None,
         parameter: Sequence[float] | None = None,
         to_all: bool = False,
         is_dagger: bool = False,
@@ -160,13 +160,13 @@ class QutritCircuit:
         used only as a free-form label.
         """
 
-        if to_all and second_qutrit_set is None:
+        if to_all and second_qutrit is None:
             for i in range(self.n_qutrit):
                 ins = Instruction(
                     gate_type=gate_type,
                     n_qutrit=self.n_qutrit,
-                    first_qutrit_set=i,
-                    second_qutrit_set=None,
+                    first_qutrit=i,
+                    second_qutrit=None,
                     parameter=parameter,
                     inverse=is_dagger,
                     custom=True,
@@ -177,8 +177,8 @@ class QutritCircuit:
             ins = Instruction(
                 gate_type=gate_type,
                 n_qutrit=self.n_qutrit,
-                first_qutrit_set=first_qutrit_set,
-                second_qutrit_set=second_qutrit_set,
+                first_qutrit=first_qutrit,
+                second_qutrit=second_qutrit,
                 parameter=parameter,
                 inverse=is_dagger,
                 custom=True,

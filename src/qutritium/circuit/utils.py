@@ -26,7 +26,7 @@ This module provides:
 
 - :func:`statevector_to_state` / :func:`print_statevector` -- inspect a
   qutrit statevector by listing its non-zero ket components.
-- :func:`checking_unitary` -- verify a square matrix is unitary to numerical
+- :func:`check_unitary` -- verify a square matrix is unitary to numerical
   tolerance.
 """
 from __future__ import annotations
@@ -94,7 +94,7 @@ def print_statevector(state: NDArray[np.complex128], n_qutrit: int) -> None:
         print(f"{state_coeff[i]} |{ket}>{suffix}")
 
 
-def checking_unitary(u: NDArray[np.complex128], atol: float = 1e-9) -> bool:
+def check_unitary(u: NDArray[np.complex128], atol: float = 1e-9) -> bool:
     """Check whether a square matrix is unitary to within absolute tolerance.
 
     Parameters
@@ -117,7 +117,7 @@ def checking_unitary(u: NDArray[np.complex128], atol: float = 1e-9) -> bool:
 
 
 __all__ = [
-    "checking_unitary",
+    "check_unitary",
     "print_statevector",
     "statevector_to_state",
 ]

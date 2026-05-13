@@ -514,17 +514,17 @@ def tdg(omega: complex = OMEGA_DEFAULT) -> NDArray[np.complex128]:
 # ===========================================================================
 # Two-qutrit gates
 # ===========================================================================
-def cnot(target: int, control: int) -> NDArray[np.complex128]:
+def cnot(control: int, target: int) -> NDArray[np.complex128]:
     """Generalized two-qutrit CNOT gate.
 
     |0>_c leaves target alone; |1>_c applies X01 @ X12; |2>_c applies X12 @ X01.
 
     Parameters
     ----------
-    target : int
-        Index of the target qutrit.
     control : int
-        Index of the control qutrit. Must not equal ``target``.
+        Index of the control qutrit.
+    target : int
+        Index of the target qutrit. Must not equal ``control``.
 
     Returns
     -------

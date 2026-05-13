@@ -34,25 +34,22 @@ from typing import Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-from qutritium.circuit.utils import multi_matrix_form, single_matrix_form
+import qutritium.circuit.elementary_matrices as em
 
-# ADDED: type alias for the union of valid gate-type names.
 GATE_SET: frozenset[str] = frozenset({
     "identity",
     "x_plus", "x_minus",
-    "sdg",
-    "tdg",
+    "sdg", "tdg",
     "CNOT",
-    "g01", "g12",
+    "g01", "g02", "g12",
     "x01", "x02", "x12",
     "y01", "y02", "y12",
-    "z01", "z12",
-    "rx01", "rx12",
-    "ry01", "ry12",
-    "rz01", "rz12",
+    "z01", "z02", "z12",
+    "rx01", "rx02", "rx12",
+    "ry01", "ry02", "ry12",
+    "rz01", "rz02", "rz12",
     "u_d",
-    "hdm",
-    "u_ft",
+    "hdm", "u_ft",
 })
 
 
@@ -70,10 +67,10 @@ class Instruction:
         ``True``.
     n_qutrit : int
         Total number of qutrits in the parent circuit.
-    first_qutrit_set : int
+    first_qutrit : int
         Index of the (first / target) qutrit. Must satisfy
-        ``0 <= first_qutrit_set < n_qutrit``.
-    second_qutrit_set : int or None, optional
+        ``0 <= first_qutrit < n_qutrit``.
+    second_qutrit : int or None, optional
         Index of the second (control) qutrit for two-qutrit gates. ``None``
         for single-qutrit gates.
     parameter : sequence of float, optional
@@ -95,41 +92,41 @@ class Instruction:
         If ''custom'' and ''custom_matrix'' is not None, the matrix dimensions
         should be 3x3 or 9x9 for two qutrits.
     IndexError
-        If ``first_qutrit_set`` or ``second_qutrit_set`` is out of range.
+        If ``first_qutrit`` or ``second_qutrit`` is out of range.
     """
 
     def __init__(
         self,
         gate_type: str,
         n_qutrit: int,
-        first_qutrit_set: int,
-        second_qutrit_set: int | None = None,
+            first_qutrit: int,
+            second_qutrit: int | None = None,
         parameter: Sequence[float] | None = None,
         inverse: bool = False,
         custom: bool = False,
         custom_matrix: NDArray | None = None,
     ) -> None:
         # Validate qutrit range
-        if not 0 <= first_qutrit_set < n_qutrit:
+        if not 0 <= first_qutrit < n_qutrit:
             raise IndexError(
-                f"first_qutrit_set={first_qutrit_set} is out of range "
+                f"first_qutrit={first_qutrit} is out of range "
                 f"[0, {n_qutrit})."
             )
-        if second_qutrit_set is not None and not 0 <= second_qutrit_set < n_qutrit:
+        if second_qutrit is not None and not 0 <= second_qutrit < n_qutrit:
             raise IndexError(
-                f"second_qutrit_set={second_qutrit_set} is out of range "
+                f"second_qutrit={second_qutrit} is out of range "
                 f"[0, {n_qutrit})."
             )
 
         self._type: str = gate_type
         self.n_qutrit: int = n_qutrit
         self.qutrit_dimension: int = 3 ** n_qutrit
-        self.first_qutrit: int = first_qutrit_set
-        self.second_qutrit: int | None = second_qutrit_set
+        self.first_qutrit: int = first_qutrit
+        self.second_qutrit: int | None = second_qutrit
         self.parameter: Sequence[float] | None = parameter
         self._is_inverse: bool = inverse
         self._is_custom: bool = custom
-        self._is_two_qutrit_gate: bool = second_qutrit_set is not None
+        self._is_two_qutrit_gate: bool = second_qutrit is not None
 
         if not custom:
             self._verify_gate()
@@ -139,9 +136,9 @@ class Instruction:
         # Validate custom matrix dimensions
         if custom and custom_matrix is not None:
             if self._is_two_qutrit_gate:
-                expected = 9  # two-qutrit gate: 3^2 x 3^2
+                expected = 9
             else:
-                expected = 3  # single-qutrit gate: 3 x 3
+                expected = 3
             if custom_matrix.shape != (expected, expected):
                 raise ValueError(
                     f"custom_matrix has shape {custom_matrix.shape}; "
@@ -151,26 +148,122 @@ class Instruction:
 
         base_matrix: NDArray
 
-        if self._is_two_qutrit_gate:
-            base_matrix = multi_matrix_form(
-                gate_type=self._type,
-                first_index=self.first_qutrit,
-                second_index=self.second_qutrit,  # type: ignore[arg-type]
-            )
-        elif custom:
+        if custom:
             assert custom_matrix is not None
             base_matrix = custom_matrix
         else:
-            base_matrix = single_matrix_form(
-                gate_type=self._type, parameter=self.parameter,
-            )
+            base_matrix = self._resolve_gate_matrix()
 
         self.gate_matrix: NDArray = (
             np.asarray(base_matrix).conj().T if self._is_inverse
             else np.asarray(base_matrix)
         )
-        # Compute local matrix and expands into full-register matrix that acts on all qutrits in our circuit
+        # Compute local matrix and expand into full-register matrix
         self._effect_matrix: NDArray = self._effect()
+
+    # ------------------------------------------------------------------
+    # Gate name -> matrix dispatch
+    # ------------------------------------------------------------------
+    def _require_params(self, n: int) -> Sequence[float]:
+        """Validate that this instruction has at least ``n`` parameters."""
+        if self.parameter is None or len(self.parameter) < n:
+            raise ValueError(
+                f"Gate '{self._type}' requires {n} parameter(s); got "
+                f"{0 if self.parameter is None else len(self.parameter)}."
+            )
+        return self.parameter
+
+    def _resolve_gate_matrix(self) -> NDArray[np.complex128]:
+        """Resolve ``self._type`` to a unitary matrix from elementary_matrices."""
+        gt = self._type
+
+        # Multi-qutrit gates
+        if gt == "CNOT":
+            assert self.second_qutrit is not None
+            return em.cnot(control=self.first_qutrit, target=self.second_qutrit)
+
+        # Static single-qutrit gates
+        if gt == "identity":
+            return em.identity()
+        if gt == "x01":
+            return em.x01()
+        if gt == "x02":
+            return em.x02()
+        if gt == "x12":
+            return em.x12()
+        if gt == "y01":
+            return em.y01()
+        if gt == "y02":
+            return em.y02()
+        if gt == "y12":
+            return em.y12()
+        if gt == "z01":
+            return em.z01()
+        if gt == "z02":
+            return em.z02()
+        if gt == "z12":
+            return em.z12()
+        if gt == "x_plus":
+            return em.x_plus()
+        if gt == "x_minus":
+            return em.x_minus()
+
+        # Omega-dependent gates
+        if gt == "hdm":
+            return em.hdm()
+        if gt == "u_ft":
+            return em.u_ft()
+        if gt == "sdg":
+            return em.sdg()
+        if gt == "tdg":
+            return em.tdg()
+
+        # Single-parameter rotation gates
+        if gt == "rx01":
+            p = self._require_params(1)
+            return em.rx01(p[0])
+        if gt == "rx02":
+            p = self._require_params(1)
+            return em.rx02(p[0])
+        if gt == "rx12":
+            p = self._require_params(1)
+            return em.rx12(p[0])
+        if gt == "ry01":
+            p = self._require_params(1)
+            return em.ry01(p[0])
+        if gt == "ry02":
+            p = self._require_params(1)
+            return em.ry02(p[0])
+        if gt == "ry12":
+            p = self._require_params(1)
+            return em.ry12(p[0])
+        if gt == "rz01":
+            p = self._require_params(1)
+            return em.rz01(p[0])
+        if gt == "rz02":
+            p = self._require_params(1)
+            return em.rz02(p[0])
+        if gt == "rz12":
+            p = self._require_params(1)
+            return em.rz12(p[0])
+
+        # Two-parameter generalized rotation gates
+        if gt == "g01":
+            p = self._require_params(2)
+            return em.g01(p[0], p[1])
+        if gt == "g02":
+            p = self._require_params(2)
+            return em.g02(p[0], p[1])
+        if gt == "g12":
+            p = self._require_params(2)
+            return em.g12(p[0], p[1])
+
+        # Three-parameter diagonal phase gate
+        if gt == "u_d":
+            p = self._require_params(3)
+            return em.u_d(p[0], p[1], p[2])
+
+        raise KeyError(f"Unknown gate type: {gt!r}.")
 
     def _effect(self) -> NDArray:
         """Compute the full ``3**n``-dim effect matrix from the local gate."""
@@ -184,8 +277,6 @@ class Instruction:
                     np.eye(int(self.qutrit_dimension / 3)),
                 ).reshape(self.qutrit_dimension, self.qutrit_dimension)
             else:
-                # Calculate tensor product on the left for example I_left ⊗ gate_of_qutrit, then take
-                # that ⊗ I_right
                 effect_matrix = np.einsum(
                     "ik,jl",
                     np.eye(3 ** self.first_qutrit),
@@ -198,7 +289,7 @@ class Instruction:
                 ).reshape(self.qutrit_dimension, self.qutrit_dimension)
             return effect_matrix  # type: ignore[no-any-return]
 
-        # Two-qutrit gate path. Same calculation as the previous one
+        # Two-qutrit gate path
         assert self.second_qutrit is not None
         second = self.second_qutrit
         left = min(self.first_qutrit, second)
@@ -258,8 +349,8 @@ class Instruction:
         return Instruction(
             gate_type=self._type,
             n_qutrit=self.n_qutrit,
-            first_qutrit_set=self.first_qutrit,
-            second_qutrit_set=self.second_qutrit,
+            first_qutrit=self.first_qutrit,
+            second_qutrit=self.second_qutrit,
             parameter=self.parameter,
             inverse=not self._is_inverse,
             custom=self._is_custom,
