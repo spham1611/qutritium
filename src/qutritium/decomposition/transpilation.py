@@ -31,9 +31,11 @@ References
 ----------
 - Reck, M., Zeilinger, A., Bernstein, H. J. & Bertani, P. (1994).
   *Experimental realization of any discrete unitary operator*.
-  Phys. Rev. Lett. 73, 58. (General N×N Givens decomposition)
+  Phys. Rev. Lett. 73, 58.
+- Bronzan, J. B. (1988). *Parametrization of SU(3)*.
+  Phys. Rev. D 38, 1994.
 - Vitanov, N. V. (2012). *Synthesis of arbitrary SU(3) transformations
-  of atomic qutrits*. Phys. Rev. A 85, 032331. (Qutrit application)
+  of atomic qutrits*. Phys. Rev. A 85, 032331.
 """
 from __future__ import annotations
 

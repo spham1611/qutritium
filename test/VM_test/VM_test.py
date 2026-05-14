@@ -4,19 +4,12 @@ Smoke tests for the v1.0.0 hardware-agnostic core.
 Migrated from the v0.0.1 ``test/VM_test/VM_test.py`` (which was a top-level
 script using ``src.X`` imports). Restructured as proper pytest tests.
 """
-# MODIFIED (v1.0.0):
-# * import paths updated from ``src.X`` to ``qutritium.*``
-# * structured as pytest test functions rather than top-level
-#   print-and-plot scripts.
-# * the U_ft round-trip now uses an explicit reconstruction-fidelity
-#   assertion so the test actually fails on regression rather than
-#   relying on visual inspection.
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from qutritium import QASM_Simulator, Qutrit_circuit, SU3_matrices
+from qutritium import QASM_Simulator, QutritCircuit, SU3Decomposition
 
 
 # ---------------------------------------------------------------------------
@@ -24,13 +17,13 @@ from qutritium import QASM_Simulator, Qutrit_circuit, SU3_matrices
 # ---------------------------------------------------------------------------
 def test_circuit_addition_preserves_operations() -> None:
     """``a + b`` should produce a fresh circuit with concatenated ops."""
-    a = Qutrit_circuit(3, None)
-    a.add_gate("hdm", first_qutrit_set=0)
-    a.add_gate("rx01", first_qutrit_set=0, parameter=[np.pi])
+    a = QutritCircuit(3, None)
+    a.add_gate("hdm", first_qutrit=0)
+    a.add_gate("rx01", first_qutrit=0, parameter=[np.pi])
 
-    b = Qutrit_circuit(3, None)
-    b.add_gate("rx01", first_qutrit_set=0, parameter=[np.pi])
-    b.add_gate("hdm", first_qutrit_set=0)
+    b = QutritCircuit(3, None)
+    b.add_gate("rx01", first_qutrit=0, parameter=[np.pi])
+    b.add_gate("hdm", first_qutrit=0)
     b.measure_all()
 
     c = a + b
@@ -41,14 +34,14 @@ def test_circuit_addition_preserves_operations() -> None:
 
 
 def test_circuit_addition_rejects_mismatched_qutrit_count() -> None:
-    a = Qutrit_circuit(2, None)
-    b = Qutrit_circuit(3, None)
+    a = QutritCircuit(2, None)
+    b = QutritCircuit(3, None)
     with pytest.raises(ValueError):
         _ = a + b
 
 
 def test_double_measurement_raises() -> None:
-    qc = Qutrit_circuit(1, None)
+    qc = QutritCircuit(1, None)
     qc.measure_all()
     with pytest.raises(RuntimeError):
         qc.measure_all()
@@ -60,14 +53,14 @@ def test_double_measurement_raises() -> None:
 def test_uft_decomposition_roundtrip() -> None:
     """The discrete Fourier matrix U_ft should round-trip to fidelity ~1."""
     omega = np.exp(1j * 2 * np.pi / 3)
-    U_ft = (1 / np.sqrt(3)) * np.array(
+    u_ft = (1 / np.sqrt(3)) * np.array(
         [[omega, 1.0, np.conj(omega)],
          [1.0, 1.0, 1.0],
          [np.conj(omega), 1.0, omega]],
         dtype=complex,
     )
-    dec = SU3_matrices(U_ft, qutrit_index=0, n_qutrits=1)
-    fidelity = np.abs(np.trace(U_ft.conj().T @ dec.reconstruct())) / 3
+    dec = SU3Decomposition(u_ft, qutrit_index=0, n_qutrits=1)
+    fidelity = np.abs(np.trace(u_ft.conj().T @ dec.reconstruct())) / 3
     assert fidelity == pytest.approx(1.0, abs=1e-9)
 
 
@@ -77,7 +70,7 @@ def test_random_su3_decomposition_roundtrip(seed: int) -> None:
     rng = np.random.default_rng(seed)
     A = rng.standard_normal((3, 3)) + 1j * rng.standard_normal((3, 3))
     Q, _ = np.linalg.qr(A)
-    dec = SU3_matrices(Q, qutrit_index=0, n_qutrits=1)
+    dec = SU3Decomposition(Q, qutrit_index=0, n_qutrits=1)
     fidelity = np.abs(np.trace(Q.conj().T @ dec.reconstruct())) / 3
     assert fidelity == pytest.approx(1.0, abs=1e-6)
 
@@ -87,9 +80,9 @@ def test_random_su3_decomposition_roundtrip(seed: int) -> None:
 # ---------------------------------------------------------------------------
 def test_two_qutrit_hadamard_cnot_distribution() -> None:
     """H_q0 + CNOT(q1, q0) should produce a uniform mixture of {00, 11, 22}."""
-    qc = Qutrit_circuit(2, None)
-    qc.add_gate("hdm", first_qutrit_set=0)
-    qc.add_gate("CNOT", first_qutrit_set=1, second_qutrit_set=0)
+    qc = QutritCircuit(2, None)
+    qc.add_gate("hdm", first_qutrit=0)
+    qc.add_gate("CNOT", first_qutrit=1, second_qutrit=0)
     qc.measure_all()
     sim = QASM_Simulator(qc)
     sim.run(num_shots=20_000)
@@ -102,15 +95,15 @@ def test_two_qutrit_hadamard_cnot_distribution() -> None:
 
 
 def test_simulator_run_without_measurement_raises() -> None:
-    qc = Qutrit_circuit(1, None)
-    qc.add_gate("hdm", first_qutrit_set=0)
+    qc = QutritCircuit(1, None)
+    qc.add_gate("hdm", first_qutrit=0)
     sim = QASM_Simulator(qc)
     with pytest.raises(RuntimeError):
         sim.run(num_shots=100)
 
 
 def test_simulator_run_with_invalid_shots_raises() -> None:
-    qc = Qutrit_circuit(1, None)
+    qc = QutritCircuit(1, None)
     qc.measure_all()
     sim = QASM_Simulator(qc)
     with pytest.raises(ValueError):
@@ -119,8 +112,8 @@ def test_simulator_run_with_invalid_shots_raises() -> None:
 
 def test_density_matrix_is_hermitian_psd() -> None:
     """Pure-state density matrix from the simulator must be Hermitian and PSD."""
-    qc = Qutrit_circuit(1, None)
-    qc.add_gate("hdm", first_qutrit_set=0)
+    qc = QutritCircuit(1, None)
+    qc.add_gate("hdm", first_qutrit=0)
     sim = QASM_Simulator(qc)
     rho = sim.density_matrix()
     assert np.allclose(rho, rho.conj().T)
