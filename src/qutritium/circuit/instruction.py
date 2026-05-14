@@ -23,9 +23,9 @@
 Single-gate instruction class and the registry of supported gate names.
 
 An :class:`Instruction` represents one application of a qutrit gate inside
-:class:`qutritium.circuit.qutrit_circuit.Qutrit_circuit`. It holds the gate type,
-target qutrit indices, parameters, and a precomputed effect matrix that the
-simulator can apply to a statevector.
+:class:`qutritium.circuit.qutrit_circuit.QutritCircuit`. It holds the gate type,
+first_qutrit / second_qutrit indices, parameters, and a precomputed effect
+matrix that the simulator can apply to a statevector.
 """
 from __future__ import annotations
 
@@ -68,10 +68,11 @@ class Instruction:
     n_qutrit : int
         Total number of qutrits in the parent circuit.
     first_qutrit : int
-        Index of the (first / target) qutrit. Must satisfy
+        Index of the first (control) qutrit for two-qutrit gates, or the
+        sole target qutrit for single-qutrit gates. Must satisfy
         ``0 <= first_qutrit < n_qutrit``.
     second_qutrit : int or None, optional
-        Index of the second (control) qutrit for two-qutrit gates. ``None``
+        Index of the second (target) qutrit for two-qutrit gates. ``None``
         for single-qutrit gates.
     parameter : sequence of float, optional
         Gate parameters for parametrized gates (e.g. rotation angles).
@@ -96,15 +97,15 @@ class Instruction:
     """
 
     def __init__(
-        self,
-        gate_type: str,
-        n_qutrit: int,
+            self,
+            gate_type: str,
+            n_qutrit: int,
             first_qutrit: int,
             second_qutrit: int | None = None,
-        parameter: Sequence[float] | None = None,
-        inverse: bool = False,
-        custom: bool = False,
-        custom_matrix: NDArray | None = None,
+            parameter: Sequence[float] | None = None,
+            inverse: bool = False,
+            custom: bool = False,
+            custom_matrix: NDArray | None = None,
     ) -> None:
         # Validate qutrit range
         if not 0 <= first_qutrit < n_qutrit:
@@ -332,16 +333,16 @@ class Instruction:
         """Print a one-line human-readable description of this instruction."""
         if not self._is_two_qutrit_gate:
             if self.parameter is None:
-                print(f"Gate {self._type}, acting qutrit: {self.first_qutrit}")
+                print(f"Gate {self._type}, first_qutrit: {self.first_qutrit}")
             else:
                 print(
                     f"Gate {self._type} with parameter {list(self.parameter)}, "
-                    f"acting qutrit: {self.first_qutrit}"
+                    f"first_qutrit: {self.first_qutrit}"
                 )
         else:
             print(
-                f"Gate {self._type}, acting qutrit: {self.first_qutrit}, "
-                f"control qutrit: {self.second_qutrit}"
+                f"Gate {self._type}, first_qutrit (control): {self.first_qutrit}, "
+                f"second_qutrit (target): {self.second_qutrit}"
             )
 
     def inverse(self) -> Instruction:

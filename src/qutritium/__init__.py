@@ -36,7 +36,7 @@ The package provides:
   into native :math:`R_{01}`, :math:`R_{12}` and diagonal phase rotations.
 
 The public API re-exports the most common symbols at package level so that
-``from qutritium import Qutrit_circuit, QASM_Simulator`` works directly.
+``from qutritium import QutritCircuit, QASMSimulator`` works directly.
 
 History
 -------
@@ -50,13 +50,13 @@ for details.
 from qutritium.circuit.instruction import Instruction
 from qutritium.circuit.qutrit_circuit import QutritCircuit
 from qutritium.decomposition.transpilation import SU3Decomposition
-from qutritium.simulator.statevector import QASM_Simulator
+from qutritium.simulator.statevector import QASMSimulator
 
 __version__ = "1.0.0"
 
 __all__ = [
     "Instruction",
-    "QASM_Simulator",
+    "QASMSimulator",
     "QutritCircuit",
     "SU3Decomposition",
     "__version__",

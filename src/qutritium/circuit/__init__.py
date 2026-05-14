@@ -25,13 +25,10 @@
 # and break tooling like static type-checkers and IDE auto-import.
 """Qutrit circuit construction primitives: gates, instructions, and circuits."""
 
-from .qutrit_circuit import QutritCircuit
 from .instruction import GATE_SET, Instruction
+from .qutrit_circuit import QutritCircuit
 from .utils import (
-    checking_unitary,
-    multi_matrix_form,
     print_statevector,
-    single_matrix_form,
     statevector_to_state,
 )
 
@@ -39,9 +36,6 @@ __all__ = [
     "GATE_SET",
     "Instruction",
     "QutritCircuit",
-    "checking_unitary",
-    "multi_matrix_form",
     "print_statevector",
-    "single_matrix_form",
     "statevector_to_state",
 ]

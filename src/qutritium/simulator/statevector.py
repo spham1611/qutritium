@@ -20,8 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-:class:`QASM_Simulator` -- a numerically exact statevector simulator for
-:class:`qutritium.circuit.qutrit_circuit.Qutrit_circuit` instances.
+:class:`QASMSimulator` -- a numerically exact statevector simulator for
+:class:`qutritium.circuit.qutrit_circuit.QutritCircuit` instances.
 
 The simulator applies each gate's precomputed effect matrix in sequence and
 samples a multinomial distribution over computational-basis states for the
@@ -56,7 +56,7 @@ final measurement.
 from __future__ import annotations
 
 from collections import Counter
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import Dict, List, Tuple, TYPE_CHECKING
 
 import numpy as np
 from numpy.typing import NDArray
@@ -74,8 +74,8 @@ if TYPE_CHECKING:
 _VALID_PLOT_TYPES: Tuple[str, ...] = ("histogram", "line", "dot")
 
 
-class QASM_Simulator:
-    """Statevector simulator for a :class:`Qutrit_circuit`.
+class QASMSimulator:
+    """Statevector simulator for a :class:`QutritCircuit`.
 
     The simulator multiplies each instruction's ``effect_matrix`` into the
     running statevector, then (if a measurement was registered) samples
@@ -83,19 +83,17 @@ class QASM_Simulator:
 
     Parameters
     ----------
-    qc : Qutrit_circuit
+    qc : QutritCircuit
         The circuit to simulate. Its ``operation_set`` is consumed but not
         mutated.
     """
 
-    def __init__(self, qc: Qutrit_circuit) -> None:
-        self.circuit: Qutrit_circuit = qc
+    def __init__(self, qc: QutritCircuit) -> None:
+        self.circuit: QutritCircuit = qc
         self.n_qutrit: int = qc.n_qutrit
         self.initial_state: NDArray = qc.initial_state
         self.state: NDArray = self.initial_state.copy()
         self._measurement_flag: bool = qc.measurement_flag
-        # MODIFIED: take a copy of the operation list so SPAM noise insertions
-        # don't mutate the user's circuit object.
         self._operation_set: List = list(qc.operation_set)
         self._spam_error_active: bool = False
         self._error_meas: List[Tuple[str, float]] = []
@@ -138,15 +136,12 @@ class QASM_Simulator:
         self._error_meas = [
             ("x_plus", p_meas / 2),
             ("x_minus", p_meas / 2),
-            ("Identity", 1 - p_meas),
+            ("identity", 1 - p_meas),
         ]
-        # MODIFIED: gate names were ``'x+'`` / ``'x-'`` / ``'I'`` -- none of
-        # which are valid entries in ``GATE_SET`` (the actual names are
-        # ``x_plus``, ``x_minus``, ``Identity``). Fixed.
         error_prep = [
             ("x_plus", p_prep / 2),
             ("x_minus", p_prep / 2),
-            ("Identity", 1 - p_prep),
+            ("identity", 1 - p_prep),
         ]
         probs_prep = [entry[1] for entry in error_prep]
         rng = np.random.default_rng()  # MODIFIED: use Generator API not legacy.
@@ -155,13 +150,10 @@ class QASM_Simulator:
             error_effect = Instruction(
                 gate_type=error_prep[choice][0],
                 n_qutrit=self.n_qutrit,
-                first_qutrit_set=i,
-                second_qutrit_set=None,
+                first_qutrit=i,
+                second_qutrit=None,
                 parameter=None,
             )
-            # MODIFIED: ``insert(__index=0, __object=error_effect)`` -> ``insert(0, ...)``
-            # The dunder-keyword form was invalid Python and would have
-            # crashed on the first execution.
             self._operation_set.insert(0, error_effect)
 
         self._spam_error_active = True
@@ -212,15 +204,15 @@ class QASM_Simulator:
                 error_effect = Instruction(
                     gate_type=self._error_meas[choice][0],
                     n_qutrit=self.n_qutrit,
-                    first_qutrit_set=i,
-                    second_qutrit_set=None,
+                    first_qutrit=i,
+                    second_qutrit=None,
                     parameter=None,
                 )
                 self._operation_set.insert(0, error_effect)
 
         state_coeff, state_construction = statevector_to_state(self.state, self.n_qutrit)
         probs = np.array([np.abs(c) ** 2 for c in state_coeff])
-        # MODIFIED: vectorise the multinomial sampling instead of a Python
+        # MODIFIED: vectorize the multinomial sampling instead of a Python
         # loop over ``num_shots`` iterations.
         sampled = rng.choice(len(state_construction), size=num_shots, p=probs)
         self._measurement_result = [state_construction[i] for i in sampled]
@@ -252,7 +244,7 @@ class QASM_Simulator:
             self._simulation()
         # MODIFIED: ``state @ state.T`` -> ``state @ state.conj().T``. The
         # original was wrong for any state with non-trivial complex phases.
-        return self.state @ self.state.conj().T
+        return self.state @ self.state.conj().T  # type: ignore[no-any-return]
 
     def plot(self, plot_type: str = "histogram") -> "Figure":
         """Plot the measurement counts.
@@ -300,4 +292,4 @@ class QASM_Simulator:
         return fig
 
 
-__all__ = ["QASM_Simulator"]
+__all__ = ["QASMSimulator"]

@@ -221,7 +221,7 @@ def y12() -> NDArray[np.complex128]:
 
 
 # ---------------------------------------------------------------------------
-# Pauli-Z: z01 (lambda_3 + |2><2|), z02 (diag(-1,1,1)), z12 (diag(1,1,-1))
+# Pauli-Z: z01 (lambda_3 + |2><2|), z02 (diag(1,1,-1)), z12 (diag(1,1,-1))
 # ---------------------------------------------------------------------------
 def z01() -> NDArray[np.complex128]:
     """Pauli-Z in {|0>, |1>}. Equivalent to lambda_3 + |2><2|."""
@@ -233,11 +233,17 @@ def z01() -> NDArray[np.complex128]:
 
 
 def z02() -> NDArray[np.complex128]:
-    """Pauli-Z in {|0>, |2>}. diag(1, 1, -1) with sign on |2>."""
+    """Pauli-Z in {|0>, |2>}. diag(1, 1, -1).
+
+    As a 3x3 matrix this coincides with :func:`z12` because both
+    subspaces assign eigenvalue -1 to |2> and +1 to the complement.
+    They are kept as separate functions for API symmetry with the X and Y
+    families.
+    """
     return np.array(
-        [[-1, 0, 0],
+        [[1, 0, 0],
          [0, 1, 0],
-         [0, 0, 1]], dtype=complex,
+         [0, 0, -1]], dtype=complex,
     )
 
 

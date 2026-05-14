@@ -16,7 +16,7 @@ Qutritium is a Python package for working with **qutrit** quantum systems — th
 generalisations of the familiar qubit. It provides:
 
 - A clean object model for qutrit gates, instructions, and circuits.
-- A numerically exact statevector **simulator** (`QASM_Simulator`) — no hardware
+- A numerically exact statevector **simulator** (`QASMSimulator`) — no hardware
   backend required.
 - A complete **SU(3) decomposition** of arbitrary 3×3 unitaries into native
   subspace rotations (`r01`, `r12`, diagonal phase).
@@ -47,14 +47,14 @@ pip install -e ".[dev]"
 
 Optional extras:
 
-- `[plot]` — matplotlib (only needed for `QASM_Simulator.plot()`)
+- `[plot]` — matplotlib (only needed for `QASMSimulator.plot()`)
 - `[dev]` — pytest, ruff, black, mypy
 
 ## Quick start
 
 ```python
 import numpy as np
-from qutritium import Qutrit_circuit, QASM_Simulator, SU3_matrices
+from qutritium import Qutrit_circuit, QASMSimulator, SU3_matrices
 
 # Build a 2-qutrit Bell-like state with a Hadamard + CNOT.
 qc = Qutrit_circuit(2, initial_state=None)
@@ -62,7 +62,7 @@ qc.add_gate("hdm", first_qutrit_set=0)
 qc.add_gate("CNOT", first_qutrit_set=1, second_qutrit_set=0)
 qc.measure_all()
 
-sim = QASM_Simulator(qc)
+sim = QASMSimulator(qc)
 sim.run(num_shots=10_000)
 print(sim.get_counts())
 # -> {'00': ~3333, '11': ~3333, '22': ~3333}
@@ -91,7 +91,7 @@ print(dec.reconstruct())     # numerically equal to U_ft
 | `qutritium.quantumcircuit.instruction_structure` | `Instruction` -- a single gate application + the `GATE_SET` registry. |
 | `qutritium.quantumcircuit.qc_elementary_matrices` | The library of 3×3 unitary primitives.                              |
 | `qutritium.quantumcircuit.qc_utility` | Gate-name -> matrix dispatch and statevector utilities.              |
-| `qutritium.vm_backend.QASM_backend`   | `QASM_Simulator` -- exact statevector simulator with optional SPAM noise. |
+| `qutritium.vm_backend.QASM_backend`   | `QASMSimulator` -- exact statevector simulator with optional SPAM noise. |
 | `qutritium.decomposition.transpilation` | `SU3_matrices`, `Parameter`, `get_parameters` -- SU(3) decomposition. |
 
 ## Migration from v0.0.x
@@ -101,11 +101,11 @@ v1.0.0 is a **breaking** release. Imports change from `src.X` to `qutritium.X`:
 ```python
 # v0.0.x
 from src.quantumcircuit.QC import Qutrit_circuit
-from src.vm_backend.QASM_backend import QASM_Simulator
+from src.vm_backend.QASM_backend import QASMSimulator
 from src.decomposition.transpilation import SU3_matrices, Pulse_Wrapper  # removed!
 
 # v1.0.0
-from qutritium import Qutrit_circuit, QASM_Simulator, SU3_matrices
+from qutritium import Qutrit_circuit, QASMSimulator, SU3_matrices
 # Pulse_Wrapper has been moved to legacy/ (no longer importable).
 ```
 

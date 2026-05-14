@@ -33,10 +33,10 @@ users:
    from src.quantumcircuit.QC import Qutrit_circuit
    from src.vm_backend.QASM_backend import QASM_Simulator
    # v1.0.0
-   from qutritium import Qutrit_circuit, QASM_Simulator
+   from qutritium import Qutrit_circuit, QASMSimulator
    ```
    The top-level `qutritium` package re-exports the four most-used symbols
-   (`Qutrit_circuit`, `Instruction`, `QASM_Simulator`, `SU3_matrices`) so
+   (`Qutrit_circuit`, `Instruction`, `QASMSimulator`, `SU3_matrices`) so
    that fully-qualified module paths are no longer necessary for typical
    usage.
 
@@ -85,9 +85,9 @@ Backward compatibility is not available, please use this new version of API
 
 | Path                                              | Was                                  | Now                                                                                                                                                                                                                                                                |
 |---------------------------------------------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `src/qutritium/__init__.py`                       | empty file                           | full module docstring + curated `__all__` re-exporting `Qutrit_circuit`, `Instruction`, `QASM_Simulator`, `SU3_matrices`; `__version__ = "1.0.0"`.                                                                                                                  |
+| `src/qutritium/__init__.py`                       | empty file                           | full module docstring + curated `__all__` re-exporting `Qutrit_circuit`, `Instruction`, `QASMSimulator`, `SU3_matrices`; `__version__ = "1.0.0"`.                                                                                                                  |
 | `src/qutritium/quantumcircuit/__init__.py`        | three commented-out wildcard imports | explicit `__all__` re-exporting `GATE_SET`, `Instruction`, `Qutrit_circuit`, plus the four utility functions.                                                                                                                                                      |
-| `src/qutritium/vm_backend/__init__.py`            | `from .QASM_backend import *` (wildcard) | explicit `__all__ = ["QASM_Simulator"]`.                                                                                                                                                                                                                          |
+| `src/qutritium/vm_backend/__init__.py`            | `from .QASM_backend import *` (wildcard) | explicit `__all__ = ["QASMSimulator"]`.                                                                                                                                                                                                                          |
 | `src/qutritium/decomposition/__init__.py`         | empty file                           | explicit `__all__` re-exporting `Parameter` and `SU3_matrices`.                                                                                                                                                                                                    |
 | `src/qutritium/py.typed`                          | (didn't exist)                       | PEP 561 marker indicating the package ships type annotations for downstream type-checkers.                                                                                                                                                                         |
 

@@ -5,19 +5,19 @@ and plot the measurement counts.
 # MODIFIED (v1.0.0): import paths updated from ``src.quantumcircuit.QC`` /
 # ``src.vm_backend.QASM_backend`` to the new ``qutritium.*`` package layout.
 
-from qutritium import QASM_Simulator, Qutrit_circuit
+from qutritium import QASMSimulator, QutritCircuit
 
 
 def main() -> None:
     """
     Matplotlib package is optional as depending on user preferences. Either use matplotlib, seaborn, etc
     """
-    qc = Qutrit_circuit(n_qutrit=2, initial_state=None)
-    qc.add_gate("hdm", first_qutrit_set=0)
-    qc.add_gate("CNOT", first_qutrit_set=1, second_qutrit_set=0)
+    qc = QutritCircuit(n_qutrit=2, initial_state=None)
+    qc.add_gate("hdm", first_qutrit=0)
+    qc.add_gate("CNOT", first_qutrit=0, second_qutrit=1)
     qc.measure_all()
 
-    sim = QASM_Simulator(qc)
+    sim = QASMSimulator(qc)
     sim.run(num_shots=10_000)
     print("Final state:")
     print(sim.return_final_state())

@@ -25,6 +25,6 @@
 """Numerically exact statevector simulator (virtual-machine backend) for qutrit
 circuits."""
 
-from .statevector import QASM_Simulator
+from .statevector import QASMSimulator
 
-__all__ = ["QASM_Simulator"]
+__all__ = ["QASMSimulator"]

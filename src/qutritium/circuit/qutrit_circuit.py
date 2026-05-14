@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-:class:`Qutrit_circuit` -- the main user-facing container for a sequence of
+:class:`QutritCircuit` -- the main user-facing container for a sequence of
 qutrit gate instructions, suitable for passing to a simulator backend.
 """
 from __future__ import annotations
@@ -43,7 +43,7 @@ class QutritCircuit:
 
     The class is a thin container; it does **not** itself simulate the
     circuit. Pass an instance to
-    :class:`qutritium.simulator.statevector.QASM_Simulator` (or any other
+    :class:`qutritium.simulator.statevector.QASMSimulator` (or any other
     backend) to obtain a final state or sampled measurement results.
 
     Parameters
@@ -62,7 +62,7 @@ class QutritCircuit:
     """
 
     def __init__(
-        self, n_qutrit: int, initial_state: NDArray | None,
+            self, n_qutrit: int, initial_state: NDArray | None,
     ) -> None:
         if n_qutrit < 1:
             raise ValueError(f"n_qutrit must be >= 1, got {n_qutrit}.")
@@ -91,13 +91,13 @@ class QutritCircuit:
             self.state = ket0.copy()
 
     def add_gate(
-        self,
-        gate_type: str,
-        first_qutrit: int,
-        second_qutrit: int | None = None,
-        parameter: Sequence[float] | None = None,
-        to_all: bool = False,
-        is_dagger: bool = False,
+            self,
+            gate_type: str,
+            first_qutrit: int,
+            second_qutrit: int | None = None,
+            parameter: Sequence[float] | None = None,
+            to_all: bool = False,
+            is_dagger: bool = False,
     ) -> None:
         """Append a gate within GATE_SET (or, with ``to_all=True``, one gate per qutrit).
         WARNING: This function is not meant to implement multiple two-gate qutrits.
@@ -109,9 +109,11 @@ class QutritCircuit:
             Name of the gate. See
             :data:`qutritium.circuit.instruction.GATE_SET`.
         first_qutrit : int
-            Target qutrit index. Ignored when ``to_all=True``.
+            Control qutrit index for two-qutrit gates, or the sole
+            target qutrit for single-qutrit gates. Ignored when
+            ``to_all=True``.
         second_qutrit : int, optional
-            Control qutrit index for two-qutrit gates.
+            Target qutrit index for two-qutrit gates.
         parameter : sequence of float, optional
             Gate parameters.
         to_all : bool, optional
@@ -144,14 +146,14 @@ class QutritCircuit:
             self._extend_operation_set([ins])
 
     def add_customized_gate(
-        self,
-        gate_type: str,
+            self,
+            gate_type: str,
             first_qutrit: int,
             second_qutrit: int | None = None,
-        parameter: Sequence[float] | None = None,
-        to_all: bool = False,
-        is_dagger: bool = False,
-        custom_matrix: NDArray | None = None,
+            parameter: Sequence[float] | None = None,
+            to_all: bool = False,
+            is_dagger: bool = False,
+            custom_matrix: NDArray | None = None,
     ) -> None:
         """Append a user-supplied custom gate.
 
@@ -258,7 +260,7 @@ class QutritCircuit:
     def __repr__(self) -> str:
         # ADDED: an actually-useful repr.
         meas = " (measured)" if self._measurement_flag else ""
-        return f"Qutrit_circuit(n_qutrit={self.n_qutrit}, ops={len(self._operation_set)}){meas}"
+        return f"QutritCircuit(n_qutrit={self.n_qutrit}, ops={len(self._operation_set)}){meas}"
 
     def __add__(self, other: "QutritCircuit") -> "QutritCircuit":
         """Concatenate two circuits.

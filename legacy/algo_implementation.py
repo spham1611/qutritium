@@ -21,17 +21,16 @@
 # SOFTWARE.
 
 import numpy as np
-from src.quantumcircuit.QC import Qutrit_circuit
-from src.vm_backend.QASM_backend import QASM_Simulator
+from matplotlib import pyplot as plt
+# Qiskit library
+from qiskit import pulse, QuantumCircuit
+from qiskit.circuit import Gate
+from qiskit_ibm_provider.ibm_provider import IBMProvider
 from src.decomposition.transpilation import Pulse_Wrapper, SU3_matrices
 from src.pulse import Pulse01, Pulse12
 from src.pulse_creation import GateSchedule
-# Qiskit library
-from qiskit import QuantumCircuit
-from qiskit import pulse
-from qiskit.circuit import Gate
-from qiskit_ibm_provider.ibm_provider import IBMProvider
-from matplotlib import pyplot as plt
+from src.quantumcircuit.QC import Qutrit_circuit
+from src.vm_backend.QASM_backend import QASM_Simulator
 
 pi = np.pi
 
@@ -123,7 +122,7 @@ for i in range(6):
     # qc_sub = u_dft_decompose.decomposed_into_qc()
     # qc += qc_sub
     # qc.measure_all()
-    # backend = QASM_Simulator(qc=qc)
+    # backend = QASMSimulator(qc=qc)
     # backend.run(num_shots=2048)
     # qc.draw()
     # print("Simulation Value: ", backend.get_counts())

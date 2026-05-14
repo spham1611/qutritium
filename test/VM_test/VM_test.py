@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from qutritium import QASM_Simulator, QutritCircuit, SU3Decomposition
+from qutritium import QASMSimulator, QutritCircuit, SU3Decomposition
 
 
 # ---------------------------------------------------------------------------
@@ -82,9 +82,9 @@ def test_two_qutrit_hadamard_cnot_distribution() -> None:
     """H_q0 + CNOT(q1, q0) should produce a uniform mixture of {00, 11, 22}."""
     qc = QutritCircuit(2, None)
     qc.add_gate("hdm", first_qutrit=0)
-    qc.add_gate("CNOT", first_qutrit=1, second_qutrit=0)
+    qc.add_gate("CNOT", first_qutrit=0, second_qutrit=1)
     qc.measure_all()
-    sim = QASM_Simulator(qc)
+    sim = QASMSimulator(qc)
     sim.run(num_shots=20_000)
     counts = sim.get_counts()
     # Expect roughly equal weight on 00, 11, 22 and ~zero on the rest.
@@ -97,7 +97,7 @@ def test_two_qutrit_hadamard_cnot_distribution() -> None:
 def test_simulator_run_without_measurement_raises() -> None:
     qc = QutritCircuit(1, None)
     qc.add_gate("hdm", first_qutrit=0)
-    sim = QASM_Simulator(qc)
+    sim = QASMSimulator(qc)
     with pytest.raises(RuntimeError):
         sim.run(num_shots=100)
 
@@ -105,7 +105,7 @@ def test_simulator_run_without_measurement_raises() -> None:
 def test_simulator_run_with_invalid_shots_raises() -> None:
     qc = QutritCircuit(1, None)
     qc.measure_all()
-    sim = QASM_Simulator(qc)
+    sim = QASMSimulator(qc)
     with pytest.raises(ValueError):
         sim.run(num_shots=0)
 
@@ -114,7 +114,7 @@ def test_density_matrix_is_hermitian_psd() -> None:
     """Pure-state density matrix from the simulator must be Hermitian and PSD."""
     qc = QutritCircuit(1, None)
     qc.add_gate("hdm", first_qutrit=0)
-    sim = QASM_Simulator(qc)
+    sim = QASMSimulator(qc)
     rho = sim.density_matrix()
     assert np.allclose(rho, rho.conj().T)
     eigvals = np.linalg.eigvalsh(rho)
