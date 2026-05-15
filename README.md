@@ -30,8 +30,8 @@ import numpy as np
 
 # Qutrit Bell state: H3 + CSUM → (|00⟩ + |11⟩ + |22⟩) / √3
 qc = QutritCircuit(2, None)
-qc.append(H3(), qutrit=0)
-qc.append(CSUM(), qutrit=0, target_qutrit=1)
+qc.append(H3(), first_qutrit=0)
+qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
 qc.measure_all()
 
 sim = QASMSimulator(qc)

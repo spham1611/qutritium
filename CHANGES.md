@@ -15,7 +15,10 @@ Versioning: [Semantic Versioning](https://semver.org/)
   - 16 fixed single-qutrit gates: `I3`, `X01/X02/X12`, `Y01/Y02/Y12`, `Z01/Z02/Z12`, `XPlus/XMinus`, `H3`, `S3`, `T3`, `UFT`.
   - 13 parametric single-qutrit gates: `Rx01/Rx02/Rx12`, `Ry01/Ry02/Ry12`, `Rz01/Rz02/Rz12`, `G01/G02/G12`, `Ud`.
   - 5 two-qutrit gates: `CSUM`, `CSUMDag`, `CNOT3`, `CPhase`, `SWAP3`.
-- **`QutritCircuit.append(gate, qutrit, ...)`** — new method accepting `Gate` instances. Old string-based `add_gate()` still works.
+- **`QutritCircuit.append(gate, first_qutrit, ...)`** — the single method for adding gates to circuits. Accepts `Gate`
+  instances from `qutritium.gates`.
+- Removed legacy `add_gate()` and `add_customized_gate()` string-dispatch methods; all callers (decomposition, tests,
+  scripts) migrated to `append()`.
 - **`elementary_matrices`**: `csum()`, `csum_dag()`, `cphase()`, `swap3()` — two-qutrit matrix functions (consistency with single-qutrit pattern).
 - **`test/test_gates.py`** — 157 new tests (169 total with Phase 1).
 - `Gate` exported from top-level `qutritium` package.

@@ -280,24 +280,13 @@ class SU3Decomposition:
 
     def to_circuit(self) -> QutritCircuit:
         """Return a fresh QutritCircuit realizing this decomposition."""
+        from qutritium.gates import G01, G12, Ud
         qc = QutritCircuit(n_qutrit=self.n_qutrits, initial_state=None)
         a = self.angles
-        qc.add_gate(
-            "g01", first_qutrit=self.qutrit_index,
-            parameter=[a.theta1, a.phi1],
-        )
-        qc.add_gate(
-            "g12", first_qutrit=self.qutrit_index,
-            parameter=[a.theta2, a.phi2],
-        )
-        qc.add_gate(
-            "g01", first_qutrit=self.qutrit_index,
-            parameter=[a.theta3, a.phi3],
-        )
-        qc.add_gate(
-            "u_d", first_qutrit=self.qutrit_index,
-            parameter=[a.phi6, a.phi5, a.phi4],
-        )
+        qc.append(G01(a.theta1, a.phi1), first_qutrit=self.qutrit_index)
+        qc.append(G12(a.theta2, a.phi2), first_qutrit=self.qutrit_index)
+        qc.append(G01(a.theta3, a.phi3), first_qutrit=self.qutrit_index)
+        qc.append(Ud(a.phi6, a.phi5, a.phi4), first_qutrit=self.qutrit_index)
         return qc
 
     def __str__(self) -> str:
