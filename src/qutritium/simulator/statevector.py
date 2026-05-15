@@ -1,58 +1,7 @@
-# MIT License
-#
-# Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-"""
-:class:`QASMSimulator` -- a numerically exact statevector simulator for
-:class:`qutritium.circuit.qutrit_circuit.QutritCircuit` instances.
+# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# See LICENSE.txt for full terms.
 
-The simulator applies each gate's precomputed effect matrix in sequence and
-samples a multinomial distribution over computational-basis states for the
-final measurement.
-"""
-# MODIFIED: import paths updated to the new ``qutritium.*`` layout.
-# MODIFIED: ``add_SPAM_noise`` previously called
-# ``self._operation_set.insert(__index=0, __object=...)``, which is INVALID
-# Python -- ``list.insert`` does not accept dunder keyword arguments. The
-# call would raise ``TypeError`` the first time the SPAM-noise codepath
-# was exercised (the v0.0.1 tests did not exercise this path, so the bug
-# was latent). Replaced with ``self._operation_set.insert(0, ...)``.
-# MODIFIED: ``density_matrix`` was using ``state @ state.T`` (transpose) for
-# what should be the outer product of a (potentially complex) statevector.
-# That returns ``ψψ^T``, NOT ``ψψ^*`` -- it's only correct for real
-# statevectors. Fixed to ``state @ state.conj().T``, which gives the proper
-# pure-state density matrix.
-# MODIFIED: bare ``Exception`` -> specific exception types throughout.
-# MODIFIED: ``run`` previously could be called without ``measure_all`` being
-# called first AND with ``num_shots`` valid, but only raised if
-# ``self._measurement_flag`` was False AFTER the simulation step ran.
-# Reordered so the validation happens first.
-# MODIFIED: ``plot`` now uses ``ax.set_*`` methods rather than implicit
-# ``plt.*`` state, returns the Figure for testability, and lazy-imports
-# matplotlib so the simulator itself doesn't require matplotlib at import
-# time. (Previously the module-level ``import matplotlib.pyplot`` made the
-# simulator unimportable in headless environments without matplotlib.)
-# MODIFIED: ``get_counts`` uses ``collections.Counter`` instead of an O(n^2)
-# ``dict((x, list.count(x)) for x in set(list))`` comprehension.
-# MODIFIED: type hints, docstrings, dropped ``return None`` ``simulation``
-# step ambiguity, etc.
+"""Statevector simulator. Applies gates sequentially, samples Born-rule outcomes."""
 from __future__ import annotations
 
 from collections import Counter
@@ -66,27 +15,15 @@ from qutritium.circuit.qutrit_circuit import QutritCircuit
 from qutritium.circuit.utils import statevector_to_state
 
 if TYPE_CHECKING:
-    # Type-only; the runtime ``plot`` codepath imports matplotlib lazily.
+
     from matplotlib.figure import Figure
 
 
-# ADDED: tuple of supported plot kinds, validated against in ``plot``.
 _VALID_PLOT_TYPES: Tuple[str, ...] = ("histogram", "line", "dot")
 
 
 class QASMSimulator:
-    """Statevector simulator for a :class:`QutritCircuit`.
-
-    The simulator multiplies each instruction's ``effect_matrix`` into the
-    running statevector, then (if a measurement was registered) samples
-    ``num_shots`` outcomes from the resulting Born distribution.
-
-    Parameters
-    ----------
-    qc : QutritCircuit
-        The circuit to simulate. Its ``operation_set`` is consumed but not
-        mutated.
-    """
+    """Simulate a QutritCircuit by matrix-vector multiplication."""
 
     def __init__(self, qc: QutritCircuit) -> None:
         self.circuit: QutritCircuit = qc
@@ -103,23 +40,7 @@ class QASMSimulator:
     def add_SPAM_noise(
         self, p_prep: float, p_meas: float, error_type: str = "Pauli_error",
     ) -> None:
-        """Add a State-Preparation-And-Measurement noise model to the simulation.
-
-        Parameters
-        ----------
-        p_prep : float
-            Probability of a preparation error (per qutrit).
-        p_meas : float
-            Probability of a measurement error (per qutrit).
-        error_type : str
-            Currently only ``"Pauli_error"`` is supported.
-
-        Notes
-        -----
-        Preparation errors are applied immediately as gate insertions at the
-        front of the operation list. Measurement errors are stored and
-        applied during :meth:`run`, immediately before sampling.
-        """
+        """Add SPAM noise. Only Pauli_error is supported."""
         # MODIFIED: input validation added.
         if not 0.0 <= p_prep <= 1.0:
             raise ValueError(f"p_prep must be in [0, 1]; got {p_prep}.")
@@ -159,7 +80,7 @@ class QASMSimulator:
         self._spam_error_active = True
 
     def _simulation(self) -> None:
-        """Run the gate sequence to produce the final statevector."""
+        """Apply all gates to get the final statevector."""
         if self._measurement_flag:
             # The last entry is the "measurement" sentinel; skip it.
             for op in self._operation_set[:-1]:
@@ -170,20 +91,7 @@ class QASMSimulator:
         self._simulation_flag = True
 
     def run(self, num_shots: int = 1024) -> None:
-        """Simulate the circuit and (if measured) sample ``num_shots`` outcomes.
-
-        Parameters
-        ----------
-        num_shots : int
-            Number of measurement shots to sample. Must be positive.
-
-        Raises
-        ------
-        ValueError
-            If ``num_shots <= 0``.
-        RuntimeError
-            If the circuit does not contain a measurement.
-        """
+        """Run simulation and sample num_shots measurement outcomes."""
         # MODIFIED: validate num_shots and measurement presence up-front.
         if num_shots <= 0:
             raise ValueError(f"num_shots must be positive; got {num_shots}.")
@@ -218,7 +126,7 @@ class QASMSimulator:
         self._measurement_result = [state_construction[i] for i in sampled]
 
     def get_counts(self) -> Dict[str, int]:
-        """Return a histogram of sampled measurement outcomes."""
+        """Measurement histogram {outcome: count}."""
         if not self._measurement_result:
             # MODIFIED: ``Exception`` -> ``RuntimeError``. Also covers the
             # case where ``run`` was never called (empty list, not None).
@@ -227,19 +135,19 @@ class QASMSimulator:
         return dict(Counter(self._measurement_result))
 
     def return_final_state(self) -> NDArray:
-        """Run the simulation if needed and return the final statevector."""
+        """Final statevector (runs simulation if needed)."""
         if not self._simulation_flag:
             self._simulation()
         return self.state
 
     def result(self) -> List[str]:
-        """Return the raw list of sampled measurement outcomes."""
+        """Raw list of sampled outcomes."""
         if not self._measurement_result:
             raise RuntimeError("No measurement result yet; call ``run()`` first.")
         return self._measurement_result
 
     def density_matrix(self) -> NDArray:
-        """Return the pure-state density matrix ``|psi><psi|`` of the final state."""
+        """Pure-state density matrix |psi><psi|."""
         if not self._simulation_flag:
             self._simulation()
         # MODIFIED: ``state @ state.T`` -> ``state @ state.conj().T``. The
@@ -247,26 +155,10 @@ class QASMSimulator:
         return self.state @ self.state.conj().T  # type: ignore[no-any-return]
 
     def plot(self, plot_type: str = "histogram") -> "Figure":
-        """Plot the measurement counts.
-
-        Parameters
-        ----------
-        plot_type : str
-            One of ``"histogram"``, ``"line"``, ``"dot"``.
-
-        Returns
-        -------
-        matplotlib.figure.Figure
-            The figure object, for further customisation or saving.
-
-        Raises
-        ------
-        ValueError
-            If ``plot_type`` is not recognised.
-        """
+        """Plot counts. plot_type: "histogram", "line", or "dot"."""
         # MODIFIED: lazy import so the simulator itself doesn't drag in
         # matplotlib at module load.
-        import matplotlib.pyplot as plt  # noqa: PLC0415 (deliberate lazy import)
+        import matplotlib.pyplot as plt
 
         if plot_type not in _VALID_PLOT_TYPES:
             raise ValueError(

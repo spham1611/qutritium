@@ -1,24 +1,5 @@
-# MIT License
-#
-# Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# See LICENSE.txt for full terms.
 """
 Elementary qutrit unitary matrices (SU(3)) + Gell-Mann matrices or GGM
 
@@ -43,10 +24,17 @@ S and T gates, identity, CNOT, CSUM, CPhase, SWAP, and composite rotation
 gates. These operators can be written in terms of GGM.
 
 References
-----------
+
 - Bertlmann, R. A. & Krammer, P. (2008). *Bloch vectors for qudits*.
-  arXiv:0806.1174.
-- H. Georgi, "Lie Algebras in Particle Physics", 2nd ed., Westview Press, 1999.
+arXiv:0806.1174.
+- Ringbauer, M. et al. (2022). *A universal qudit quantum processor
+with trapped ions*. Nature Physics 18, 1053-1057.
+- Wang, Y. et al. (2020). *Qudits and high-dimensional quantum
+computing*. Frontiers in Physics 8, 589504.
+- Vitanov, N. V. (2012). *Synthesis of arbitrary SU(3) transformations
+of 8-dimensional targets*. Phys. Rev. A 85, 032331.
+- H. Georgi, "Lie Algebras in Particle Physics", 2nd ed., Westview
+Press, 1999.
 """
 from __future__ import annotations
 
@@ -58,8 +46,7 @@ from numpy.typing import NDArray
 # ---------------------------------------------------------------------------
 PI: float = float(np.pi)
 OMEGA_DEFAULT: complex = complex(np.exp(1j * 2 * PI / 3))
-"""Primitive cube root of unity ``exp(2*pi*i/3)`` used as the default phase
-in the qutrit Hadamard, S-, and T-gates."""
+# exp(2*pi*i/3), default phase for H3, S3, T3
 
 _STATE_0: NDArray[np.complex128] = np.array([[1], [0], [0]], dtype=complex)
 _STATE_1: NDArray[np.complex128] = np.array([[0], [1], [0]], dtype=complex)
@@ -397,9 +384,6 @@ def rz12(phi: float) -> NDArray[np.complex128]:
 
 # ===========================================================================
 # Generalized rotation gates
-#
-# g_ij(theta, phi) = exp(-i*theta/2 * (cos(phi)*X_ij + sin(phi)*Y_ij))
-# Reduces to Rx_ij(theta) at phi=0.
 # ===========================================================================
 def g01(theta: float, phi: float) -> NDArray[np.complex128]:
     """Generalized rotation in {|0>, |1>} with azimuthal phase ``phi``."""
@@ -477,13 +461,7 @@ def identity() -> NDArray[np.complex128]:
 
 
 def hdm(omega: complex = OMEGA_DEFAULT) -> NDArray[np.complex128]:
-    """Qutrit Hadamard / discrete Fourier gate F_3 / sqrt(3).
-
-    Parameters
-    ----------
-    omega : complex, optional
-        Primitive cube root of unity. Defaults to exp(2*pi*i/3).
-    """
+    """Qutrit Hadamard (DFT F_3 / sqrt(3))."""
     return (1 / np.sqrt(3)) * np.array(  # type: ignore[no-any-return]
         [[1, 1, 1],
          [1, omega, omega ** 2],
@@ -522,26 +500,9 @@ def tdg(omega: complex = OMEGA_DEFAULT) -> NDArray[np.complex128]:
 # Two-qutrit gates
 # ===========================================================================
 def cnot(control: int, target: int) -> NDArray[np.complex128]:
-    """Generalized two-qutrit CNOT gate.
+    """Two-qutrit CNOT. |0>c: identity, |1>c: X01.X12, |2>c: X12.X01.
 
-    |0>_c leaves target alone; |1>_c applies X01 @ X12; |2>_c applies X12 @ X01.
-
-    Parameters
-    ----------
-    control : int
-        Index of the control qutrit.
-    target : int
-        Index of the target qutrit. Must not equal ``control``.
-
-    Returns
-    -------
-    ndarray
-        A 3**n x 3**n complex matrix where n = |target - control| + 1.
-
-    Raises
-    ------
-    ValueError
-        If target == control.
+    Returns 3^n x 3^n matrix where n = |target - control| + 1.
     """
     if control == target:
         raise ValueError(
@@ -577,16 +538,9 @@ def cnot(control: int, target: int) -> NDArray[np.complex128]:
 
 
 def csum() -> NDArray[np.complex128]:
-    """Controlled-SUM gate: |c, t> -> |c, (t + c) mod 3>.
+    """CSUM gate: |c, t> -> |c, (t + c) mod 3>. 9x9 permutation matrix.
 
-    The standard two-qutrit entangling gate, generalising the qubit CNOT.
-    Returns a 9x9 permutation matrix in the computational basis
-    {|00>, |01>, |02>, |10>, |11>, |12>, |20>, |21>, |22>}.
-
-    References
-    ----------
-    Wang, Y. et al. (2020). *Qudits and high-dimensional quantum computing*.
-    Frontiers in Physics 8, 589504, Table 1.
+    Ref: Wang et al. (2020), Front. Phys. 8, 589504.
     """
     mat = np.zeros((9, 9), dtype=complex)
     for c in range(3):
@@ -596,26 +550,14 @@ def csum() -> NDArray[np.complex128]:
 
 
 def csum_dag() -> NDArray[np.complex128]:
-    """Inverse of CSUM: |c, t> -> |c, (t - c) mod 3>.
-
-    Since CSUM is a permutation matrix, the inverse is its transpose.
-    """
+    """CSUM inverse: |c, t> -> |c, (t - c) mod 3>. Just the transpose."""
     return csum().T.copy()
 
 
 def cphase() -> NDArray[np.complex128]:
-    """Controlled-phase gate: |c, t> -> omega^{c*t} |c, t>.
+    """CPhase: |c, t> -> omega^{c*t} |c, t>. Qutrit analogue of CZ.
 
-    Diagonal in the computational basis. omega = exp(2*pi*i/3).
-    This is the qutrit analogue of the qubit CZ gate and is related to
-    CSUM by conjugation with Fourier transforms:
-
-        CPhase = (I x F_3) . CSUM . (I x F_3^dag)
-
-    References
-    ----------
-    Wang, Y. et al. (2020). *Qudits and high-dimensional quantum computing*.
-    Frontiers in Physics 8, 589504.
+    Related to CSUM by: CPhase = (I x F3) . CSUM . (I x F3^dag).
     """
     omega = np.exp(2j * np.pi / 3)
     diag = np.array(
@@ -626,10 +568,7 @@ def cphase() -> NDArray[np.complex128]:
 
 
 def swap3() -> NDArray[np.complex128]:
-    """Qutrit SWAP gate: |a, b> -> |b, a>.
-
-    A 9x9 permutation matrix that exchanges two qutrits. Self-inverse.
-    """
+    """SWAP: |a, b> -> |b, a>. Self-inverse permutation."""
     mat = np.zeros((9, 9), dtype=complex)
     for a in range(3):
         for b in range(3):

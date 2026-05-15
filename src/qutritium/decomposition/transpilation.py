@@ -1,41 +1,14 @@
-# MIT License
-#
-# Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-"""
-SU(3) decomposition into native single-qutrit rotations.
+# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# See LICENSE.txt for full terms.
 
-The decomposition is hardware-agnostic: it produces angle parameters and a
-list of :class:`qutritium.circuit.instruction.Instruction` objects that any
-backend (statevector simulator, ARTIQ, AQT, IBM via Qiskit, ...) can consume.
-For more info on how to decompose SU(3) matrices into Euler angles rotations
-can be found here
+"""SU(3) -> native qutrit rotations.
+
+Decomposition: U = u_d(phi6,phi5,phi4) . r01(phi3,theta3) . r12(phi2,theta2) . r01(phi1,theta1)
+
 References
-----------
-- Reck, M., Zeilinger, A., Bernstein, H. J. & Bertani, P. (1994).
-  *Experimental realization of any discrete unitary operator*.
-  Phys. Rev. Lett. 73, 58.
-- Bronzan, J. B. (1988). *Parametrization of SU(3)*.
-  Phys. Rev. D 38, 1994.
+
 - Vitanov, N. V. (2012). *Synthesis of arbitrary SU(3) transformations
-  of atomic qutrits*. Phys. Rev. A 85, 032331.
+of 8-dimensional targets*. Phys. Rev. A 85, 032331.
 """
 from __future__ import annotations
 
@@ -52,7 +25,7 @@ _PI: float = float(np.pi)
 
 
 class DecompositionAngles(NamedTuple):
-    """Nine Euler-like angles of the SU(3) decomposition."""
+    """Nine angles from the SU(3) decomposition."""
     theta1: float
     theta2: float
     theta3: float
@@ -65,7 +38,7 @@ class DecompositionAngles(NamedTuple):
 
 
 class NativeDecomposition(NamedTuple):
-    """Result of :meth:`SU3Decomposition.to_native`."""
+    """Native decomposition result: phases + instructions."""
     phases: NDArray
     instructions: list[Instruction]
 
@@ -74,12 +47,12 @@ class NativeDecomposition(NamedTuple):
 # Helper functions
 # ---------------------------------------------------------------------------
 def _safe_arccos(x: float) -> float:
-    """``np.arccos`` with clamping to [-1, 1] to avoid NaN from rounding."""
+    """arccos with clamping to avoid NaN."""
     return float(np.arccos(np.clip(float(x), -1.0, 1.0)))
 
 
 def _round_abs(z: complex, decimals: int = 6) -> float:
-    """Round the magnitude of a complex number to ``decimals`` places."""
+    """Round |z| to given decimal places."""
     return float(np.round(np.absolute(z), decimals))
 
 
@@ -87,29 +60,7 @@ def _round_abs(z: complex, decimals: int = 6) -> float:
 # Angle extraction
 # ---------------------------------------------------------------------------
 def _extract_angles(unitary: NDArray) -> DecompositionAngles:
-    """Decompose a 3x3 SU(3) matrix into nine canonical angles.
-
-    The canonical form is
-       unitary = u_d(\\phi_6, \\phi_5, \\phi_4) \\cdot
-                r_{01}(\\phi_3, \\theta_3) \\cdot
-                r_{12}(\\phi_2, \\theta_2) \\cdot
-                r_{01}(\\phi_1, \\theta_1)
-
-    Parameters
-    ----------
-    unitary : ndarray
-        A 3x3 matrix in (or close to) SU(3).
-
-    Returns
-    -------
-    DecompositionAngles
-        Named tuple with fields ``theta1, theta2, theta3, phi1, ..., phi6``.
-
-    Notes
-    -----
-    The branching on ``|unitary[2,2]|`` handles the three degenerate cases where
-    the standard formulae become singular.
-    """
+    """Extract nine canonical angles from a 3x3 unitary. Branches on |U[2,2]|."""
     abs_u22 = _round_abs(unitary[2, 2])
 
     if abs_u22 == 1.0:
@@ -187,22 +138,7 @@ def _extract_angles(unitary: NDArray) -> DecompositionAngles:
 # Decomposition class
 # ---------------------------------------------------------------------------
 class SU3Decomposition:
-    """Decomposition of an arbitrary 3x3 unitary into native qutrit rotations.
-
-    Parameters
-    ----------
-    su3 : ndarray
-        A 3x3 unitary matrix.
-    qutrit_index : int
-        Index of the qutrit on which the decomposed gates will act.
-    n_qutrits : int
-        Total number of qutrits in the parent circuit.
-
-    Raises
-    ------
-    ValueError
-        If ``su3`` does not have shape ``(3, 3)`` or is not unitary.
-    """
+    """Decompose a 3x3 unitary into native qutrit rotations (r01, r12, u_d)."""
 
     def __init__(self, su3: NDArray, qutrit_index: int, n_qutrits: int) -> None:
         if su3.shape != (3, 3):
@@ -217,7 +153,7 @@ class SU3Decomposition:
         self.angles: DecompositionAngles = _extract_angles(self.su3)
 
     def diagonal_phase(self) -> NDArray:
-        """Return the diagonal unitary u_d(phi_6, phi_5, phi_4)."""
+        """u_d(phi6, phi5, phi4) factor."""
         return u_d(self.angles.phi6, self.angles.phi5, self.angles.phi4)
 
     def rotation_01_theta3(self) -> NDArray:
@@ -233,7 +169,7 @@ class SU3Decomposition:
         return r12(phi=self.angles.phi2, theta=self.angles.theta2)
 
     def reconstruct(self) -> NDArray:
-        """Multiply the four factors back together; should equal ``su3``."""
+        """Reconstruct U from the decomposed factors. Should match su3."""
         return (  # type: ignore[no-any-return]
             self.diagonal_phase()
             @ self.rotation_01_theta3()
@@ -242,14 +178,7 @@ class SU3Decomposition:
         )
 
     def to_native(self) -> NativeDecomposition:
-        """Return the decomposition as virtual-Z phases and native instructions.
-
-        Returns
-        -------
-        NativeDecomposition
-            ``phases``: cumulative virtual-Z phase advances on {01} and {12}.
-            ``instructions``: sequence of native g01/g12 rotations.
-        """
+        """Virtual-Z phases + native g01/g12 instruction sequence."""
         a = self.angles
         phase01 = a.phi6 - a.phi5
         phase12 = a.phi5 - a.phi4
@@ -279,7 +208,7 @@ class SU3Decomposition:
         return NativeDecomposition(np.array([phase01, phase12]), instructions)
 
     def to_circuit(self) -> QutritCircuit:
-        """Return a fresh QutritCircuit realizing this decomposition."""
+        """Build a QutritCircuit from this decomposition."""
         from qutritium.gates import G01, G12, Ud
         qc = QutritCircuit(n_qutrit=self.n_qutrits, initial_state=None)
         a = self.angles

@@ -1,34 +1,29 @@
-<div align="center">
-
 [![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE.txt)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-yellow.svg?style=for-the-badge)](https://www.python.org/)
 
 # Qutritium
 
-**A hardware-agnostic Python library for qutrit quantum computing.**
+Hardware-agnostic Python library for qutrit (3-level) quantum computing.
+Build circuits, simulate them, decompose arbitrary SU(3) unitaries.
 
-*Build, simulate, and decompose three-level quantum circuits.*
+Funded by a [Unitary Fund](https://unitary.fund) microgrant. Originally presented
+at the Munich Quantum Software Conference (October 2023).
 
-</div>
-
----
-
-## Installation
+## Install
 
 ```bash
-pip install qutritium            # release
-pip install -e ".[dev]"          # editable + dev tools
+pip install qutritium
+# or for development:
+pip install -e ".[dev]"
 ```
 
-## Quick Start
+## Usage
 
 ```python
 from qutritium import QutritCircuit, QASMSimulator
-from qutritium.gates import H3, CSUM, Rx01
+from qutritium.gates import H3, CSUM
 import numpy as np
 
-# Qutrit Bell state: H3 + CSUM → (|00⟩ + |11⟩ + |22⟩) / √3
+# Qutrit Bell state: H3 on qutrit 0, then CSUM
 qc = QutritCircuit(2, None)
 qc.append(H3(), first_qutrit=0)
 qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
@@ -39,76 +34,53 @@ sim.run(num_shots=10_000)
 print(sim.get_counts())   # {'00': ~3333, '11': ~3333, '22': ~3333}
 ```
 
-Decompose an arbitrary SU(3) unitary:
+SU(3) decomposition:
 
 ```python
 from qutritium import SU3Decomposition
-import numpy as np
 
-U = ...  # any 3×3 unitary
+U = ...  # any 3x3 unitary
 dec = SU3Decomposition(U, qutrit_index=0, n_qutrits=1)
-print(dec.parameters)      # extracted angles
-print(dec.reconstruct())   # ≈ U to machine precision
+print(dec.angles)
+print(dec.reconstruct())  # should match U
 ```
 
-## Gate Library
+## Gates
 
-### Single-qutrit gates
+Single-qutrit: `X01`, `X02`, `X12`, `Y01`..., `Z01`..., `XPlus`, `XMinus`,
+`H3`, `S3`, `T3`, `UFT`, `I3`, rotation gates `Rx01(θ)`, `Ry01(θ)`, `Rz01(φ)` etc.,
+generalized rotations `G01(θ,φ)`, `G02(θ,φ)`, `G12(θ,φ)`, diagonal `Ud(φ₁,φ₂,φ₃)`.
 
-| Category | Gates |
-|----------|-------|
-| Pauli-X  | `X01`, `X02`, `X12` |
-| Pauli-Y  | `Y01`, `Y02`, `Y12` |
-| Pauli-Z  | `Z01`, `Z02`, `Z12` |
-| Shifts   | `XPlus` (cyclic), `XMinus` (inverse) |
-| Discrete | `H3` (Hadamard/DFT), `S3`, `T3`, `UFT`, `I3` |
-| Rotations | `Rx01`, `Rx02`, `Rx12`, `Ry01`, `Ry02`, `Ry12`, `Rz01`, `Rz02`, `Rz12` |
-| Generalized | `G01(θ,φ)`, `G02(θ,φ)`, `G12(θ,φ)` — native trapped-ion gate |
-| Diagonal | `Ud(φ₁,φ₂,φ₃)` — virtual-Z in hardware |
+Two-qutrit: `CSUM`, `CPhase`, `SWAP3`, `CNOT3` (legacy).
 
-### Two-qutrit gates
+All gates inherit from `Gate` and have `.matrix()`, `.inverse()`, `.is_unitary()`,
+`.label`, `.params`.
 
-| Gate | Action |
-|------|--------|
-| `CSUM` | \|c,t⟩ → \|c, (t+c) mod 3⟩ |
-| `CPhase` | \|c,t⟩ → ω^{c·t} \|c,t⟩ |
-| `SWAP3` | \|a,b⟩ → \|b,a⟩ |
-| `CNOT3` | Legacy v0.0.1 CNOT (= CSUM on adjacent qutrits) |
-
-All gates inherit from `Gate` and provide `.matrix()`, `.inverse()`, `.is_unitary()`, `.label`, `.params`.
-
-## Package Structure
+## Layout
 
 ```
 qutritium/
-├── gates/               # Gate objects (Phase 2)
-│   ├── base.py          #   Gate ABC + _DaggerGate
-│   ├── single_qutrit.py #   29 single-qutrit gates
-│   └── two_qutrit.py    #   5 two-qutrit gates
-├── circuit/             # Circuit infrastructure
-│   ├── elementary_matrices.py  # Raw 3×3 / 9×9 unitaries
-│   ├── instruction.py          # Instruction + GATE_SET
-│   ├── qutrit_circuit.py       # QutritCircuit container
-│   └── utils.py                # Statevector utilities
-├── simulator/           # QASMSimulator (statevector)
-├── decomposition/       # SU(3) → native rotations
-└── legacy/              # v0.0.x Qiskit-pulse code (not installable)
+├── gates/           # Gate objects (base.py, single_qutrit.py, two_qutrit.py)
+├── circuit/         # Circuit container, instruction, elementary 3x3 matrices
+├── simulator/       # Statevector simulator
+├── decomposition/   # SU(3) → native rotations
+└── legacy/          # Original v0.0.x Qiskit-pulse code (archived, not installable)
 ```
 
-## History
+## Background
 
-Qutritium was originally built for calibrating qutrits on IBM superconducting hardware,
-presented at the **Munich Quantum Software Conference 2023** and funded by a
-**Unitary Fund** microgrant. The v1.0.0 release pivoted to a hardware-agnostic
-library; the original pulse code is preserved under `legacy/`.
+Qutritium started as a Qiskit-pulse package for calibrating qutrits on IBM
+superconducting hardware. The v1.0.0 release dropped the IBM dependency and
+became hardware-agnostic; the original pulse code is kept under `legacy/` for
+reference.
 
 ## Authors
 
-- **[Son Pham](https://github.com/spham1611)** — Duke University · sph40@duke.edu
-- **[Tien Nguyen](https://github.com/ngdnhtien)** — École Polytechnique, France
-- **[Bao Bach](https://github.com/bachbao)** — University of Delaware, USA
-- **[Charlie (abdomsisn)](https://github.com/abdomsisn)** — Duke University · abdomsisn.haobei@gmail.com
+- [Son Pham](https://github.com/spham1611) — Duke University
+- [Tien Nguyen](https://github.com/ngdnhtien) — École Polytechnique
+- [Bao Bach](https://github.com/bachbao) — University of Delaware
+- [Charlie (abdomsisn)](https://github.com/abdomsisn) — Duke University
 
 ## License
 
-[MIT](LICENSE.txt)
+MIT — see [LICENSE.txt](LICENSE.txt)

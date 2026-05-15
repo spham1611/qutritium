@@ -1,4 +1,4 @@
-# pyproject.toml -- v1.0.0
+# pyproject.toml -- v1.1.0
 # This is used to replace the old files such as requirements.txt, changes, setup etc
 #
 # Supports Python 3.11 through 3.14 and newest versions of Numpy, Scipy and Matplot
@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qutritium"
-version = "1.0.0"
+version = "1.1.0"
 description = "A hardware-agnostic Python library for qutrit (3-level) quantum computing: gates, circuits, simulation, and SU(3) decomposition."
 readme = "README.md"
 license = { file = "LICENSE.txt" }
@@ -19,6 +19,7 @@ authors = [
     { name = "Son Pham", email = "sph40@duke.edu" },
     { name = "Tien Nguyen" },
     { name = "Bao Bach" },
+    { name = "Charlie He" }
 ]
 maintainers = [
     { name = "Son Pham", email = "sph40@duke.edu" },

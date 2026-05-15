@@ -1,32 +1,7 @@
-# MIT License
-#
-# Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-"""
-Single-gate instruction class and the registry of supported gate names.
+# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# See LICENSE.txt for full terms.
 
-An :class:`Instruction` represents one application of a qutrit gate inside
-:class:`qutritium.circuit.qutrit_circuit.QutritCircuit`. It holds the gate type,
-first_qutrit / second_qutrit indices, parameters, and a precomputed effect
-matrix that the simulator can apply to a statevector.
-"""
+"""Instruction: one gate applied to specific qutrit(s) in a circuit."""
 from __future__ import annotations
 
 from typing import Sequence
@@ -54,51 +29,7 @@ GATE_SET: frozenset[str] = frozenset({
 
 
 class Instruction:
-    """A single gate application within a qutrit circuit.
-
-    An :class:`Instruction` precomputes the full ``3**n_qutrit``-dimensional
-    effect matrix at construction time so that the simulator can apply each
-    gate by a single matrix-vector multiplication.
-
-    Parameters
-    ----------
-    gate_type : str
-        Name of the gate. Must be in :data:`GATE_SET` unless ``custom`` is
-        ``True``.
-    n_qutrit : int
-        Total number of qutrits in the parent circuit.
-    first_qutrit : int
-        Index of the first (control) qutrit for two-qutrit gates, or the
-        sole target qutrit for single-qutrit gates. Must satisfy
-        ``0 <= first_qutrit < n_qutrit``.
-    second_qutrit : int or None, optional
-        Index of the second (target) qutrit for two-qutrit gates. ``None``
-        for single-qutrit gates.
-    parameter : sequence of float, optional
-        Gate parameters for parametrized gates (e.g. rotation angles).
-    inverse : bool, optional
-        If ``True``, the Hermitian conjugate of the gate matrix is used.
-    custom : bool, optional
-        If ``True``, ``custom_matrix`` is taken as the gate matrix verbatim
-        and ``gate_type`` is treated as a free-form label (not validated
-        against :data:`GATE_SET`).
-    custom_matrix : ndarray, optional
-        The custom 3x3 unitary, required when ``custom`` is ``True``.
-    gate : Gate or None, optional
-        The originating :class:`~qutritium.gates.base.Gate` object, if this
-        instruction was created via :meth:`QutritCircuit.append`. Stored for
-        introspection; not used in simulation.
-
-    Raises
-    ------
-    ValueError
-        If ``gate_type`` is not in :data:`GATE_SET` (and ``custom`` is
-        ``False``), or if a custom gate is requested without a matrix.
-        If ''custom'' and ''custom_matrix'' is not None, the matrix dimensions
-        should be 3x3 or 9x9 for two qutrits.
-    IndexError
-        If ``first_qutrit`` or ``second_qutrit`` is out of range.
-    """
+    """One gate application in a circuit. Precomputes the full 3^n effect matrix."""
 
     def __init__(
             self,
@@ -172,7 +103,7 @@ class Instruction:
     # Gate name -> matrix dispatch
     # ------------------------------------------------------------------
     def _require_params(self, n: int) -> Sequence[float]:
-        """Validate that this instruction has at least ``n`` parameters."""
+        """Check we have enough parameters."""
         if self.parameter is None or len(self.parameter) < n:
             raise ValueError(
                 f"Gate '{self._type}' requires {n} parameter(s); got "
@@ -181,7 +112,7 @@ class Instruction:
         return self.parameter
 
     def _resolve_gate_matrix(self) -> NDArray[np.complex128]:
-        """Resolve ``self._type`` to a unitary matrix from elementary_matrices."""
+        """Map gate name -> matrix from elementary_matrices."""
         gt = self._type
 
         # Multi-qutrit gates
@@ -273,7 +204,7 @@ class Instruction:
         raise KeyError(f"Unknown gate type: {gt!r}.")
 
     def _effect(self) -> NDArray:
-        """Compute the full ``3**n``-dim effect matrix from the local gate."""
+        """Expand local gate matrix into the full 3^n register."""
         if not self._is_two_qutrit_gate:
             if self.n_qutrit == 1:
                 return self.gate_matrix
@@ -319,7 +250,7 @@ class Instruction:
         return effect_matrix  # type: ignore[no-any-return]
 
     def _verify_gate(self) -> None:
-        """Verify ``self._type`` is a recognized gate name."""
+        """Check gate name is in GATE_SET."""
         if self._type not in GATE_SET:
             raise ValueError(
                 f"Gate type {self._type!r} is not in GATE_SET. "
@@ -328,15 +259,15 @@ class Instruction:
 
     @property
     def effect_matrix(self) -> NDArray:
-        """The ``3**n``-dim matrix representing this gate on the full register."""
+        """Full-register effect matrix."""
         return self._effect_matrix
 
     def type(self) -> str:
-        """Return the gate-type string."""
+        """Gate name."""
         return self._type
 
     def print(self) -> None:
-        """Print a one-line human-readable description of this instruction."""
+        """Print gate info."""
         if not self._is_two_qutrit_gate:
             if self.parameter is None:
                 print(f"Gate {self._type}, first_qutrit: {self.first_qutrit}")
@@ -352,7 +283,7 @@ class Instruction:
             )
 
     def inverse(self) -> Instruction:
-        """Return a new Instruction that is the Hermitian conjugate of this one."""
+        """Return the conjugate-transpose instruction."""
         return Instruction(
             gate_type=self._type,
             n_qutrit=self.n_qutrit,
@@ -363,4 +294,3 @@ class Instruction:
             custom=self._is_custom,
             custom_matrix=self.gate_matrix if self._is_custom else None,
         )
-    

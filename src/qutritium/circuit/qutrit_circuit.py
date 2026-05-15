@@ -1,28 +1,7 @@
-# MIT License
-#
-# Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-"""
-:class:`QutritCircuit` -- the main user-facing container for a sequence of
-qutrit gate instructions, suitable for passing to a simulator backend.
-"""
+# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# See LICENSE.txt for full terms.
+
+"""QutritCircuit: container for a sequence of qutrit gate instructions."""
 from __future__ import annotations
 
 from typing import Iterator, List, Sequence, Union
@@ -32,6 +11,7 @@ from numpy.typing import NDArray
 
 from qutritium.circuit.instruction import Instruction
 from qutritium.circuit.utils import print_statevector
+from qutritium.gates.base import Gate
 
 # Type alias: an operation is either an Instruction or the literal "measurement"
 # string sentinel. Used for internal QutritCircuit class only
@@ -39,27 +19,7 @@ _Operation = Union[Instruction, str]
 
 
 class QutritCircuit:
-    """A sequence of qutrit gates plus an optional terminating measurement.
-
-    The class is a thin container; it does **not** itself simulate the
-    circuit. Pass an instance to
-    :class:`qutritium.simulator.statevector.QASMSimulator` (or any other
-    backend) to obtain a final state or sampled measurement results.
-
-    Parameters
-    ----------
-    n_qutrit : int
-        Number of qutrits in the register. Must be positive.
-    initial_state : ndarray, optional
-        A ``(3**n_qutrit, 1)`` complex column vector representing the
-        initial state. If ``None``, the all-zeros state ``|00...0>`` is
-        used.
-
-    Raises
-    ------
-    ValueError
-        If ``n_qutrit < 1`` or ``initial_state`` has the wrong shape.
-    """
+    """Ordered gate list + optional measurement. Pass to QASMSimulator to run."""
 
     def __init__(
             self, n_qutrit: int, initial_state: NDArray | None,
@@ -97,32 +57,7 @@ class QutritCircuit:
             second_qutrit: int | None = None,
             is_dagger: bool = False,
     ) -> None:
-        """Append a :class:`~qutritium.gates.base.Gate` instance to the circuit.
-
-        This is the recommended API for Phase 2+. It accepts first-class
-        Gate objects from :mod:`qutritium.gates` rather than string names.
-
-        Parameters
-        ----------
-        gate : Gate
-            A gate instance (e.g. ``H3()``, ``Rx01(np.pi/4)``, ``CSUM()``).
-        first_qutrit : int
-            Target qutrit index for single-qutrit gates, or control qutrit
-            index for two-qutrit gates.
-        second_qutrit : int or None, optional
-            Target qutrit for two-qutrit gates. Must be ``None`` for
-            single-qutrit gates.
-        is_dagger : bool, optional
-            If ``True``, apply the Hermitian conjugate (inverse) of the gate.
-
-        Raises
-        ------
-        TypeError
-            If ``gate`` is not a :class:`Gate` instance.
-        ValueError
-            If a two-qutrit gate is missing ``second_qutrit``, or a
-            single-qutrit gate is given one.
-        """
+        """Add a Gate to the circuit."""
         # Runtime import to avoid circular dependency:
         # gates → elementary_matrices ← instruction ← qutrit_circuit
         from qutritium.gates.base import Gate as _Gate
@@ -161,13 +96,7 @@ class QutritCircuit:
         self._extend_operation_set([ins])
 
     def measure_all(self) -> None:
-        """Mark the end of the circuit by adding a measurement of all qutrits.
-
-        Raises
-        ------
-        RuntimeError
-            If a measurement has already been added.
-        """
+        """Add measurement. Can only be called once."""
         if self._measurement_flag:
             raise RuntimeError("A measurement has already been added to this circuit.")
         self._measurement_flag = True
@@ -175,7 +104,7 @@ class QutritCircuit:
 
     @property
     def operation_set(self) -> List[_Operation]:
-        """The list of recorded operations (instructions and the measurement sentinel)."""
+        """List of operations."""
         return self._operation_set
 
     @operation_set.setter
@@ -193,7 +122,7 @@ class QutritCircuit:
 
     @property
     def measurement_flag(self) -> bool:
-        """Whether :meth:`measure_all` has been called on this circuit."""
+        """True if measure_all() was called."""
         return self._measurement_flag
 
     def reset_circuit(self) -> None:
@@ -209,8 +138,7 @@ class QutritCircuit:
         self._operation_set.clear()
 
     def draw(self) -> None:
-        """Print a textual summary of the circuit to stdout."""
-        # TODO: graphical circuit rendering -- carried over from v0.0.1.
+        """Print circuit summary. TODO: proper circuit drawing."""
         print("Initial state of the circuit: ")
         print_statevector(self.initial_state, self.n_qutrit)
         print("Set of gate on the circuits: ")
@@ -226,7 +154,7 @@ class QutritCircuit:
         return len(self._operation_set)
 
     def __iter__(self) -> Iterator[_Operation]:
-        """Iterate over recorded operations in order."""
+        """Iterate over operations."""
         return iter(self._operation_set)
 
     def __repr__(self) -> str:
@@ -235,18 +163,7 @@ class QutritCircuit:
         return f"QutritCircuit(n_qutrit={self.n_qutrit}, ops={len(self._operation_set)}){meas}"
 
     def __add__(self, other: "QutritCircuit") -> "QutritCircuit":
-        """Concatenate two circuits.
-
-        The left operand must not contain a measurement; the right operand
-        may. The result starts from ``self.initial_state``.
-
-        Raises
-        ------
-        ValueError
-            If the two circuits act on different numbers of qutrits.
-        RuntimeError
-            If ``self`` already contains a measurement.
-        """
+        """Concatenate two circuits. Left must not have a measurement."""
         if self.n_qutrit != other.n_qutrit:
             raise ValueError(
                 f"Cannot concatenate circuits with different qutrit counts: "

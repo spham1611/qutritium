@@ -23,10 +23,13 @@ authors:
     orcid: "https://orcid.org/0000-0000-0000-0000"  # TODO: replace with real ORCID
   - family-names: Nguyen
     given-names: Tien
-    affiliation: "Vietnam National University, Hanoi"
+    affiliation: "École Polytechnique, France"
   - family-names: Bach
     given-names: Bao
-    affiliation: "Vietnam National University, Hanoi"
+    affiliation: "University of Delaware, USA"
+   -family-names: He
+    given-names: Charlie
+    affiliation: "Duke University, USA"
 
 repository-code: "https://github.com/spham1611/qutritium"
 url: "https://github.com/spham1611/qutritium"
