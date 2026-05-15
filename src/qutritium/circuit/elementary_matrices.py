@@ -37,9 +37,10 @@ These 8 generators splits into three families which are:
     - Antisymmetric (imaginary): lambda_2, lambda_5, lambda_7
     - Off Diagonal: lambda_3, lambda_8
 
-In addition, this module also contains operators that do not belong to GGM, including: Qutrit cyclic-inverse shift,
-Pauli-Z in {1,2}, Qutrit Hadamard, Qutrit S and T gate, Qutrit Identity, Qutrit CNOT, Qutrit composite rotation gates.
-It should be noted these operators can be written in terms of GGM
+In addition, this module contains operators that do not belong to GGM,
+including: qutrit cyclic/inverse shift, Pauli-Z in {1,2}, qutrit Hadamard,
+S and T gates, identity, CNOT, CSUM, CPhase, SWAP, and composite rotation
+gates. These operators can be written in terms of GGM.
 
 References
 ----------
@@ -573,3 +574,64 @@ def cnot(control: int, target: int) -> NDArray[np.complex128]:
                 + np.kron(np.kron(x12_x01, spacing), proj_2)
         )
     return np.array(matrix, dtype=complex)
+
+
+def csum() -> NDArray[np.complex128]:
+    """Controlled-SUM gate: |c, t> -> |c, (t + c) mod 3>.
+
+    The standard two-qutrit entangling gate, generalising the qubit CNOT.
+    Returns a 9x9 permutation matrix in the computational basis
+    {|00>, |01>, |02>, |10>, |11>, |12>, |20>, |21>, |22>}.
+
+    References
+    ----------
+    Wang, Y. et al. (2020). *Qudits and high-dimensional quantum computing*.
+    Frontiers in Physics 8, 589504, Table 1.
+    """
+    mat = np.zeros((9, 9), dtype=complex)
+    for c in range(3):
+        for t in range(3):
+            mat[3 * c + ((t + c) % 3), 3 * c + t] = 1.0
+    return mat
+
+
+def csum_dag() -> NDArray[np.complex128]:
+    """Inverse of CSUM: |c, t> -> |c, (t - c) mod 3>.
+
+    Since CSUM is a permutation matrix, the inverse is its transpose.
+    """
+    return csum().T.copy()
+
+
+def cphase() -> NDArray[np.complex128]:
+    """Controlled-phase gate: |c, t> -> omega^{c*t} |c, t>.
+
+    Diagonal in the computational basis. omega = exp(2*pi*i/3).
+    This is the qutrit analogue of the qubit CZ gate and is related to
+    CSUM by conjugation with Fourier transforms:
+
+        CPhase = (I x F_3) . CSUM . (I x F_3^dag)
+
+    References
+    ----------
+    Wang, Y. et al. (2020). *Qudits and high-dimensional quantum computing*.
+    Frontiers in Physics 8, 589504.
+    """
+    omega = np.exp(2j * np.pi / 3)
+    diag = np.array(
+        [omega ** (c * t) for c in range(3) for t in range(3)],
+        dtype=complex,
+    )
+    return np.diag(diag)
+
+
+def swap3() -> NDArray[np.complex128]:
+    """Qutrit SWAP gate: |a, b> -> |b, a>.
+
+    A 9x9 permutation matrix that exchanges two qutrits. Self-inverse.
+    """
+    mat = np.zeros((9, 9), dtype=complex)
+    for a in range(3):
+        for b in range(3):
+            mat[3 * b + a, 3 * a + b] = 1.0
+    return mat
