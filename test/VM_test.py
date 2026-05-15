@@ -3,6 +3,7 @@ Smoke tests for the v1.0.0 hardware-agnostic core.
 
 Migrated from the v0.0.1 ``test/VM_test/VM_test.py`` (which was a top-level
 script using ``src.X`` imports). Restructured as proper pytest tests.
+Updated for v1.1.0: uses Gate-based ``append()`` API.
 """
 from __future__ import annotations
 
@@ -10,6 +11,7 @@ import numpy as np
 import pytest
 
 from qutritium import QASMSimulator, QutritCircuit, SU3Decomposition
+from qutritium.gates import CSUM, H3, Rx01
 
 
 # ---------------------------------------------------------------------------
@@ -18,12 +20,12 @@ from qutritium import QASMSimulator, QutritCircuit, SU3Decomposition
 def test_circuit_addition_preserves_operations() -> None:
     """``a + b`` should produce a fresh circuit with concatenated ops."""
     a = QutritCircuit(3, None)
-    a.add_gate("hdm", first_qutrit=0)
-    a.add_gate("rx01", first_qutrit=0, parameter=[np.pi])
+    a.append(H3(), first_qutrit=0)
+    a.append(Rx01(np.pi), first_qutrit=0)
 
     b = QutritCircuit(3, None)
-    b.add_gate("rx01", first_qutrit=0, parameter=[np.pi])
-    b.add_gate("hdm", first_qutrit=0)
+    b.append(Rx01(np.pi), first_qutrit=0)
+    b.append(H3(), first_qutrit=0)
     b.measure_all()
 
     c = a + b
@@ -78,25 +80,23 @@ def test_random_su3_decomposition_roundtrip(seed: int) -> None:
 # ---------------------------------------------------------------------------
 # Simulator
 # ---------------------------------------------------------------------------
-def test_two_qutrit_hadamard_cnot_distribution() -> None:
-    """H_q0 + CNOT(q1, q0) should produce a uniform mixture of {00, 11, 22}."""
+def test_two_qutrit_hadamard_csum_distribution() -> None:
+    """H3 + CSUM should produce a uniform mixture of {00, 11, 22}."""
     qc = QutritCircuit(2, None)
-    qc.add_gate("hdm", first_qutrit=0)
-    qc.add_gate("CNOT", first_qutrit=0, second_qutrit=1)
+    qc.append(H3(), first_qutrit=0)
+    qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
     qc.measure_all()
     sim = QASMSimulator(qc)
     sim.run(num_shots=20_000)
     counts = sim.get_counts()
-    # Expect roughly equal weight on 00, 11, 22 and ~zero on the rest.
     assert set(counts.keys()) <= {"00", "11", "22"}
     for outcome in ("00", "11", "22"):
-        # 5-sigma confidence interval on a multinomial is plenty loose.
         assert 6_000 <= counts[outcome] <= 7_500, counts
 
 
 def test_simulator_run_without_measurement_raises() -> None:
     qc = QutritCircuit(1, None)
-    qc.add_gate("hdm", first_qutrit=0)
+    qc.append(H3(), first_qutrit=0)
     sim = QASMSimulator(qc)
     with pytest.raises(RuntimeError):
         sim.run(num_shots=100)
@@ -113,7 +113,7 @@ def test_simulator_run_with_invalid_shots_raises() -> None:
 def test_density_matrix_is_hermitian_psd() -> None:
     """Pure-state density matrix from the simulator must be Hermitian and PSD."""
     qc = QutritCircuit(1, None)
-    qc.add_gate("hdm", first_qutrit=0)
+    qc.append(H3(), first_qutrit=0)
     sim = QASMSimulator(qc)
     rho = sim.density_matrix()
     assert np.allclose(rho, rho.conj().T)

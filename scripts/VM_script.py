@@ -1,38 +1,21 @@
 """
-Minimal example: build a 2-qutrit Hadamard + CNOT circuit, simulate it,
-and plot the measurement counts.
+Minimal 2-qutrit example: H3 + CSUM → qutrit Bell state.
 """
-# MODIFIED (v1.0.0): import paths updated from ``src.quantumcircuit.QC`` /
-# ``src.vm_backend.QASM_backend`` to the new ``qutritium.*`` package layout.
-
 from qutritium import QASMSimulator, QutritCircuit
+from qutritium.gates import CSUM, H3
 
 
 def main() -> None:
-    """
-    Matplotlib package is optional as depending on user preferences. Either use matplotlib, seaborn, etc
-    """
-    qc = QutritCircuit(n_qutrit=2, initial_state=None)
-    qc.add_gate("hdm", first_qutrit=0)
-    qc.add_gate("CNOT", first_qutrit=0, second_qutrit=1)
+    qc = QutritCircuit(2, None)
+    qc.append(H3(), first_qutrit=0)
+    qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
     qc.measure_all()
 
     sim = QASMSimulator(qc)
     sim.run(num_shots=10_000)
-    print("Final state:")
-    print(sim.return_final_state())
-    print("-" * 40)
-    print("Counts:", sim.get_counts())
-
-    # Optional: requires the [plot] extra (matplotlib).
-    try:
-        fig = sim.plot(plot_type="histogram")
-        fig.savefig("vm_script_histogram.png", bbox_inches="tight")
-        print("Histogram saved to vm_script_histogram.png")
-    except ImportError:
-        print("matplotlib not installed; skipping plot. "
-              "Install with `pip install qutritium[plot]`.")
+    print(sim.get_counts())
 
 
 if __name__ == "__main__":
     main()
+   
