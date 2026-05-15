@@ -84,6 +84,10 @@ class Instruction:
         against :data:`GATE_SET`).
     custom_matrix : ndarray, optional
         The custom 3x3 unitary, required when ``custom`` is ``True``.
+    gate : Gate or None, optional
+        The originating :class:`~qutritium.gates.base.Gate` object, if this
+        instruction was created via :meth:`QutritCircuit.append`. Stored for
+        introspection; not used in simulation.
 
     Raises
     ------
@@ -106,6 +110,7 @@ class Instruction:
             inverse: bool = False,
             custom: bool = False,
             custom_matrix: NDArray | None = None,
+            gate: object | None = None,
     ) -> None:
         # Validate qutrit range
         if not 0 <= first_qutrit < n_qutrit:
@@ -128,6 +133,7 @@ class Instruction:
         self._is_inverse: bool = inverse
         self._is_custom: bool = custom
         self._is_two_qutrit_gate: bool = second_qutrit is not None
+        self.gate: object | None = gate  # Gate reference for introspection
 
         if not custom:
             self._verify_gate()
@@ -357,3 +363,4 @@ class Instruction:
             custom=self._is_custom,
             custom_matrix=self.gate_matrix if self._is_custom else None,
         )
+    

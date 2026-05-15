@@ -90,103 +90,75 @@ class QutritCircuit:
             self.initial_state = ket0
             self.state = ket0.copy()
 
-    def add_gate(
+    def append(
             self,
-            gate_type: str,
+            gate: "Gate",
             first_qutrit: int,
             second_qutrit: int | None = None,
-            parameter: Sequence[float] | None = None,
-            to_all: bool = False,
             is_dagger: bool = False,
     ) -> None:
-        """Append a gate within GATE_SET (or, with ``to_all=True``, one gate per qutrit).
-        WARNING: This function is not meant to implement multiple two-gate qutrits.
-        It is advised  to implement one at a time.
+        """Append a :class:`~qutritium.gates.base.Gate` instance to the circuit.
+
+        This is the recommended API for Phase 2+. It accepts first-class
+        Gate objects from :mod:`qutritium.gates` rather than string names.
 
         Parameters
         ----------
-        gate_type : str
-            Name of the gate. See
-            :data:`qutritium.circuit.instruction.GATE_SET`.
+        gate : Gate
+            A gate instance (e.g. ``H3()``, ``Rx01(np.pi/4)``, ``CSUM()``).
         first_qutrit : int
-            Control qutrit index for two-qutrit gates, or the sole
-            target qutrit for single-qutrit gates. Ignored when
-            ``to_all=True``.
-        second_qutrit : int, optional
-            Target qutrit index for two-qutrit gates.
-        parameter : sequence of float, optional
-            Gate parameters.
-        to_all : bool, optional
-            If ``True`` and ``second_qutrit is None``, the gate is
-            applied to every qutrit in the register.
+            Target qutrit index for single-qutrit gates, or control qutrit
+            index for two-qutrit gates.
+        second_qutrit : int or None, optional
+            Target qutrit for two-qutrit gates. Must be ``None`` for
+            single-qutrit gates.
         is_dagger : bool, optional
-            If ``True``, the inverse (Hermitian conjugate) is applied.
+            If ``True``, apply the Hermitian conjugate (inverse) of the gate.
+
+        Raises
+        ------
+        TypeError
+            If ``gate`` is not a :class:`Gate` instance.
+        ValueError
+            If a two-qutrit gate is missing ``second_qutrit``, or a
+            single-qutrit gate is given one.
         """
-        if to_all and second_qutrit is None:
-            # Implement all a single gate
-            for i in range(self.n_qutrit):
-                ins = Instruction(
-                    gate_type=gate_type,
-                    n_qutrit=self.n_qutrit,
-                    first_qutrit=i,
-                    second_qutrit=None,
-                    parameter=parameter,
-                    inverse=is_dagger,
-                )
-                self._extend_operation_set([ins])
-        else:
-            ins = Instruction(
-                gate_type=gate_type,
-                n_qutrit=self.n_qutrit,
-                first_qutrit=first_qutrit,
-                second_qutrit=second_qutrit,
-                parameter=parameter,
-                inverse=is_dagger,
+        # Runtime import to avoid circular dependency:
+        # gates → elementary_matrices ← instruction ← qutrit_circuit
+        from qutritium.gates.base import Gate as _Gate
+
+        if not isinstance(gate, _Gate):
+            raise TypeError(
+                f"append() expects a Gate instance, got {type(gate).__name__}."
             )
-            self._extend_operation_set([ins])
 
-    def add_customized_gate(
-            self,
-            gate_type: str,
-            first_qutrit: int,
-            second_qutrit: int | None = None,
-            parameter: Sequence[float] | None = None,
-            to_all: bool = False,
-            is_dagger: bool = False,
-            custom_matrix: NDArray | None = None,
-    ) -> None:
-        """Append a user-supplied custom gate.
-
-        Identical to :meth:`add_gate` but with an explicit ``custom_matrix``
-        that is taken as the gate's unitary verbatim. ``gate_type`` is then
-        used only as a free-form label.
-        """
-
-        if to_all and second_qutrit is None:
-            for i in range(self.n_qutrit):
-                ins = Instruction(
-                    gate_type=gate_type,
-                    n_qutrit=self.n_qutrit,
-                    first_qutrit=i,
-                    second_qutrit=None,
-                    parameter=parameter,
-                    inverse=is_dagger,
-                    custom=True,
-                    custom_matrix=custom_matrix,
-                )
-                self._extend_operation_set([ins])
-        else:
-            ins = Instruction(
-                gate_type=gate_type,
-                n_qutrit=self.n_qutrit,
-                first_qutrit=first_qutrit,
-                second_qutrit=second_qutrit,
-                parameter=parameter,
-                inverse=is_dagger,
-                custom=True,
-                custom_matrix=custom_matrix,
+        # Validate qutrit consistency with gate width
+        if gate.num_qutrits == 2 and second_qutrit is None:
+            raise ValueError(
+                f"{gate.label} is a 2-qutrit gate and requires second_qutrit."
             )
-            self._extend_operation_set([ins])
+        if gate.num_qutrits == 1 and second_qutrit is not None:
+            raise ValueError(
+                f"{gate.label} is a 1-qutrit gate and does not accept second_qutrit."
+            )
+
+        # Get the gate matrix (apply dagger if requested)
+        effective_gate = gate.inverse() if is_dagger else gate
+        mat = effective_gate.matrix()
+
+        # Build Instruction with Gate reference preserved
+        ins = Instruction(
+            gate_type=gate.label,
+            n_qutrit=self.n_qutrit,
+            first_qutrit=first_qutrit,
+            second_qutrit=second_qutrit,
+            parameter=list(gate.params) if gate.params else None,
+            inverse=False,  # dagger already applied above
+            custom=True,
+            custom_matrix=np.asarray(mat, dtype=complex),
+            gate=effective_gate,
+        )
+        self._extend_operation_set([ins])
 
     def measure_all(self) -> None:
         """Mark the end of the circuit by adding a measurement of all qutrits.
