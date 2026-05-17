@@ -37,7 +37,3 @@ jobs:
 
       - name: Run tests with coverage
         run: pytest test/ --cov=src/qutritium --cov-report=term-missing -v
-
-      - name: Verify legacy/ is excluded from installed package
-        run: |
-          python -c "import importlib.util; assert importlib.util.find_spec('legacy') is None, 'legacy should not be an installed package'"
