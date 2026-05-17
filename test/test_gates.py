@@ -23,14 +23,14 @@ from qutritium.gates import (CNOT3, CPhase, CSUM, CSUMDag, G01, G02, G12, H3, I3
 # Helpers
 # ===================================================================
 _FIXED_SINGLE_GATES = [
-    I3, X01, X02, X12,
-    Y01, Y02, Y12,
-    Z01, Z02, Z12,
-    XPlus, XMinus,
-    H3, S3, T3, UFT,
+    I3(), X01(), X02(), X12(),
+    Y01(), Y02(), Y12(),
+    Z01(), Z02(), Z12(),
+    XPlus(), XMinus(),
+    H3(), S3(), T3(), UFT(),
 ]
 
-_FIXED_TWO_GATES = [CSUM, CSUMDag, CNOT3, CPhase, SWAP3]
+_FIXED_TWO_GATES = [CSUM(), CSUMDag(), CNOT3(), CPhase(), SWAP3()]
 
 
 def _is_unitary(m: np.ndarray, atol: float = 1e-9) -> bool:
@@ -43,47 +43,40 @@ def _is_unitary(m: np.ndarray, atol: float = 1e-9) -> bool:
 class TestGateBaseContract:
     """Every Gate subclass must satisfy the Gate ABC contract."""
 
-    @pytest.mark.parametrize("gate_cls", _FIXED_SINGLE_GATES)
-    def test_fixed_single_gate_is_unitary(self, gate_cls):
-        g = gate_cls()
-        assert g.is_unitary(), f"{g.label} is not unitary"
+    @pytest.mark.parametrize("gate", _FIXED_SINGLE_GATES, ids=lambda g: g.label)
+    def test_fixed_single_gate_is_unitary(self, gate):
+        assert gate.is_unitary(), f"{gate.label} is not unitary"
 
-    @pytest.mark.parametrize("gate_cls", _FIXED_TWO_GATES)
-    def test_fixed_two_gate_is_unitary(self, gate_cls):
-        g = gate_cls()
-        assert g.is_unitary(), f"{g.label} is not unitary"
+    @pytest.mark.parametrize("gate", _FIXED_TWO_GATES, ids=lambda g: g.label)
+    def test_fixed_two_gate_is_unitary(self, gate):
+        assert gate.is_unitary(), f"{gate.label} is not unitary"
 
-    @pytest.mark.parametrize("gate_cls", _FIXED_SINGLE_GATES)
-    def test_fixed_single_gate_shape(self, gate_cls):
-        g = gate_cls()
-        assert g.matrix().shape == (3, 3)
-        assert g.num_qutrits == 1
+    @pytest.mark.parametrize("gate", _FIXED_SINGLE_GATES, ids=lambda g: g.label)
+    def test_fixed_single_gate_shape(self, gate):
+        assert gate.matrix().shape == (3, 3)
+        assert gate.num_qutrits == 1
 
-    @pytest.mark.parametrize("gate_cls", _FIXED_TWO_GATES)
-    def test_fixed_two_gate_shape(self, gate_cls):
-        g = gate_cls()
-        assert g.matrix().shape == (9, 9)
-        assert g.num_qutrits == 2
+    @pytest.mark.parametrize("gate", _FIXED_TWO_GATES, ids=lambda g: g.label)
+    def test_fixed_two_gate_shape(self, gate):
+        assert gate.matrix().shape == (9, 9)
+        assert gate.num_qutrits == 2
 
-    @pytest.mark.parametrize("gate_cls", _FIXED_SINGLE_GATES)
-    def test_inverse_is_unitary(self, gate_cls):
-        g = gate_cls()
-        inv = g.inverse()
+    @pytest.mark.parametrize("gate", _FIXED_SINGLE_GATES, ids=lambda g: g.label)
+    def test_inverse_is_unitary(self, gate):
+        inv = gate.inverse()
         assert inv.is_unitary(), f"{inv.label} is not unitary"
 
-    @pytest.mark.parametrize("gate_cls", _FIXED_SINGLE_GATES)
-    def test_inverse_product_is_identity(self, gate_cls):
-        g = gate_cls()
-        product = g.matrix() @ g.inverse().matrix()
+    @pytest.mark.parametrize("gate", _FIXED_SINGLE_GATES, ids=lambda g: g.label)
+    def test_inverse_product_is_identity(self, gate):
+        product = gate.matrix() @ gate.inverse().matrix()
         assert np.allclose(product, np.eye(3), atol=1e-12), \
-            f"{g.label} @ {g.label}† != I"
+            f"{gate.label} @ {gate.label}† != I"
 
-    @pytest.mark.parametrize("gate_cls", _FIXED_TWO_GATES)
-    def test_two_gate_inverse_product_is_identity(self, gate_cls):
-        g = gate_cls()
-        product = g.matrix() @ g.inverse().matrix()
+    @pytest.mark.parametrize("gate", _FIXED_TWO_GATES, ids=lambda g: g.label)
+    def test_two_gate_inverse_product_is_identity(self, gate):
+        product = gate.matrix() @ gate.inverse().matrix()
         assert np.allclose(product, np.eye(9), atol=1e-12), \
-            f"{g.label} @ {g.label}† != I"
+            f"{gate.label} @ {gate.label}† != I"
 
     def test_repr_fixed_gate(self):
         assert repr(H3()) == "H3"

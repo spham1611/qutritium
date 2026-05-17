@@ -163,9 +163,9 @@ class Z02(Gate):
 
 
 class Z12(Gate):
-    """Pauli-Z in {|1⟩, |2⟩} subspace.
+    """Phase-flip on |2⟩: diag(1, 1, -1).
 
-    diag(1, 1, -1). Coincides with Z02 as a 3×3 matrix.
+    Derived: |0⟩⟨0| + |1⟩⟨1| − |2⟩⟨2|. Numerically identical to Z02.
     """
 
     def __init__(self) -> None:

@@ -25,6 +25,8 @@ GATE_SET: frozenset[str] = frozenset({
     "rz01", "rz02", "rz12",
     "u_d",
     "hdm", "u_ft",
+    # Two-qutrit gates (v1.1.0)
+    "csum", "csum_dag", "cphase", "swap3",
 })
 
 
@@ -201,6 +203,16 @@ class Instruction:
             p = self._require_params(3)
             return em.u_d(p[0], p[1], p[2])
 
+        # Two-qutrit gates (v1.1.0)
+        if gt == "csum":
+            return em.csum()
+        if gt == "csum_dag":
+            return em.csum_dag()
+        if gt == "cphase":
+            return em.cphase()
+        if gt == "swap3":
+            return em.swap3()
+
         raise KeyError(f"Unknown gate type: {gt!r}.")
 
     def _effect(self) -> NDArray:
@@ -262,6 +274,7 @@ class Instruction:
         """Full-register effect matrix."""
         return self._effect_matrix
 
+    @property
     def type(self) -> str:
         """Gate name."""
         return self._type

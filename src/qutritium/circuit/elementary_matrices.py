@@ -221,12 +221,11 @@ def z01() -> NDArray[np.complex128]:
 
 
 def z02() -> NDArray[np.complex128]:
-    """Pauli-Z in {|0>, |2>}. diag(1, 1, -1).
+    """Phase-flip on |2⟩: diag(1, 1, -1).
 
-    As a 3x3 matrix this coincides with :func:`z12` because both
-    subspaces assign eigenvalue -1 to |2> and +1 to the complement.
-    They are kept as separate functions for API symmetry with the X and Y
-    families.
+    Derived: |0⟩⟨0| + |1⟩⟨1| - |2⟩⟨2|. As a 3×3 matrix this is
+    identical to z12() because both assign eigenvalue −1 only to |2⟩.
+    Kept as separate functions for API symmetry with X and Y families.
     """
     return np.array(
         [[1, 0, 0],

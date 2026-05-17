@@ -70,7 +70,7 @@ class _CPhaseInv(Gate):
         super().__init__(label="CPhase†", num_qutrits=2)
 
     def matrix(self) -> NDArray[np.complex128]:
-        return em.cphase().conj()
+        return em.cphase().conj().T
 
     def inverse(self) -> "CPhase":
         return CPhase()

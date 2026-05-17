@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import numpy as np
-from numpy.linalg import LinAlgError
 from numpy.typing import NDArray
 
 
@@ -34,7 +33,7 @@ def statevector_to_state(
         for _ in range(n_qutrit):
             digits += str(int(tmp % 3))
             tmp //= 3
-        state_construction.append(digits)
+        state_construction.append(digits[::-1])
     return state_coeff, state_construction
 
 
@@ -47,17 +46,7 @@ def print_statevector(state: NDArray[np.complex128], n_qutrit: int) -> None:
         print(f"{state_coeff[i]} |{ket}>{suffix}")
 
 
-def check_unitary(u: NDArray[np.complex128], atol: float = 1e-9) -> bool:
-    """True if u @ u^H ≈ I within atol."""
-    try:
-        product = u @ u.conj().T
-    except (ValueError, LinAlgError):
-        return False
-    return bool(np.allclose(product, np.eye(u.shape[0]), atol=atol))
-
-
 __all__ = [
-    "check_unitary",
     "print_statevector",
     "statevector_to_state",
 ]

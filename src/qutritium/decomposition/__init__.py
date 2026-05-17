@@ -2,8 +2,14 @@
 # See LICENSE.txt for full terms.
 
 """SU(3) decomposition into native rotations."""
-from qutritium.decomposition.transpilation import SU3Decomposition
+from qutritium.decomposition.transpilation import (
+    DecompositionAngles,
+    NativeDecomposition,
+    SU3Decomposition,
+)
 
 __all__ = [
+    "DecompositionAngles",
+    "NativeDecomposition",
     "SU3Decomposition",
 ]
