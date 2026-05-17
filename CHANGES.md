@@ -9,7 +9,8 @@ gates (fixed + parametric) and 5 two-qutrit gates, all with `.matrix()`, `.inver
 New two-qutrit matrix functions in `elementary_matrices`: `csum()`, `csum_dag()`,
 `cphase()`, `swap3()`.
 
-157 new gate tests in `test/test_gates.py`.
+Comprehensive gate test suite in `test/test_gates.py` (~50 test functions, parametrized
+across all gate families).
 
 ## [1.0.0] — 2026-05-07
 

@@ -20,21 +20,20 @@ authors:
     given-names: Son
     email: sph40@duke.edu
     affiliation: "Duke University"
-    orcid: "https://orcid.org/0000-0000-0000-0000"  # TODO: replace with real ORCID
   - family-names: Nguyen
     given-names: Tien
     affiliation: "École Polytechnique, France"
   - family-names: Bach
     given-names: Bao
     affiliation: "University of Delaware, USA"
-   -family-names: He
+  - family-names: He
     given-names: Charlie
     affiliation: "Duke University, USA"
 
 repository-code: "https://github.com/spham1611/qutritium"
 url: "https://github.com/spham1611/qutritium"
 license: MIT
-version: "1.0.0"
+version: "1.1.0"
 date-released: "2026-05-07"
 
 keywords:

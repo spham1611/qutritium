@@ -68,12 +68,13 @@ print(dec.reconstruct())  # ≈ U to machine precision
 
 ### Two-qutrit gates
 
-| Gate     | Action                                          |
-|----------|-------------------------------------------------|
-| `CSUM`   | \|c,t⟩ → \|c, (t+c) mod 3⟩                      |
-| `CPhase` | \|c,t⟩ → ω^{c·t} \|c,t⟩                         |
-| `SWAP3`  | \|a,b⟩ → \|b,a⟩                                 |
-| `CNOT3`  | Legacy v0.0.1 CNOT (= CSUM on adjacent qutrits) |
+| Gate      | Action                                          |
+|-----------|-------------------------------------------------|
+| `CSUM`    | \|c,t⟩ → \|c, (t+c) mod 3⟩                      |
+| `CSUMDag` | \|c,t⟩ → \|c, (t−c) mod 3⟩ (CSUM inverse)       |
+| `CPhase`  | \|c,t⟩ → ω^{c·t} \|c,t⟩                         |
+| `SWAP3`   | \|a,b⟩ → \|b,a⟩                                 |
+| `CNOT3`   | Legacy v0.0.1 CNOT (= CSUM on adjacent qutrits) |
 
 All gates inherit from `Gate` and provide `.matrix()`, `.inverse()`, `.is_unitary()`, `.label`, `.params`.
 
