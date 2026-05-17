@@ -15,7 +15,7 @@ Added `MANIFEST.in` for clean sdist/wheel packaging (excludes legacy/, test/, do
 Added `docs` optional dependency group to `pyproject.toml`.
 Added `Documentation` URL to `[project.urls]`.
 
-168 tests passing across `test/VM_test.py` and `test/test_gates.py`.
+Tests passing across `test/VM_test.py` and `test/test_gates.py`.
 
 ## [1.1.0] — 2026-05-15
 
