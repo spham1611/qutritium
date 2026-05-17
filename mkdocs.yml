@@ -1,0 +1,58 @@
+site_name: Qutritium
+site_description: A hardware-agnostic Python library for qutrit quantum computing
+site_url: https://spham1611.github.io/qutritium/
+repo_url: https://github.com/spham1611/qutritium
+repo_name: spham1611/qutritium
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+  - API Reference:
+      - Gates: api/gates.md
+      - Circuits: api/circuits.md
+      - Simulator: api/simulator.md
+      - Decomposition: api/decomposition.md
+  - Tutorials:
+      - Qutrit Bell State: tutorials/bell-state.md
+  - Legacy Code: legacy.md
+  - Changelog: changelog.md
