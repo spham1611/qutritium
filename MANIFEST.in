@@ -1,0 +1,25 @@
+include README.md
+include LICENSE.txt
+include CITATION.cff
+include CHANGES.md
+include pyproject.toml
+
+# Exclude development and historical content from the package
+prune legacy
+prune test
+prune docs
+prune examples
+prune .github
+prune scripts
+
+# Exclude development metadata
+exclude .gitignore
+exclude mkdocs.yml
+exclude presentation.pdf
+exclude changes_summary.txt
+
+# Exclude any caches/artifacts
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude .DS_Store
+global-exclude *.swp
