@@ -1,5 +1,6 @@
 <div align="center">
 
+[![Tests](https://github.com/spham1611/qutritium/actions/workflows/test.yml/badge.svg)](https://github.com/spham1611/qutritium/actions)
 [![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE.txt)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-yellow.svg?style=for-the-badge)](https://www.python.org/)
@@ -81,7 +82,7 @@ All gates inherit from `Gate` and provide `.matrix()`, `.inverse()`, `.is_unitar
 ## Package Structure
 
 ```
-qutritium/
+src/qutritium/
 ├── gates/               # Gate objects
 │   ├── base.py          #   Gate ABC + _DaggerGate
 │   ├── single_qutrit.py #   29 single-qutrit gates
@@ -92,9 +93,24 @@ qutritium/
 │   ├── qutrit_circuit.py       # QutritCircuit container
 │   └── utils.py                # Statevector utilities
 ├── simulator/           # QASMSimulator (statevector)
-├── decomposition/       # SU(3) → native rotations
-└── legacy/              # v0.0.x Qiskit-pulse code (archived)
+└── decomposition/       # SU(3) → native rotations
 ```
+
+Supporting files at repo root:
+
+```
+.github/workflows/       # CI (test.yml, docs.yml)
+docs/                    # MkDocs source → spham1611.github.io/qutritium
+examples/tutorial.ipynb  # End-to-end Bell state tutorial
+test/                    # pytest suite (168 tests)
+legacy/                  # v0.0.x Qiskit-pulse code (archived, not installed)
+```
+
+## Documentation
+
+Full docs: **<https://spham1611.github.io/qutritium/>**
+
+Tutorial notebook: [`examples/tutorial.ipynb`](examples/tutorial.ipynb)
 
 ## History
 
