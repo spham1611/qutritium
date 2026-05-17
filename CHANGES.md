@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.0] — 2026-05-17
+
+Added GitHub Actions CI (`.github/workflows/test.yml`) for Python 3.10/3.11/3.12/3.13.
+Added MkDocs documentation site (`mkdocs.yml` + `docs/`) with API reference for gates,
+circuits, simulator, decomposition; getting-started guides; Bell state tutorial; legacy
+code documentation page; and changelog.
+
+Added `examples/tutorial.ipynb` — end-to-end notebook covering single-qutrit gates,
+Bell state preparation, measurement sampling, density matrix, parametric rotations,
+and SU(3) decomposition. Runs in <10 seconds.
+
+Added `MANIFEST.in` for clean sdist/wheel packaging (excludes legacy/, test/, docs/).
+Added `docs` optional dependency group to `pyproject.toml`.
+Added `Documentation` URL to `[project.urls]`.
+
+168 tests passing across `test/VM_test.py` and `test/test_gates.py`.
+
 ## [1.1.0] — 2026-05-15
 
 Added `qutritium.gates` subpackage with first-class Gate objects. 29 single-qutrit
@@ -9,8 +26,7 @@ gates (fixed + parametric) and 5 two-qutrit gates, all with `.matrix()`, `.inver
 New two-qutrit matrix functions in `elementary_matrices`: `csum()`, `csum_dag()`,
 `cphase()`, `swap3()`.
 
-Comprehensive gate test suite in `test/test_gates.py` (~50 test functions, parametrized
-across all gate families).
+Comprehensive gate test suite in `test/test_gates.py`
 
 ## [1.0.0] — 2026-05-07
 

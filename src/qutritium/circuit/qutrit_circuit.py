@@ -10,7 +10,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from qutritium.circuit.instruction import Instruction
-from qutritium.circuit.utils import print_statevector
+from qutritium.gates import CSUM, H3
 from qutritium.gates.base import Gate
 
 # Type alias: an operation is either an Instruction or the literal "measurement"
@@ -137,16 +137,83 @@ class QutritCircuit:
         # MODIFIED: documented the (intentional) measurement_flag persistence.
         self._operation_set.clear()
 
-    def draw(self) -> None:
-        """Print circuit summary. TODO: proper circuit drawing."""
-        print("Initial state of the circuit: ")
-        print_statevector(self.initial_state, self.n_qutrit)
-        print("Set of gate on the circuits: ")
+    def draw(self, output: str = "text") -> str:
+        """Render the circuit as a text diagram.
+
+        Parameters
+        ----------
+        output : str
+            ``"text"`` (default) prints and returns the diagram string.
+
+        Returns
+        -------
+        str
+            Multi-line text diagram.
+
+        Example
+        -------
+        >>> qc = QutritCircuit(2, None)
+        >>> qc.append(H3(), first_qutrit=0)
+        >>> qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
+        >>> qc.measure_all()
+        >>> print(qc.draw())
+        q0: ─ H3 ─ CSUM─● ─ M ─
+        q1: ───── CSUM─○ ─ M ─
+        """
+        # Collect gate events per time-step (each Instruction is one step)
+        steps: list[dict[int, str]] = []
         for op in self._operation_set:
             if isinstance(op, Instruction):
-                op.print()
-            else:
-                print(op)
+                slot: dict[int, str] = {}
+                gate_obj = op.gate
+                label = gate_obj.label if gate_obj is not None else op.type  # type: ignore[attr-defined]
+
+                if op.parameter and not (gate_obj and gate_obj.params):  # type: ignore[attr-defined]
+                    params_str = ",".join(f"{p:.2g}" for p in op.parameter)
+                    label = f"{label}({params_str})"
+                elif gate_obj and gate_obj.params:  # type: ignore[attr-defined]
+                    params_str = ",".join(f"{p:.2g}" for p in gate_obj.params)  # type: ignore[attr-defined]
+                    label = f"{label}({params_str})"
+
+                if op.second_qutrit is not None:
+                    # Two-qutrit gate: control line gets ●, target gets ○
+                    slot[op.first_qutrit] = f"{label}─●"
+                    slot[op.second_qutrit] = f"{label}─○"
+                else:
+                    slot[op.first_qutrit] = label
+                steps.append(slot)
+            elif op == "measurement":
+                steps.append({q: "M" for q in range(self.n_qutrit)})
+
+        if not steps:
+            diagram = "\n".join(f"q{q}: ─" for q in range(self.n_qutrit))
+            print(diagram)
+            return diagram
+
+        # Determine column widths (each step is one column)
+        col_widths: list[int] = []
+        for step in steps:
+            max_w = max((len(step.get(q, "")) for q in range(self.n_qutrit)), default=1)
+            col_widths.append(max(max_w, 1))
+
+        # Build lines
+        lines: list[str] = []
+        for q in range(self.n_qutrit):
+            prefix = f"q{q}: "
+            segments: list[str] = []
+            for i, step in enumerate(steps):
+                cell = step.get(q, "")
+                w = col_widths[i]
+                if cell:
+                    padded = f" {cell} ".center(w + 4, "─")
+                else:
+                    padded = "─" * (w + 4)
+                segments.append(padded)
+            lines.append(prefix + "".join(segments) + "─")
+
+        diagram = "\n" + "\n".join(lines) + "\n"
+        print(diagram)
+        return diagram
 
     def __len__(self) -> int:
         """Number of recorded operations (counting the measurement sentinel)."""

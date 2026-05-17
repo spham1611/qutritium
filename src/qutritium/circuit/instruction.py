@@ -114,13 +114,8 @@ class Instruction:
         return self.parameter
 
     def _resolve_gate_matrix(self) -> NDArray[np.complex128]:
-        """Map gate name -> matrix from elementary_matrices."""
+        """Map gate name -> matrix from elementary_matrices.py"""
         gt = self._type
-
-        # Multi-qutrit gates
-        if gt == "CNOT":
-            assert self.second_qutrit is not None
-            return em.cnot(control=self.first_qutrit, target=self.second_qutrit)
 
         # Static single-qutrit gates
         if gt == "identity":
@@ -204,6 +199,9 @@ class Instruction:
             return em.u_d(p[0], p[1], p[2])
 
         # Two-qutrit gates (v1.1.0)
+        if gt == "CNOT":
+            assert self.second_qutrit is not None
+            return em.cnot(control=self.first_qutrit, target=self.second_qutrit)
         if gt == "csum":
             return em.csum()
         if gt == "csum_dag":

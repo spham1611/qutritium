@@ -9,7 +9,7 @@ from qutritium.circuit.qutrit_circuit import QutritCircuit
 from qutritium.decomposition.transpilation import SU3Decomposition
 from qutritium.simulator.statevector import QASMSimulator
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 __all__ = [
     "Instruction",
