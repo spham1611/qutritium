@@ -105,8 +105,10 @@ class QASMSimulator:
             self._simulation()
 
         rng = np.random.default_rng()
+        measured_state = self.state
         if self._spam_error_active:
             probs_meas = [entry[1] for entry in self._error_meas]
+            measured_state = measured_state.copy()
             for i in range(self.n_qutrit):
                 choice = rng.choice(len(self._error_meas), p=probs_meas)
                 error_effect = Instruction(
@@ -116,9 +118,11 @@ class QASMSimulator:
                     second_qutrit=None,
                     parameter=None,
                 )
-                self._operation_set.insert(0, error_effect)
+                measured_state = np.einsum(
+                    "ij,jk", error_effect.effect_matrix, measured_state,
+                )
 
-        state_coeff, state_construction = statevector_to_state(self.state, self.n_qutrit)
+        state_coeff, state_construction = statevector_to_state(measured_state, self.n_qutrit)
         probs = np.array([np.abs(c) ** 2 for c in state_coeff])
         # MODIFIED: vectorize the multinomial sampling instead of a Python
         # loop over ``num_shots`` iterations.
