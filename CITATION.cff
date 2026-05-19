@@ -10,10 +10,11 @@ title: "Qutritium: a hardware-agnostic Python library for qutrit quantum computi
 abstract: >-
   Qutritium provides a Python implementation of qutrit (3-level) quantum
   gate definitions, circuit construction, an exact statevector simulator,
-  and SU(3) decomposition into native subspace rotations. The v1.0.0
-  release is hardware-agnostic (numpy/scipy only); earlier 0.0.x releases
-  shipped Qiskit-pulse-based calibration routines for IBM quantum hardware
-  and are preserved as a historical record under the legacy/ directory.
+  and SU(3) decomposition into native subspace rotations. From v1.0.0
+  onward the package is hardware-agnostic (numpy/scipy only); earlier
+  0.0.x releases shipped Qiskit-pulse-based calibration routines for IBM
+  quantum hardware and are preserved as a historical record under the
+  legacy/ directory.
 
 authors:
   - family-names: Pham

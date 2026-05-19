@@ -41,7 +41,7 @@ nosetests.xml
 # Jupyter
 .ipynb_checkpoints/
 
-# mkdocs (only here for safety; we are not using mkdocs in v1.0.0)
+# mkdocs build output
 site/
 
 # Logs / temp
@@ -59,12 +59,3 @@ tmp/
 # Doc file
 changes_summary.txt
 
-# Image file type
-*.png
-*.svg
-*.jpg
-*.jpeg
-*.gif
-*.bmp
-*.ico
-*.webp

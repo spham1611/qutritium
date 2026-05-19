@@ -15,8 +15,6 @@ prune scripts
 # Exclude development metadata
 exclude .gitignore
 exclude mkdocs.yml
-exclude presentation.pdf
-exclude changes_summary.txt
 
 # Exclude any caches/artifacts
 global-exclude __pycache__
