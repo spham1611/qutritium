@@ -19,7 +19,6 @@ abstract: >-
 authors:
   - family-names: Pham
     given-names: Son
-    email: sph40@duke.edu
     affiliation: "Duke University"
   - family-names: Nguyen
     given-names: Tien

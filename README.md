@@ -123,7 +123,7 @@ library; the original pulse code is preserved under `legacy/`.
 
 - **[Son Pham](https://github.com/spham1611)** — Duke University · sph40@duke.edu
 - **[Tien Nguyen](https://github.com/ngdnhtien)** — École Polytechnique, France
-- **[Bao Bach](https://github.com/bachbao)** — University of Delaware, USA
+- **[Bao Bach](https://github.com/bachbao)** — University of Delaware, USA · bachgiabao12@gmail.com
 - **[Charlie (abdomsisn)](https://github.com/abdomsisn)** — Duke University · abdomsisn.haobei@gmail.com
 
 ## License
