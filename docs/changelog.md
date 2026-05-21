@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.1] — 2026-05-21
+
+Fix maintainer email address in README.
+
 ## [1.2.0] — 2026-05-17
 
 Phase 3 polish and release engineering.
