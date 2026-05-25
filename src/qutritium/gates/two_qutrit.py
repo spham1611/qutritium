@@ -59,12 +59,12 @@ class CPhase(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.cphase()
 
-    def inverse(self) -> "_CPhaseInv":
-        return _CPhaseInv()
+    def inverse(self) -> "CPhaseDag":
+        return CPhaseDag()
 
 
-class _CPhaseInv(Gate):
-    """CPhase inverse."""
+class CPhaseDag(Gate):
+    """CPhase inverse: |c,t> -> omega^{-c*t} |c,t>."""
 
     def __init__(self) -> None:
         super().__init__(label="CPhase†", num_qutrits=2)
@@ -94,5 +94,6 @@ __all__ = [
     "CSUMDag",
     "CNOT3",
     "CPhase",
+    "CPhaseDag",
     "SWAP3",
 ]

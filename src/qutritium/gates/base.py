@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import abc
-from typing import Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -18,7 +17,7 @@ class Gate(abc.ABC):
             self,
             label: str,
             num_qutrits: int,
-            params: Tuple[float, ...] = (),
+            params: tuple[float, ...] = (),
     ) -> None:
         if num_qutrits not in (1, 2):
             raise ValueError(
@@ -26,7 +25,7 @@ class Gate(abc.ABC):
             )
         self._label: str = label
         self._num_qutrits: int = num_qutrits
-        self._params: Tuple[float, ...] = tuple(params)
+        self._params: tuple[float, ...] = tuple(params)
 
     # ----- public API -----
 
@@ -41,7 +40,7 @@ class Gate(abc.ABC):
         return self._num_qutrits
 
     @property
-    def params(self) -> Tuple[float, ...]:
+    def params(self) -> tuple[float, ...]:
         """Gate parameters."""
         return self._params
 

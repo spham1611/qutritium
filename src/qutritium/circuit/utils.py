@@ -7,6 +7,9 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
+# Coefficients with |c| <= _ZERO_TOL are treated as numerical noise.
+_ZERO_TOL: float = 1e-10
+
 
 def statevector_to_state(
     state: NDArray[np.complex128], n_qutrit: int,
@@ -22,7 +25,7 @@ def statevector_to_state(
     state_basis: list[int] = []
     state_coeff: list[complex] = []
     for i in range(3 ** n_qutrit):
-        if abs(complex(state[i][0])) != 0.0:
+        if abs(complex(state[i][0])) > _ZERO_TOL:
             state_basis.append(i)
             state_coeff.append(state[i][0])
 
