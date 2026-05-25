@@ -4,12 +4,16 @@
 """Instruction: one gate applied to specific qutrit(s) in a circuit."""
 from __future__ import annotations
 
-from typing import Sequence
+from functools import cached_property
+from typing import Sequence, TYPE_CHECKING
 
 import numpy as np
 from numpy.typing import NDArray
 
 import qutritium.circuit.elementary_matrices as em
+
+if TYPE_CHECKING:
+    from qutritium.gates.base import Gate
 
 GATE_SET: frozenset[str] = frozenset({
     "identity",
@@ -43,7 +47,7 @@ class Instruction:
             inverse: bool = False,
             custom: bool = False,
             custom_matrix: NDArray | None = None,
-            gate: object | None = None,
+            gate: "Gate | None" = None,
     ) -> None:
         # Validate qutrit range
         if not 0 <= first_qutrit < n_qutrit:
@@ -66,7 +70,7 @@ class Instruction:
         self._is_inverse: bool = inverse
         self._is_custom: bool = custom
         self._is_two_qutrit_gate: bool = second_qutrit is not None
-        self.gate: object | None = gate  # Gate reference for introspection
+        self.gate: "Gate | None" = gate  # Gate reference for introspection
 
         if not custom:
             self._verify_gate()
@@ -98,8 +102,6 @@ class Instruction:
             np.asarray(base_matrix).conj().T if self._is_inverse
             else np.asarray(base_matrix)
         )
-        # Compute local matrix and expand into full-register matrix
-        self._effect_matrix: NDArray = self._effect()
 
     # ------------------------------------------------------------------
     # Gate name -> matrix dispatch
@@ -213,51 +215,23 @@ class Instruction:
 
         raise KeyError(f"Unknown gate type: {gt!r}.")
 
-    def _effect(self) -> NDArray:
-        """Expand local gate matrix into the full 3^n register."""
-        if not self._is_two_qutrit_gate:
-            if self.n_qutrit == 1:
-                return self.gate_matrix
-            if self.first_qutrit == 0:
-                effect_matrix = np.einsum(
-                    "ik,jl",
-                    self.gate_matrix,
-                    np.eye(int(self.qutrit_dimension / 3)),
-                ).reshape(self.qutrit_dimension, self.qutrit_dimension)
-            else:
-                effect_matrix = np.einsum(
-                    "ik,jl",
-                    np.eye(3 ** self.first_qutrit),
-                    self.gate_matrix,
-                ).reshape(3 ** (self.first_qutrit + 1), 3 ** (self.first_qutrit + 1))
-                effect_matrix = np.einsum(
-                    "ik,jl",
-                    effect_matrix,
-                    np.eye(3 ** (self.n_qutrit - self.first_qutrit - 1)),
-                ).reshape(self.qutrit_dimension, self.qutrit_dimension)
-            return effect_matrix  # type: ignore[no-any-return]
-
-        # Two-qutrit gate path
-        assert self.second_qutrit is not None
-        second = self.second_qutrit
-        left = min(self.first_qutrit, second)
-        right = max(self.first_qutrit, second)
-        if left == 0:
-            effect_matrix = np.einsum(
-                "ik,jl",
-                self.gate_matrix,
-                np.eye(3 ** (self.n_qutrit - right - 1)),
-            ).reshape(self.qutrit_dimension, self.qutrit_dimension)
+    @cached_property
+    def effect_matrix(self) -> NDArray:
+        """Full-register effect matrix, computed lazily on first access."""
+        if self._is_two_qutrit_gate:
+            assert self.second_qutrit is not None
+            lo = min(self.first_qutrit, self.second_qutrit)
+            hi = max(self.first_qutrit, self.second_qutrit)
+            left_dim = 3 ** lo
+            right_dim = 3 ** (self.n_qutrit - hi - 1)
         else:
-            effect_matrix = np.einsum(
-                "ik,jl", np.eye(3 ** left), self.gate_matrix,
-            ).reshape(3 ** (right + 1), 3 ** (right + 1))
-            effect_matrix = np.einsum(
-                "ik,jl",
-                effect_matrix,
-                np.eye(3 ** (self.n_qutrit - right - 1)),
-            ).reshape(self.qutrit_dimension, self.qutrit_dimension)
-        return effect_matrix  # type: ignore[no-any-return]
+            left_dim = 3 ** self.first_qutrit
+            right_dim = 3 ** (self.n_qutrit - self.first_qutrit - 1)
+
+        return np.kron(
+            np.kron(np.eye(left_dim, dtype=complex), self.gate_matrix),
+            np.eye(right_dim, dtype=complex),
+        )
 
     def _verify_gate(self) -> None:
         """Check gate name is in GATE_SET."""
@@ -268,33 +242,27 @@ class Instruction:
             )
 
     @property
-    def effect_matrix(self) -> NDArray:
-        """Full-register effect matrix."""
-        return self._effect_matrix
-
-    @property
     def type(self) -> str:
         """Gate name."""
         return self._type
 
-    def print(self) -> None:
-        """Print gate info."""
+    def describe(self) -> str:
+        """Human-readable description of this instruction."""
         if not self._is_two_qutrit_gate:
             if self.parameter is None:
-                print(f"Gate {self._type}, first_qutrit: {self.first_qutrit}")
-            else:
-                print(
-                    f"Gate {self._type} with parameter {list(self.parameter)}, "
-                    f"first_qutrit: {self.first_qutrit}"
-                )
-        else:
-            print(
-                f"Gate {self._type}, first_qutrit (control): {self.first_qutrit}, "
-                f"second_qutrit (target): {self.second_qutrit}"
+                return f"Gate {self._type}, first_qutrit: {self.first_qutrit}"
+            return (
+                f"Gate {self._type} with parameter {list(self.parameter)}, "
+                f"first_qutrit: {self.first_qutrit}"
             )
+        return (
+            f"Gate {self._type}, first_qutrit (control): {self.first_qutrit}, "
+            f"second_qutrit (target): {self.second_qutrit}"
+        )
 
     def inverse(self) -> Instruction:
         """Return the conjugate-transpose instruction."""
+        inverted_gate = self.gate.inverse() if self.gate is not None else None
         return Instruction(
             gate_type=self._type,
             n_qutrit=self.n_qutrit,
@@ -304,4 +272,5 @@ class Instruction:
             inverse=not self._is_inverse,
             custom=self._is_custom,
             custom_matrix=self.gate_matrix if self._is_custom else None,
+            gate=inverted_gate,
         )
