@@ -41,14 +41,12 @@ class QASMSimulator:
         self, p_prep: float, p_meas: float, error_type: str = "Pauli_error",
     ) -> None:
         """Add SPAM noise. Only Pauli_error is supported."""
-        # MODIFIED: input validation added.
         if not 0.0 <= p_prep <= 1.0:
             raise ValueError(f"p_prep must be in [0, 1]; got {p_prep}.")
         if not 0.0 <= p_meas <= 1.0:
             raise ValueError(f"p_meas must be in [0, 1]; got {p_meas}.")
 
         if error_type != "Pauli_error":
-            # MODIFIED: previously the non-Pauli case silently ``pass``ed.
             raise NotImplementedError(
                 f"Unsupported SPAM error_type {error_type!r}; only "
                 f"'Pauli_error' is currently implemented."
@@ -65,7 +63,7 @@ class QASMSimulator:
             ("identity", 1 - p_prep),
         ]
         probs_prep = [entry[1] for entry in error_prep]
-        rng = np.random.default_rng()  # MODIFIED: use Generator API not legacy.
+        rng = np.random.default_rng()
         for i in range(self.n_qutrit):
             choice = rng.choice(len(error_prep), p=probs_prep)
             error_effect = Instruction(
@@ -92,7 +90,6 @@ class QASMSimulator:
 
     def run(self, num_shots: int = 1024) -> None:
         """Run simulation and sample num_shots measurement outcomes."""
-        # MODIFIED: validate num_shots and measurement presence up-front.
         if num_shots <= 0:
             raise ValueError(f"num_shots must be positive; got {num_shots}.")
         if not self._measurement_flag:
@@ -122,18 +119,13 @@ class QASMSimulator:
 
         state_coeff, state_construction = statevector_to_state(measured_state, self.n_qutrit)
         probs = np.array([np.abs(c) ** 2 for c in state_coeff])
-        # MODIFIED: vectorize the multinomial sampling instead of a Python
-        # loop over ``num_shots`` iterations.
         sampled = rng.choice(len(state_construction), size=num_shots, p=probs)
         self._measurement_result = [state_construction[i] for i in sampled]
 
     def get_counts(self) -> Dict[str, int]:
         """Measurement histogram {outcome: count}."""
         if not self._measurement_result:
-            # MODIFIED: ``Exception`` -> ``RuntimeError``. Also covers the
-            # case where ``run`` was never called (empty list, not None).
             raise RuntimeError("No measurement result yet; call ``run()`` first.")
-        # MODIFIED: O(n) Counter replaces O(n^2) ``set + list.count``.
         return dict(Counter(self._measurement_result))
 
     def return_final_state(self) -> NDArray:
@@ -152,14 +144,10 @@ class QASMSimulator:
         """Pure-state density matrix |psi><psi|."""
         if not self._simulation_flag:
             self._simulation()
-        # MODIFIED: ``state @ state.T`` -> ``state @ state.conj().T``. The
-        # original was wrong for any state with non-trivial complex phases.
         return self.state @ self.state.conj().T  # type: ignore[no-any-return]
 
     def plot(self, plot_type: str = "histogram") -> "Figure":
         """Plot counts. plot_type: "histogram", "line", or "dot"."""
-        # MODIFIED: lazy import so the simulator itself doesn't drag in
-        # matplotlib at module load.
         import matplotlib.pyplot as plt
 
         if plot_type not in _VALID_PLOT_TYPES:
@@ -181,8 +169,6 @@ class QASMSimulator:
         ax.set_xlabel("Outcome")
         ax.set_ylabel("Counts")
         ax.set_title(f"Measurement counts ({plot_type})")
-        # MODIFIED: removed unconditional ``plt.show()``; callers can decide
-        # whether to show, save, or embed the figure.
         return fig
 
 

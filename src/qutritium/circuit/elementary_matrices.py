@@ -510,11 +510,11 @@ def cnot(control: int, target: int) -> NDArray[np.complex128]:
         )
 
     space = int(np.abs(target - control)) - 1
-    spacing: NDArray | int = 1 if space == 0 else np.eye(3 ** space)
+    spacing: NDArray = np.eye(3 ** space) if space > 0 else np.eye(1)
 
-    proj_0 = _STATE_0 @ _STATE_0.T
-    proj_1 = _STATE_1 @ _STATE_1.T
-    proj_2 = _STATE_2 @ _STATE_2.T
+    proj_0 = _STATE_0 @ _STATE_0.conj().T
+    proj_1 = _STATE_1 @ _STATE_1.conj().T
+    proj_2 = _STATE_2 @ _STATE_2.conj().T
 
     x01_mat = x01()
     x12_mat = x12()

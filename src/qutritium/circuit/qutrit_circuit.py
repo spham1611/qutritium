@@ -105,15 +105,10 @@ class QutritCircuit:
 
     @operation_set.setter
     def operation_set(self, ops: List[_Operation]) -> None:
-        # MODIFIED: in v0.0.1 the setter *extended* the list (clearly a bug
-        # given Python's ``@property.setter`` contract). The new setter
-        # *replaces*; internal append-on-add behavior now goes through
-        # ``_extend_operation_set``.
         self._operation_set = list(ops)
 
     def _extend_operation_set(self, ops: Sequence[_Operation]) -> None:
         """Append operations to the circuit (private helper)."""
-        # ADDED: extracted from the broken-by-design setter above.
         self._operation_set.extend(ops)
 
     @property
@@ -130,7 +125,6 @@ class QutritCircuit:
         had its measurement registered before reset cannot register another
         without rebuilding.
         """
-        # MODIFIED: documented the (intentional) measurement_flag persistence.
         self._operation_set.clear()
 
     def draw(self, output: str = "text") -> str:
@@ -213,7 +207,6 @@ class QutritCircuit:
 
     def __len__(self) -> int:
         """Number of recorded operations (counting the measurement sentinel)."""
-        # ADDED: makes ``len(circuit)`` work.
         return len(self._operation_set)
 
     def __iter__(self) -> Iterator[_Operation]:
@@ -221,7 +214,6 @@ class QutritCircuit:
         return iter(self._operation_set)
 
     def __repr__(self) -> str:
-        # ADDED: an actually-useful repr.
         meas = " (measured)" if self._measurement_flag else ""
         return f"QutritCircuit(n_qutrit={self.n_qutrit}, ops={len(self._operation_set)}){meas}"
 

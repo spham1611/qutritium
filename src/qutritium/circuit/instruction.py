@@ -228,6 +228,8 @@ class Instruction:
             left_dim = 3 ** self.first_qutrit
             right_dim = 3 ** (self.n_qutrit - self.first_qutrit - 1)
 
+        if left_dim == 1 and right_dim == 1:
+            return self.gate_matrix
         return np.kron(
             np.kron(np.eye(left_dim, dtype=complex), self.gate_matrix),
             np.eye(right_dim, dtype=complex),
