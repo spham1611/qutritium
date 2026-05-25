@@ -23,7 +23,29 @@ _VALID_PLOT_TYPES: Tuple[str, ...] = ("histogram", "line", "dot")
 
 
 class QASMSimulator:
-    """Simulate a QutritCircuit by matrix-vector multiplication."""
+    """Statevector simulator for a ``QutritCircuit``.
+
+    Applies each gate's full-register matrix to the running statevector
+    via matrix-vector multiplication, then (optionally) samples
+    measurement outcomes from the Born distribution. Exact and noiseless
+    by default; SPAM-style Pauli noise can be added via
+    :meth:`add_SPAM_noise`.
+
+    Parameters
+    ----------
+    qc : QutritCircuit
+        The circuit to simulate. Its operations and initial state are
+        copied into the simulator, so subsequent edits to ``qc`` do not
+        affect this simulator instance.
+
+    Notes
+    -----
+    Memory scales as ``3 ** n_qutrit`` for the statevector and up to
+    ``9 ** n_qutrit`` per stored gate matrix (lazy). Practical limit is
+    around ``n_qutrit ≤ 10`` on a typical laptop. For larger systems or
+    non-unitary evolution, use the density-matrix simulator (coming in
+    v1.3).
+    """
 
     def __init__(self, qc: QutritCircuit) -> None:
         self.circuit: QutritCircuit = qc
@@ -40,7 +62,39 @@ class QASMSimulator:
     def add_SPAM_noise(
         self, p_prep: float, p_meas: float, error_type: str = "Pauli_error",
     ) -> None:
-        """Add SPAM noise. Only Pauli_error is supported."""
+        """Add state-preparation and measurement (SPAM) noise to the circuit.
+
+        Models SPAM as cyclic-shift Pauli errors on every qutrit, applied
+        once before all gates (preparation noise) and once after the final
+        gate (measurement noise). Each qutrit's error is sampled
+        independently from {x_plus, x_minus, identity} with probabilities
+        ``(p/2, p/2, 1-p)``.
+
+        Parameters
+        ----------
+        p_prep : float
+            Probability of a Pauli error during state preparation, per
+            qutrit. Must lie in ``[0, 1]``.
+        p_meas : float
+            Probability of a Pauli error during measurement, per qutrit.
+            Must lie in ``[0, 1]``.
+        error_type : str, optional
+            SPAM error channel. Currently only ``"Pauli_error"`` is
+            implemented.
+
+        Raises
+        ------
+        ValueError
+            If ``p_prep`` or ``p_meas`` is outside ``[0, 1]``.
+        NotImplementedError
+            If ``error_type`` is anything other than ``"Pauli_error"``.
+
+        Notes
+        -----
+        This API will be deprecated when the v1.4 noise-channel framework
+        lands. The replacement will be a ``NoiseModel`` attached to the
+        simulator rather than mutating the operation list.
+        """
         if not 0.0 <= p_prep <= 1.0:
             raise ValueError(f"p_prep must be in [0, 1]; got {p_prep}.")
         if not 0.0 <= p_meas <= 1.0:
@@ -89,7 +143,28 @@ class QASMSimulator:
         self._simulation_flag = True
 
     def run(self, num_shots: int = 1024) -> None:
-        """Run simulation and sample num_shots measurement outcomes."""
+        """Simulate the circuit and sample measurement outcomes.
+
+        Runs (or reuses) the statevector evolution, then samples
+        ``num_shots`` projective measurements from the computational-basis
+        Born distribution. Results are stored internally and accessible
+        via :meth:`get_counts` and :meth:`result`.
+
+        Parameters
+        ----------
+        num_shots : int, optional
+            Number of measurement shots to sample. Must be positive.
+            Defaults to ``1024``.
+
+        Raises
+        ------
+        ValueError
+            If ``num_shots`` is non-positive.
+        RuntimeError
+            If the circuit does not contain a measurement (call
+            ``QutritCircuit.measure_all()`` before instantiating the
+            simulator).
+        """
         if num_shots <= 0:
             raise ValueError(f"num_shots must be positive; got {num_shots}.")
         if not self._measurement_flag:
@@ -147,7 +222,28 @@ class QASMSimulator:
         return self.state @ self.state.conj().T  # type: ignore[no-any-return]
 
     def plot(self, plot_type: str = "histogram") -> "Figure":
-        """Plot counts. plot_type: "histogram", "line", or "dot"."""
+        """Plot the measurement-count distribution.
+
+        Parameters
+        ----------
+        plot_type : str, optional
+            Plot style. One of ``"histogram"`` (default), ``"line"``, or
+            ``"dot"``.
+
+        Returns
+        -------
+        matplotlib.figure.Figure
+            The figure object. Caller decides whether to ``show()``,
+            ``savefig()``, or embed.
+
+        Raises
+        ------
+        ValueError
+            If ``plot_type`` is not one of the supported values.
+        RuntimeError
+            If the simulator has no measurement results yet (call
+            :meth:`run` first).
+        """
         import matplotlib.pyplot as plt
 
         if plot_type not in _VALID_PLOT_TYPES:

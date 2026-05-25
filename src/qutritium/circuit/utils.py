@@ -14,7 +14,34 @@ _ZERO_TOL: float = 1e-10
 def statevector_to_state(
     state: NDArray[np.complex128], n_qutrit: int,
 ) -> tuple[list[complex], list[str]]:
-    """Extract non-zero (coefficient, ket_string) pairs from a statevector."""
+    """Extract non-zero (coefficient, ket-label) pairs from a statevector.
+
+    Walks the statevector and returns the basis states with appreciable
+    amplitude (``|c| > 1e-10``), paired with their base-3 ket labels in
+    big-endian order. Useful for human-readable inspection and for
+    sampling-based measurement routines.
+
+    Parameters
+    ----------
+    state : NDArray[np.complex128]
+        Statevector of shape ``(3**n_qutrit, 1)``.
+    n_qutrit : int
+        Number of qutrits the state describes. Used to format the ket
+        labels and validate the shape.
+
+    Returns
+    -------
+    tuple of (list of complex, list of str)
+        ``(coefficients, labels)`` where ``coefficients[i]`` is the
+        complex amplitude of the ket whose label is ``labels[i]``. Labels
+        are zero-padded base-3 strings of length ``n_qutrit`` written
+        most-significant-qutrit first (e.g. ``"021"`` for n_qutrit=3).
+
+    Raises
+    ------
+    ValueError
+        If ``state.shape`` does not equal ``(3 ** n_qutrit, 1)``.
+    """
     expected_shape = (3 ** n_qutrit, 1)
     if state.shape != expected_shape:
         raise ValueError(

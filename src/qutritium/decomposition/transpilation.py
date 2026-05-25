@@ -138,7 +138,48 @@ def _extract_angles(unitary: NDArray) -> DecompositionAngles:
 # Decomposition class
 # ---------------------------------------------------------------------------
 class SU3Decomposition:
-    """Decompose a 3x3 unitary into native qutrit rotations (r01, r12, u_d)."""
+    """Decompose an arbitrary SU(3) unitary into native qutrit rotations.
+
+    Implements the nine-angle decomposition of Vitanov (2012):
+
+        U = u_d(φ₆, φ₅, φ₄) · r01(φ₃, θ₃) · r12(φ₂, θ₂) · r01(φ₁, θ₁)
+
+    where ``r01`` and ``r12`` are composite rotations in the {|0⟩,|1⟩} and
+    {|1⟩,|2⟩} subspaces and ``u_d`` is a diagonal phase. Useful for
+    transpiling arbitrary single-qutrit unitaries onto a native gate set
+    (e.g. trapped-ion ``g01``/``g12`` plus virtual-Z phases).
+
+    Parameters
+    ----------
+    su3 : NDArray
+        The unitary to decompose. Must have shape ``(3, 3)`` and satisfy
+        ``U U† = I`` to within ``1e-6``.
+    qutrit_index : int
+        Index of the qutrit this unitary acts on, used when emitting
+        ``Instruction`` objects via :meth:`to_native`.
+    n_qutrits : int
+        Total number of qutrits in the target register. Used by
+        :meth:`to_native` / :meth:`to_circuit` to construct correctly
+        sized circuits.
+
+    Raises
+    ------
+    ValueError
+        If ``su3`` is not ``(3, 3)`` or fails the unitarity check.
+
+    References
+    ----------
+    Vitanov, N. V. (2012). *Synthesis of arbitrary SU(3) transformations
+    of 8-dimensional targets*. Phys. Rev. A 85, 032331.
+
+    Examples
+    --------
+    >>> from qutritium.gates import H3
+    >>> dec = SU3Decomposition(H3().matrix(), qutrit_index=0, n_qutrits=1)
+    >>> import numpy as np
+    >>> np.allclose(dec.reconstruct(), H3().matrix())
+    True
+    """
 
     def __init__(self, su3: NDArray, qutrit_index: int, n_qutrits: int) -> None:
         if su3.shape != (3, 3):
@@ -169,7 +210,18 @@ class SU3Decomposition:
         return r12(phi=self.angles.phi2, theta=self.angles.theta2)
 
     def reconstruct(self) -> NDArray:
-        """Reconstruct U from the decomposed factors. Should match su3."""
+        """Reconstruct the original unitary from the decomposed factors.
+
+        Multiplies the four extracted factors back together. Used as a
+        verification primitive: ``reconstruct()`` should equal ``self.su3``
+        to within numerical precision.
+
+        Returns
+        -------
+        NDArray
+            Shape ``(3, 3)`` complex matrix, ideally equal to ``self.su3``
+            up to floating-point error.
+        """
         return (  # type: ignore[no-any-return]
             self.diagonal_phase()
             @ self.rotation_01_theta3()
@@ -178,7 +230,21 @@ class SU3Decomposition:
         )
 
     def to_native(self) -> NativeDecomposition:
-        """Virtual-Z phases + native g01/g12 instruction sequence."""
+        """Return native ``g01``/``g12`` instructions plus virtual-Z phases.
+
+        Converts the diagonal phase ``u_d(φ₆, φ₅, φ₄)`` into two virtual-Z
+        rotation angles applied to the {|0⟩,|1⟩} and {|1⟩,|2⟩} subspaces,
+        and emits three ``Instruction`` objects implementing the
+        composite-rotation sequence.
+
+        Returns
+        -------
+        NativeDecomposition
+            Named tuple of ``(phases, instructions)`` where ``phases`` is a
+            length-2 array ``[phase01, phase12]`` and ``instructions`` is a
+            list of three string-typed ``Instruction`` objects (``g01``,
+            ``g12``, ``g01``).
+        """
         a = self.angles
         phase01 = a.phi6 - a.phi5
         phase12 = a.phi5 - a.phi4
@@ -208,7 +274,18 @@ class SU3Decomposition:
         return NativeDecomposition(np.array([phase01, phase12]), instructions)
 
     def to_circuit(self) -> QutritCircuit:
-        """Build a QutritCircuit from this decomposition."""
+        """Build a ``QutritCircuit`` implementing this decomposition.
+
+        Emits the same factor sequence as :meth:`to_native`, but as Gate
+        objects (``G01``, ``G12``, ``Ud``) appended to a fresh
+        ``QutritCircuit`` rather than as raw ``Instruction`` strings.
+
+        Returns
+        -------
+        QutritCircuit
+            A circuit on ``n_qutrits`` qutrits whose action on
+            ``qutrit_index`` equals ``self.su3`` (up to global phase).
+        """
         from qutritium.gates import G01, G12, Ud
         qc = QutritCircuit(n_qutrit=self.n_qutrits, initial_state=None)
         a = self.angles

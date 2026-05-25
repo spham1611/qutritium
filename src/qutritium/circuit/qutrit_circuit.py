@@ -56,7 +56,37 @@ class QutritCircuit:
             first_qutrit: int,
             second_qutrit: int | None = None,
     ) -> None:
-        """Add a Gate to the circuit. Pass ``gate.inverse()`` for the adjoint."""
+        """Add a gate to the circuit.
+
+        Builds an ``Instruction`` from ``gate`` and appends it to the
+        circuit's operation list in order. For the adjoint of ``gate``,
+        pass ``gate.inverse()`` rather than the gate itself.
+
+        Parameters
+        ----------
+        gate : Gate
+            A ``Gate`` instance from ``qutritium.gates``. Determines the
+            unitary applied to the targeted qutrit(s).
+        first_qutrit : int
+            Index of the target qutrit (0-based). For two-qutrit gates this
+            is the *control* qutrit by convention.
+        second_qutrit : int or None, optional
+            Index of the second qutrit for two-qutrit gates (target).
+            Required when ``gate.num_qutrits == 2``; must be ``None``
+            otherwise.
+
+        Raises
+        ------
+        TypeError
+            If ``gate`` is not an instance of ``Gate``.
+        ValueError
+            If ``gate.num_qutrits`` and the provided qutrit indices are
+            inconsistent (two-qutrit gate without ``second_qutrit``, or
+            single-qutrit gate with one supplied).
+        IndexError
+            If any qutrit index is out of ``[0, n_qutrit)`` (raised by
+            ``Instruction``).
+        """
         # Runtime import to avoid circular dependency:
         # gates → elementary_matrices ← instruction ← qutrit_circuit
         from qutritium.gates.base import Gate as _Gate
