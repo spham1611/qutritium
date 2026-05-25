@@ -186,13 +186,13 @@ class QutritCircuit:
             if isinstance(op, Instruction):
                 slot: dict[int, str] = {}
                 gate_obj = op.gate
-                label = gate_obj.label if gate_obj is not None else op.type  # type: ignore[attr-defined]
+                label = gate_obj.label if gate_obj is not None else op.type
 
-                if op.parameter and not (gate_obj and gate_obj.params):  # type: ignore[attr-defined]
+                if op.parameter and not (gate_obj and gate_obj.params):
                     params_str = ",".join(f"{p:.2g}" for p in op.parameter)
                     label = f"{label}({params_str})"
-                elif gate_obj and gate_obj.params:  # type: ignore[attr-defined]
-                    params_str = ",".join(f"{p:.2g}" for p in gate_obj.params)  # type: ignore[attr-defined]
+                elif gate_obj and gate_obj.params:
+                    params_str = ",".join(f"{p:.2g}" for p in gate_obj.params)
                     label = f"{label}({params_str})"
 
                 if op.second_qutrit is not None:
