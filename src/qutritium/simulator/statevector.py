@@ -84,10 +84,10 @@ class QASMSimulator:
         if self._measurement_flag:
             # The last entry is the "measurement" sentinel; skip it.
             for op in self._operation_set[:-1]:
-                self.state = np.einsum("ij,jk", op.effect_matrix, self.state)
+                self.state = op.effect_matrix @ self.state
         else:
             for op in self._operation_set:
-                self.state = np.einsum("ij,jk", op.effect_matrix, self.state)
+                self.state = op.effect_matrix @ self.state
         self._simulation_flag = True
 
     def run(self, num_shots: int = 1024) -> None:
@@ -118,9 +118,7 @@ class QASMSimulator:
                     second_qutrit=None,
                     parameter=None,
                 )
-                measured_state = np.einsum(
-                    "ij,jk", error_effect.effect_matrix, measured_state,
-                )
+                measured_state = error_effect.effect_matrix @ measured_state
 
         state_coeff, state_construction = statevector_to_state(measured_state, self.n_qutrit)
         probs = np.array([np.abs(c) ** 2 for c in state_coeff])
