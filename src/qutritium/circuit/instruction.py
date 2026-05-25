@@ -35,7 +35,7 @@ GATE_SET: frozenset[str] = frozenset({
 
 
 class Instruction:
-    """One gate application in a circuit. Precomputes the full 3^n effect matrix."""
+    """One gate application in a circuit. ``effect_matrix`` is lazy."""
 
     def __init__(
             self,

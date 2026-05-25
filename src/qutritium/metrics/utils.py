@@ -49,6 +49,18 @@ def _check_square_matrix(arr: NDArray, name: str) -> None:
         )
 
 
+def _check_unitary(arr: NDArray, name: str, atol: float = 1e-6) -> None:
+    """Raise ValueError unless arr @ arr.conj().T equals the identity.
+
+    Tolerance matches ``SU3Decomposition.__init__``.
+    """
+    product = arr @ arr.conj().T
+    if not np.allclose(product, np.eye(arr.shape[0]), atol=atol):
+        raise ValueError(
+            f"{name} is not unitary (||U U† - I|| > {atol})."
+        )
+
+
 def _matrix_sqrt_hermitian(
         rho: NDArray[np.complex128],
 ) -> NDArray[np.complex128]:
@@ -61,6 +73,3 @@ def _matrix_sqrt_hermitian(
     eigvals = np.clip(eigvals, 0.0, None)
     sqrt_eigvals = np.sqrt(eigvals)
     return (eigvecs * sqrt_eigvals) @ eigvecs.conj().T  # type: ignore[no-any-return]
-
-
-__all__: list[str] = []  # nothing is public from this module

@@ -1,14 +1,9 @@
 # MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
 # See LICENSE.txt for full terms.
 
-"""SU(3) -> native qutrit rotations.
+"""SU(3) -> native qutrit rotations via the Vitanov (2012) decomposition.
 
-Decomposition: U = u_d(phi6,phi5,phi4) . r01(phi3,theta3) . r12(phi2,theta2) . r01(phi1,theta1)
-
-References
-
-- Vitanov, N. V. (2012). *Synthesis of arbitrary SU(3) transformations
-of 8-dimensional targets*. Phys. Rev. A 85, 032331.
+See ``SU3Decomposition`` docstring for the factor sequence and reference.
 """
 from __future__ import annotations
 
@@ -138,29 +133,25 @@ def _extract_angles(unitary: NDArray) -> DecompositionAngles:
 # Decomposition class
 # ---------------------------------------------------------------------------
 class SU3Decomposition:
-    """Decompose an arbitrary SU(3) unitary into native qutrit rotations.
+    """Decompose an SU(3) unitary into native qutrit rotations.
 
     Implements the nine-angle decomposition of Vitanov (2012):
 
-        U = u_d(φ₆, φ₅, φ₄) · r01(φ₃, θ₃) · r12(φ₂, θ₂) · r01(φ₁, θ₁)
+        U = u_d(phi6, phi5, phi4) . r01(phi3, theta3) . r12(phi2, theta2) . r01(phi1, theta1)
 
-    where ``r01`` and ``r12`` are composite rotations in the {|0⟩,|1⟩} and
-    {|1⟩,|2⟩} subspaces and ``u_d`` is a diagonal phase. Useful for
-    transpiling arbitrary single-qutrit unitaries onto a native gate set
-    (e.g. trapped-ion ``g01``/``g12`` plus virtual-Z phases).
+    where ``r01``, ``r12`` are composite subspace rotations and ``u_d``
+    is a diagonal phase. Transpiles arbitrary single-qutrit unitaries
+    onto a native gate set such as trapped-ion ``g01``/``g12`` plus
+    virtual-Z phases.
 
     Parameters
     ----------
     su3 : NDArray
-        The unitary to decompose. Must have shape ``(3, 3)`` and satisfy
-        ``U U† = I`` to within ``1e-6``.
+        Shape ``(3, 3)``. Must be unitary to within ``atol=1e-6``.
     qutrit_index : int
-        Index of the qutrit this unitary acts on, used when emitting
-        ``Instruction`` objects via :meth:`to_native`.
+        Index of the qutrit this unitary acts on.
     n_qutrits : int
-        Total number of qutrits in the target register. Used by
-        :meth:`to_native` / :meth:`to_circuit` to construct correctly
-        sized circuits.
+        Total number of qutrits in the target register.
 
     Raises
     ------
@@ -169,14 +160,13 @@ class SU3Decomposition:
 
     References
     ----------
-    Vitanov, N. V. (2012). *Synthesis of arbitrary SU(3) transformations
-    of 8-dimensional targets*. Phys. Rev. A 85, 032331.
+    Vitanov, N. V. (2012). Phys. Rev. A 85, 032331.
 
     Examples
     --------
     >>> from qutritium.gates import H3
-    >>> dec = SU3Decomposition(H3().matrix(), qutrit_index=0, n_qutrits=1)
     >>> import numpy as np
+    >>> dec = SU3Decomposition(H3().matrix(), qutrit_index=0, n_qutrits=1)
     >>> np.allclose(dec.reconstruct(), H3().matrix())
     True
     """
@@ -210,17 +200,13 @@ class SU3Decomposition:
         return r12(phi=self.angles.phi2, theta=self.angles.theta2)
 
     def reconstruct(self) -> NDArray:
-        """Reconstruct the original unitary from the decomposed factors.
-
-        Multiplies the four extracted factors back together. Used as a
-        verification primitive: ``reconstruct()`` should equal ``self.su3``
-        to within numerical precision.
+        """Multiply the four decomposed factors. Equals ``self.su3`` up to
+        floating-point error.
 
         Returns
         -------
         NDArray
-            Shape ``(3, 3)`` complex matrix, ideally equal to ``self.su3``
-            up to floating-point error.
+            Shape ``(3, 3)`` complex matrix.
         """
         return (  # type: ignore[no-any-return]
             self.diagonal_phase()
@@ -230,20 +216,17 @@ class SU3Decomposition:
         )
 
     def to_native(self) -> NativeDecomposition:
-        """Return native ``g01``/``g12`` instructions plus virtual-Z phases.
+        """Native ``g01``/``g12`` instructions plus two virtual-Z phases.
 
-        Converts the diagonal phase ``u_d(φ₆, φ₅, φ₄)`` into two virtual-Z
-        rotation angles applied to the {|0⟩,|1⟩} and {|1⟩,|2⟩} subspaces,
-        and emits three ``Instruction`` objects implementing the
-        composite-rotation sequence.
+        The diagonal ``u_d`` factor is folded into two virtual-Z angles
+        applied to the ``{|0>,|1>}`` and ``{|1>,|2>}`` subspaces.
 
         Returns
         -------
         NativeDecomposition
-            Named tuple of ``(phases, instructions)`` where ``phases`` is a
-            length-2 array ``[phase01, phase12]`` and ``instructions`` is a
-            list of three string-typed ``Instruction`` objects (``g01``,
-            ``g12``, ``g01``).
+            ``(phases, instructions)`` with ``phases = [phase01, phase12]``
+            and three ``Instruction`` objects in the order
+            ``g01, g12, g01``.
         """
         a = self.angles
         phase01 = a.phi6 - a.phi5
@@ -274,17 +257,17 @@ class SU3Decomposition:
         return NativeDecomposition(np.array([phase01, phase12]), instructions)
 
     def to_circuit(self) -> QutritCircuit:
-        """Build a ``QutritCircuit`` implementing this decomposition.
+        """Build a ``QutritCircuit`` from this decomposition.
 
-        Emits the same factor sequence as :meth:`to_native`, but as Gate
-        objects (``G01``, ``G12``, ``Ud``) appended to a fresh
-        ``QutritCircuit`` rather than as raw ``Instruction`` strings.
+        Emits the same factor sequence as :meth:`to_native`, but as
+        ``G01`` / ``G12`` / ``Ud`` gate objects appended to a fresh
+        circuit.
 
         Returns
         -------
         QutritCircuit
-            A circuit on ``n_qutrits`` qutrits whose action on
-            ``qutrit_index`` equals ``self.su3`` (up to global phase).
+            On ``n_qutrits`` qutrits; acts as ``self.su3`` on
+            ``qutrit_index`` up to global phase.
         """
         from qutritium.gates import G01, G12, Ud
         qc = QutritCircuit(n_qutrit=self.n_qutrits, initial_state=None)

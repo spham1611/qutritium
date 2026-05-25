@@ -295,3 +295,19 @@ class TestInputValidation:
         eye3 = np.eye(3, dtype=complex)
         with pytest.raises(ValueError, match="mismatched"):
             process_fidelity(eye2, eye3)
+
+    def test_process_fidelity_rejects_non_unitary_ideal(self):
+        non_unitary = np.array(
+            [[1, 0, 0], [0, 1, 0], [0, 0, 2]], dtype=complex,
+        )
+        eye3 = np.eye(3, dtype=complex)
+        with pytest.raises(ValueError, match="not unitary"):
+            process_fidelity(non_unitary, eye3)
+
+    def test_process_fidelity_rejects_non_unitary_actual(self):
+        non_unitary = np.array(
+            [[1, 0, 0], [0, 1, 0], [0, 0, 2]], dtype=complex,
+        )
+        eye3 = np.eye(3, dtype=complex)
+        with pytest.raises(ValueError, match="not unitary"):
+            process_fidelity(eye3, non_unitary)

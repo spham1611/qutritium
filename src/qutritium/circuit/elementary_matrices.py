@@ -1,40 +1,11 @@
 # MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
 # See LICENSE.txt for full terms.
-"""
-Elementary qutrit unitary matrices (SU(3)) + Gell-Mann matrices or GGM
+"""Elementary 3x3 and 9x9 unitary matrices for qutrit circuits.
 
-This module collects the building-block 3x3 unitary matrices used by the
-qutritium.circuit package. All functions return ``numpy.ndarray`` with ``dtype=complex``.
-
-Gell-Mann matrices and SU(3) generators
-----------------------------------------
-The eight Gell-Mann matrices lambda_1 ... lambda_8 are the standard
-generators of the Lie algebra su(3), analogous to the three Pauli matrices
-for su(2). They are traceless, Hermitian, and satisfy
-Tr(lambda_a @ lambda_b) = 2 * delta_{a,b}. They can be used to expand any qutrit density operator.
-
-These 8 generators splits into three families which are:
-    - Symmetric (real): lambda_1, lambda_4, lambda_6
-    - Antisymmetric (imaginary): lambda_2, lambda_5, lambda_7
-    - Off Diagonal: lambda_3, lambda_8
-
-In addition, this module contains operators that do not belong to GGM,
-including: qutrit cyclic/inverse shift, Pauli-Z in {1,2}, qutrit Hadamard,
-S and T gates, identity, CNOT, CSUM, CPhase, SWAP, and composite rotation
-gates. These operators can be written in terms of GGM.
-
-References
-
-- Bertlmann, R. A. & Krammer, P. (2008). *Bloch vectors for qudits*.
-arXiv:0806.1174.
-- Ringbauer, M. et al. (2022). *A universal qudit quantum processor
-with trapped ions*. Nature Physics 18, 1053-1057.
-- Wang, Y. et al. (2020). *Qudits and high-dimensional quantum
-computing*. Frontiers in Physics 8, 589504.
-- Vitanov, N. V. (2012). *Synthesis of arbitrary SU(3) transformations
-of 8-dimensional targets*. Phys. Rev. A 85, 032331.
-- H. Georgi, "Lie Algebras in Particle Physics", 2nd ed., Westview
-Press, 1999.
+Includes the eight Gell-Mann matrices (su(3) generators), subspace
+Pauli-X/Y/Z, cyclic shifts, Hadamard, S/T, single-qutrit parametric
+rotations, and two-qutrit gates (CNOT, CSUM, CPhase, SWAP). All
+functions return ``numpy.ndarray`` with ``dtype=complex``.
 """
 from __future__ import annotations
 

@@ -14,38 +14,28 @@ def state_fidelity(
         rho: NDArray[np.complex128],
         sigma: NDArray[np.complex128],
 ) -> float:
-    """Quantum-state fidelity F(rho, sigma) = (tr sqrt(sqrt(rho) sigma sqrt(rho)))^2.
+    """Quantum-state fidelity F = (tr sqrt(sqrt(rho) sigma sqrt(rho)))^2.
 
-    For two pure states |psi>, |phi> this reduces to |<psi|phi>|^2. Symmetric
-    in its arguments. Equal to 1 if and only if rho = sigma.
+    Reduces to |<psi|phi>|^2 for pure states.
 
     Parameters
     ----------
     rho : NDArray[np.complex128]
-        First state. Either a density matrix of shape ``(d, d)`` or a
-        pure-state ket of shape ``(d,)`` or ``(d, 1)``; kets are promoted
-        to ``|psi><psi|`` internally.
+        Density matrix ``(d, d)`` or ket ``(d,)``/``(d, 1)``. Kets are
+        promoted to ``|psi><psi|`` internally.
     sigma : NDArray[np.complex128]
-        Second state. Same shape conventions as ``rho``. After promotion,
-        the dimension of ``sigma`` must match that of ``rho``.
+        Second state, same shape conventions. Dimensions must match
+        ``rho`` after promotion.
 
     Returns
     -------
     float
-        Fidelity in ``[0, 1]``. Real-valued; small imaginary parts from
-        numerical noise are discarded by taking the real component before
-        squaring.
+        Fidelity in ``[0, 1]``.
 
     Raises
     ------
     ValueError
-        If either input is neither a ket nor a square matrix, or if the
-        promoted matrices have different dimensions.
-
-    References
-    ----------
-    Nielsen, M. A. & Chuang, I. L. *Quantum Computation and Quantum
-    Information*, Cambridge University Press, 2010. §9.2.2.
+        On malformed input or dimension mismatch.
 
     Examples
     --------
@@ -72,33 +62,24 @@ def trace_distance(
         rho: NDArray[np.complex128],
         sigma: NDArray[np.complex128],
 ) -> float:
-    """Trace distance T(rho, sigma) = (1/2) ||rho - sigma||_1.
-
-    Equal to the maximum classical distinguishability of the two states
-    over all POVMs (Helstrom bound). Symmetric and non-negative; T = 0
-    iff rho = sigma, T = 1 iff their supports are orthogonal.
+    """Trace distance T = (1/2) ||rho - sigma||_1.
 
     Parameters
     ----------
-    rho : NDArray[np.complex128]
-        First state. Density matrix ``(d, d)`` or ket ``(d,)``/``(d, 1)``.
-    sigma : NDArray[np.complex128]
-        Second state. Same shape conventions as ``rho``.
+    rho, sigma : NDArray[np.complex128]
+        States to compare. Density matrices ``(d, d)`` or kets
+        ``(d,)``/``(d, 1)``.
 
     Returns
     -------
     float
-        Trace distance in ``[0, 1]``.
+        Trace distance in ``[0, 1]``. ``0`` iff ``rho == sigma``;
+        ``1`` iff their supports are orthogonal.
 
     Raises
     ------
     ValueError
-        If either input is malformed or dimensions disagree.
-
-    References
-    ----------
-    Nielsen & Chuang, *Quantum Computation and Quantum Information*,
-    §9.2.1.
+        On malformed input or dimension mismatch.
 
     Examples
     --------
@@ -119,27 +100,23 @@ def trace_distance(
 
 
 def purity(rho: NDArray[np.complex128]) -> float:
-    """Purity P(rho) = tr(rho^2).
-
-    Bounded in ``[1/d, 1]`` for a d-dimensional system. P = 1 iff rho is
-    pure; P = 1/d iff rho is the maximally mixed state I/d. Lower values
-    indicate more mixed states.
+    """Purity P = tr(rho^2).
 
     Parameters
     ----------
     rho : NDArray[np.complex128]
-        State to evaluate. Density matrix ``(d, d)`` or ket
-        ``(d,)``/``(d, 1)``.
+        Density matrix ``(d, d)`` or ket ``(d,)``/``(d, 1)``.
 
     Returns
     -------
     float
-        Purity in ``[1/d, 1]``.
+        Purity in ``[1/d, 1]``. ``1`` for pure states; ``1/d`` for
+        the maximally mixed state ``I/d``.
 
     Raises
     ------
     ValueError
-        If ``rho`` is malformed.
+        On malformed input.
 
     Examples
     --------
@@ -159,31 +136,28 @@ def von_neumann_entropy(
         rho: NDArray[np.complex128],
         base: float = 2.0,
 ) -> float:
-    """Von Neumann entropy S(rho) = -tr(rho log rho).
+    """Von Neumann entropy S = -tr(rho log rho).
 
-    Equal to 0 for pure states and ``log_base(d)`` for the maximally
-    mixed state ``I/d``. Eigenvalues at or below numerical zero are
-    dropped before the log to avoid log(0).
+    Eigenvalues below numerical zero are dropped before the log.
 
     Parameters
     ----------
     rho : NDArray[np.complex128]
-        State to evaluate. Density matrix ``(d, d)`` or ket
-        ``(d,)``/``(d, 1)``.
+        Density matrix ``(d, d)`` or ket ``(d,)``/``(d, 1)``.
     base : float, optional
-        Logarithm base. ``2`` (default) reports entropy in qubit-bits;
-        ``np.e`` reports in nats. Must be positive and not equal to 1.
+        Logarithm base. ``2`` (default) gives bits; ``np.e`` gives nats.
+        Must be positive and not equal to 1.
 
     Returns
     -------
     float
-        Non-negative entropy in the chosen base. ``0`` for pure states;
-        ``log_base(d)`` for the maximally mixed state.
+        Non-negative entropy. ``0`` for pure states; ``log_base(d)`` for
+        the maximally mixed state ``I/d``.
 
     Raises
     ------
     ValueError
-        If ``rho`` is malformed or ``base`` is non-positive or equal to 1.
+        On malformed input or invalid ``base``.
 
     Examples
     --------
