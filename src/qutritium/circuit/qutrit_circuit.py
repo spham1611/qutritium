@@ -55,9 +55,8 @@ class QutritCircuit:
             gate: "Gate",
             first_qutrit: int,
             second_qutrit: int | None = None,
-            is_dagger: bool = False,
     ) -> None:
-        """Add a Gate to the circuit."""
+        """Add a Gate to the circuit. Pass ``gate.inverse()`` for the adjoint."""
         # Runtime import to avoid circular dependency:
         # gates → elementary_matrices ← instruction ← qutrit_circuit
         from qutritium.gates.base import Gate as _Gate
@@ -77,9 +76,7 @@ class QutritCircuit:
                 f"{gate.label} is a 1-qutrit gate and does not accept second_qutrit."
             )
 
-        # Get the gate matrix (apply dagger if requested)
-        effective_gate = gate.inverse() if is_dagger else gate
-        mat = effective_gate.matrix()
+        mat = gate.matrix()
 
         # Build Instruction with Gate reference preserved
         ins = Instruction(
@@ -88,10 +85,9 @@ class QutritCircuit:
             first_qutrit=first_qutrit,
             second_qutrit=second_qutrit,
             parameter=list(gate.params) if gate.params else None,
-            inverse=False,  # dagger already applied above
             custom=True,
             custom_matrix=np.asarray(mat, dtype=complex),
-            gate=effective_gate,
+            gate=gate,
         )
         self._extend_operation_set([ins])
 

@@ -17,14 +17,13 @@ QutritCircuit(n_qutrit: int, initial_state: NDArray | None)
 
 ### Methods
 
-**`append(gate, first_qutrit, second_qutrit=None, is_dagger=False)`**
+**`append(gate, first_qutrit, second_qutrit=None)`**
 
-Add a `Gate` instance to the circuit.
+Add a `Gate` instance to the circuit. For the adjoint, pass `gate.inverse()`.
 
 - `gate` — a `Gate` object from `qutritium.gates`
 - `first_qutrit` — target qutrit index (0-based)
 - `second_qutrit` — required for two-qutrit gates
-- `is_dagger` — if `True`, applies `gate.inverse()`
 
 **`measure_all()`**
 

@@ -549,8 +549,8 @@ def csum() -> NDArray[np.complex128]:
 
 
 def csum_dag() -> NDArray[np.complex128]:
-    """CSUM inverse: |c, t> -> |c, (t - c) mod 3>. Just the transpose."""
-    return csum().T.copy()
+    """CSUM inverse: |c, t> -> |c, (t - c) mod 3>."""
+    return csum().conj().T  # type: ignore[no-any-return]
 
 
 def cphase() -> NDArray[np.complex128]:

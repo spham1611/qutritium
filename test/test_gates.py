@@ -348,11 +348,11 @@ class TestCircuitAppend:
         with pytest.raises(TypeError):
             qc.append("not_a_gate", first_qutrit=0)
 
-    def test_append_with_dagger(self):
-        """append(gate, is_dagger=True) should apply the inverse."""
+    def test_append_with_inverse(self):
+        """append(gate.inverse(), ...) should apply the adjoint."""
         qc = QutritCircuit(1, None)
         qc.append(H3(), first_qutrit=0)
-        qc.append(H3(), first_qutrit=0, is_dagger=True)
+        qc.append(H3().inverse(), first_qutrit=0)
         sim = QASMSimulator(qc)
         state = sim.return_final_state()
         # H @ H† = I, so state should be |0⟩
