@@ -61,7 +61,6 @@ changes_summary.txt
 
 # Personal scratch
 _read_plan.py
-_*.py
 
 # Script output artifacts
 scripts/*.png
