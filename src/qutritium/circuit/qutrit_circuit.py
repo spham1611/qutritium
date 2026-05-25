@@ -154,12 +154,12 @@ class QutritCircuit:
         Parameters
         ----------
         output : str
-            ``"text"`` (default) prints and returns the diagram string.
+            ``"text"`` (default) is currently the only supported format.
 
         Returns
         -------
         str
-            Multi-line text diagram.
+            Multi-line text diagram. Wrap in ``print(...)`` to display.
 
         Example
         -------
@@ -197,9 +197,7 @@ class QutritCircuit:
                 steps.append({q: "M" for q in range(self.n_qutrit)})
 
         if not steps:
-            diagram = "\n".join(f"q{q}: ─" for q in range(self.n_qutrit))
-            print(diagram)
-            return diagram
+            return "\n".join(f"q{q}: ─" for q in range(self.n_qutrit))
 
         # Determine column widths (each step is one column)
         col_widths: list[int] = []
@@ -222,9 +220,7 @@ class QutritCircuit:
                 segments.append(padded)
             lines.append(prefix + "".join(segments) + "─")
 
-        diagram = "\n" + "\n".join(lines) + "\n"
-        print(diagram)
-        return diagram
+        return "\n" + "\n".join(lines) + "\n"
 
     def __len__(self) -> int:
         """Number of recorded operations (counting the measurement sentinel)."""
