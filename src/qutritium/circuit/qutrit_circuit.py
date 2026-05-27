@@ -4,13 +4,14 @@
 """QutritCircuit: container for a sequence of qutrit gate instructions."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Iterator, List, Sequence, Union
 
 import numpy as np
 from numpy.typing import NDArray
 
 from qutritium.circuit.instruction import Instruction
-from qutritium.gates import CSUM, H3
+from qutritium.gates import CSUM, H3, X01
 from qutritium.gates.base import Gate
 
 # Type alias: an operation is either an Instruction or the literal "measurement"
@@ -19,7 +20,18 @@ _Operation = Union[Instruction, str]
 
 
 class QutritCircuit:
-    """Ordered gate list + optional measurement. Pass to QASMSimulator to run."""
+    """Ordered list of gate operations with an optional terminal measurement.
+
+    Pass to ``QASMSimulator`` or ``DensityMatrixSimulator`` to evaluate.
+
+    Parameters
+    ----------
+    n_qutrit : int
+        Number of qutrits in the register. Must be ``>= 1``.
+    initial_state : NDArray or None
+        Initial statevector of shape ``(3 ** n_qutrit, 1)``. ``None``
+        defaults to ``|0...0>``.
+    """
 
     def __init__(
             self, n_qutrit: int, initial_state: NDArray | None,
@@ -76,7 +88,7 @@ class QutritCircuit:
             If ``gate.num_qutrits`` and the provided qutrit indices are
             inconsistent.
         IndexError
-            If a qutrit index is outside ``[0, n_qutrit)``.
+            If a qutrit index is outside ``[0, n_qutrit]``.
         """
         # Runtime import to avoid circular dependency:
         # gates → elementary_matrices ← instruction ← qutrit_circuit
@@ -113,7 +125,12 @@ class QutritCircuit:
         self._extend_operation_set([ins])
 
     def measure_all(self) -> None:
-        """Add measurement. Can only be called once."""
+        """Add measurement. Can only be called once.
+
+        This only add string ''measurement'' to our instruction set -> It
+        will be handled by statevector.py file
+
+        """
         if self._measurement_flag:
             raise RuntimeError("A measurement has already been added to this circuit.")
         self._measurement_flag = True
@@ -148,13 +165,64 @@ class QutritCircuit:
         """
         self._operation_set.clear()
 
-    def draw(self, output: str = "text") -> str:
-        """Render the circuit as a text diagram.
+    def gate_count(self) -> int:
+        """Number of gates operations, excluding measurements"""
+        return sum(1 for operation in self._operation_set if isinstance(operation, Instruction))
 
+    def depth(
+            self,
+            filter_function: Callable[[Instruction], bool] = lambda _: True,
+    ) -> int:
+        """Circuit depth
+
+        This function mirrors Qiskit Circuit depth function by calculating the depth based
+        on Instruction filter
         Parameters
         ----------
-        output : str
-            ``"text"`` (default) is currently the only supported format.
+        filter_function : Callable[[Instruction], bool], optional
+            Predicate selecting which instructions contribute to the depth
+            count. Default counts every gate
+
+        Returns
+        -------
+        int
+            Length of the critical path. ``0`` for an empty circuit.
+
+        Example:
+        -------
+        >>> qc = QutritCircuit(3, None)
+        >>> qc.append(H3(), 0)
+        >>> qc.append(H3(), 1)
+        >>> qc.append(X01(), 2)
+        >>> qc.depth()
+        1
+
+        >>> qc2 = QutritCircuit(3, None)
+        >>> qc2.append(H3(), 0)
+        >>> qc2.append(H3(), 1)
+        >>> qc2.append(X01(), 2)
+        >>> qc2.depth(lambda ins: ins.second_qutrit is not None)
+        0
+        """
+
+        depth = [0] * self.n_qutrit
+        for operation in self._operation_set:
+            if not isinstance(operation, Instruction):
+                continue
+            assert isinstance(operation, Instruction)
+            if operation.second_qutrit is None:
+                d = (operation.first_qutrit,)
+            else:
+                d = (operation.first_qutrit, operation.second_qutrit)  # type: ignore[assignment]
+            new_depth = max(depth[ind] for ind in d)
+            if filter_function(operation):
+                new_depth += 1
+            for ind in d:
+                depth[ind] = new_depth
+        return max(depth, default=0)
+
+    def draw(self) -> str:
+        """Render the circuit as a text diagram.
 
         Returns
         -------
@@ -221,6 +289,24 @@ class QutritCircuit:
             lines.append(prefix + "".join(segments) + "─")
 
         return "\n" + "\n".join(lines) + "\n"
+
+    def to_matrix(self) -> NDArray[np.complex128]:
+        """Return the final matrix 3^n x 3^n unitary matrix.
+
+        Gates are multiplied in time order, most recent on the left
+
+        Raises
+        ------
+        RuntimeError
+            If the circuit contains a measurement
+        """
+        if self._measurement_flag:
+            raise RuntimeError("Measurement is present")
+        result = np.eye(3 ** self.n_qutrit, dtype=complex)
+        for operation in self._operation_set:
+            assert isinstance(operation, Instruction)
+            result = operation.effect_matrix @ result
+        return result
 
     def __len__(self) -> int:
         """Number of recorded operations (counting the measurement sentinel)."""

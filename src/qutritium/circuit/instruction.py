@@ -35,7 +35,49 @@ GATE_SET: frozenset[str] = frozenset({
 
 
 class Instruction:
-    """One gate application in a circuit. ``effect_matrix`` is lazy."""
+    """One gate application in a circuit. ``effect_matrix`` is lazy.
+
+    Most users construct ``Instruction`` indirectly via
+    ``QutritCircuit.append``; the direct constructor is the lower-level
+    path used by the string-based API and by ``SU3Decomposition``.
+
+    Parameters
+    ----------
+    gate_type : str
+        Gate name; must be in ``GATE_SET`` unless ``custom=True``.
+    n_qutrit : int
+        Total qutrit count for the register this instruction targets.
+    first_qutrit : int
+        Target qutrit index in ``[0, n_qutrit)``. Control qutrit for
+        two-qutrit gates.
+    second_qutrit : int or None, optional
+        Second qutrit for two-qutrit gates (target). ``None`` for
+        single-qutrit gates.
+    parameter : Sequence[float] or None, optional
+        Numerical parameters required by parametric gates (e.g.
+        rotation angles for ``rx01``).
+    inverse : bool, optional
+        Apply the conjugate transpose of the resolved matrix.
+    custom : bool, optional
+        Set to ``True`` to bypass the ``GATE_SET`` lookup and supply a
+        matrix via ``custom_matrix``.
+    custom_matrix : NDArray or None, optional
+        Required when ``custom=True``. Must be ``(3, 3)`` for a
+        single-qutrit gate or ``(9, 9)`` for a two-qutrit gate.
+    gate : Gate or None, optional
+        Optional reference to the originating ``Gate`` object. Preserved
+        for ``QutritCircuit.draw`` to render correct labels.
+
+    Raises
+    ------
+    IndexError
+        If ``first_qutrit`` or ``second_qutrit`` is outside
+        ``[0, n_qutrit)``.
+    ValueError
+        If ``gate_type`` is unknown (and ``custom=False``), if
+        ``custom=True`` without a ``custom_matrix``, or if
+        ``custom_matrix`` has the wrong shape for the gate width.
+    """
 
     def __init__(
             self,

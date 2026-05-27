@@ -11,7 +11,18 @@ from numpy.typing import NDArray
 
 
 class Gate(abc.ABC):
-    """Base class for qutrit gates."""
+    """Base class for qutrit gates.
+
+    Parameters
+    ----------
+    label : str
+        Display name for the gate (e.g. ``"X01"``, ``"H3"``).
+    num_qutrits : int
+        Gate width. Must be ``1`` or ``2``.
+    params : tuple of float, optional
+        Numerical parameters such as rotation angles. Empty for
+        zero-parameter gates.
+    """
 
     def __init__(
             self,
@@ -58,7 +69,7 @@ class Gate(abc.ABC):
         return _DaggerGate(self)
 
     def is_unitary(self, atol: float = 1e-9) -> bool:
-        """Check unitarity."""
+        """Check ``M @ M.conj().T == I`` within ``atol`` (default ``1e-9``)."""
         m = self.matrix()
         product = m @ m.conj().T
         return bool(np.allclose(product, np.eye(m.shape[0]), atol=atol))
