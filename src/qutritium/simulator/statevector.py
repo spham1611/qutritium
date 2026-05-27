@@ -28,15 +28,17 @@ class QASMSimulator:
     Applies each gate's full-register matrix to the running statevector
     and (optionally) samples measurement outcomes. Memory scales as
     ``3^n_qutrit``; practical limit around ``n <= 10``.
-
-    Parameters
-    ----------
-    qc : QutritCircuit
-        Circuit to simulate. Operations and initial state are copied,
-        so later edits to ``qc`` don't affect this simulator.
     """
 
     def __init__(self, qc: QutritCircuit) -> None:
+        """Construct a QASMSimulator.
+
+        Parameters
+        ----------
+        qc : QutritCircuit
+            Circuit to simulate. Operations and initial state are copied,
+            so later edits to ``qc`` don't affect this simulator.
+        """
         self.circuit: QutritCircuit = qc
         self.n_qutrit: int = qc.n_qutrit
         self.initial_state: NDArray = qc.initial_state

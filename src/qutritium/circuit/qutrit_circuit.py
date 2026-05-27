@@ -23,19 +23,26 @@ class QutritCircuit:
     """Ordered list of gate operations with an optional terminal measurement.
 
     Pass to ``QASMSimulator`` or ``DensityMatrixSimulator`` to evaluate.
-
-    Parameters
-    ----------
-    n_qutrit : int
-        Number of qutrits in the register. Must be ``>= 1``.
-    initial_state : NDArray or None
-        Initial statevector of shape ``(3 ** n_qutrit, 1)``. ``None``
-        defaults to ``|0...0>``.
     """
 
     def __init__(
             self, n_qutrit: int, initial_state: NDArray | None,
     ) -> None:
+        """Construct a QutritCircuit.
+
+        Parameters
+        ----------
+        n_qutrit : int
+            Number of qutrits in the register. Must be ``>= 1``.
+        initial_state : NDArray or None
+            Initial statevector of shape ``(3 ** n_qutrit, 1)``. ``None``
+            defaults to ``|0...0>``.
+
+        Raises
+        ------
+        ValueError
+            If ``n_qutrit < 1`` or ``initial_state`` has the wrong shape.
+        """
         if n_qutrit < 1:
             raise ValueError(f"n_qutrit must be >= 1, got {n_qutrit}.")
 

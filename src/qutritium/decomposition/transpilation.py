@@ -144,20 +144,6 @@ class SU3Decomposition:
     onto a native gate set such as trapped-ion ``g01``/``g12`` plus
     virtual-Z phases.
 
-    Parameters
-    ----------
-    su3 : NDArray
-        Shape ``(3, 3)``. Must be unitary to within ``atol=1e-6``.
-    qutrit_index : int
-        Index of the qutrit this unitary acts on.
-    n_qutrits : int
-        Total number of qutrits in the target register.
-
-    Raises
-    ------
-    ValueError
-        If ``su3`` is not ``(3, 3)`` or fails the unitarity check.
-
     References
     ----------
     Vitanov, N. V. (2012). Phys. Rev. A 85, 032331.
@@ -172,6 +158,22 @@ class SU3Decomposition:
     """
 
     def __init__(self, su3: NDArray, qutrit_index: int, n_qutrits: int) -> None:
+        """Construct an SU(3) decomposition.
+
+        Parameters
+        ----------
+        su3 : NDArray
+            Shape ``(3, 3)``. Must be unitary to within ``atol=1e-6``.
+        qutrit_index : int
+            Index of the qutrit this unitary acts on.
+        n_qutrits : int
+            Total number of qutrits in the target register.
+
+        Raises
+        ------
+        ValueError
+            If ``su3`` is not ``(3, 3)`` or fails the unitarity check.
+        """
         if su3.shape != (3, 3):
             raise ValueError(
                 f"su3 must have shape (3, 3); got {su3.shape}."

@@ -11,18 +11,7 @@ from numpy.typing import NDArray
 
 
 class Gate(abc.ABC):
-    """Base class for qutrit gates.
-
-    Parameters
-    ----------
-    label : str
-        Display name for the gate (e.g. ``"X01"``, ``"H3"``).
-    num_qutrits : int
-        Gate width. Must be ``1`` or ``2``.
-    params : tuple of float, optional
-        Numerical parameters such as rotation angles. Empty for
-        zero-parameter gates.
-    """
+    """Base class for qutrit gates."""
 
     def __init__(
             self,
@@ -30,6 +19,23 @@ class Gate(abc.ABC):
             num_qutrits: int,
             params: tuple[float, ...] = (),
     ) -> None:
+        """Construct a Gate.
+
+        Parameters
+        ----------
+        label : str
+            Display name for the gate (e.g. ``"X01"``, ``"H3"``).
+        num_qutrits : int
+            Gate width. Must be ``1`` or ``2``.
+        params : tuple of float, optional
+            Numerical parameters such as rotation angles. Empty for
+            zero-parameter gates.
+
+        Raises
+        ------
+        ValueError
+            If ``num_qutrits`` is not ``1`` or ``2``.
+        """
         if num_qutrits not in (1, 2):
             raise ValueError(
                 f"num_qutrits must be 1 or 2; got {num_qutrits}."
