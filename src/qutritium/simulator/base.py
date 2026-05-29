@@ -68,12 +68,7 @@ class Simulator(ABC):
         self.circuit = qc
         self.n_qutrit = qc.n_qutrit
         self._operation_set = list(qc.operation_set)
-        QutritCircuit._validate_operations(self._operation_set)
-        # Derive the flag from the validated contents rather than trusting
-        # qc.measurement_flag, which can be stale (e.g. after reset_circuit).
-        self._measurement_flag = (
-                bool(self._operation_set) and self._operation_set[-1] == "measurement"
-        )
+        self._measurement_flag = qc.measurement_flag
         self._measurement_result: list[str] = []
         self._simulation_flag = False
 
