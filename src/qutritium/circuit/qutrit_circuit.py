@@ -94,8 +94,14 @@ class QutritCircuit:
             If a qutrit index is outside ``[0, n_qutrit]``.
         """
         # Runtime import to avoid circular dependency:
-        # gates → elementary_matrices ← instruction ← qutrit_circuit
         from qutritium.gates.base import Gate as _Gate
+
+        if self._measurement_flag:
+            raise RuntimeError(
+                "Cannot append a gate after measure_all(); the measurement "
+                "must remain the final operation. Build all gates first, "
+                "then call measure_all()."
+            )
 
         if not isinstance(gate, _Gate):
             raise TypeError(
@@ -139,6 +145,28 @@ class QutritCircuit:
         self._measurement_flag = True
         self._extend_operation_set(["measurement"])
 
+    @staticmethod
+    def _validate_operations(ops: Sequence[_Operation]) -> None:
+        """Enforce the operation-list invariant.
+
+        A circuit may contain at most one ``"measurement"`` sentinel, and
+        if present it must be the final operation. The simulators rely on
+        this, so a malformed list would otherwise crash mid-simulation.
+
+        Raises
+        ------
+        ValueError
+            If more than one measurement is present, or a measurement is
+            not the last operation.
+        """
+        n_meas = sum(1 for op in ops if op == "measurement")
+        if n_meas > 1:
+            raise ValueError(
+                f"A circuit may contain at most one measurement; found {n_meas}."
+            )
+        if n_meas == 1 and ops[-1] != "measurement":
+            raise ValueError("The measurement must be the final operation.")
+
     @property
     def operation_set(self) -> list[_Operation]:
         """List of operations."""
@@ -146,7 +174,11 @@ class QutritCircuit:
 
     @operation_set.setter
     def operation_set(self, ops: list[_Operation]) -> None:
-        self._operation_set = list(ops)
+        ops = list(ops)
+        self._validate_operations(ops)
+        self._operation_set = ops
+        # Re-derive the flag from contents so it can never desync.
+        self._measurement_flag = bool(ops) and ops[-1] == "measurement"
 
     def _extend_operation_set(self, ops: Sequence[_Operation]) -> None:
         """Append operations to the circuit (private helper)."""
@@ -158,15 +190,14 @@ class QutritCircuit:
         return self._measurement_flag
 
     def reset_circuit(self) -> None:
-        """Remove all recorded operations.
+        """Clear all operations and the measurement, returning a clean slate.
 
-        Note
-        ----
-        This does **not** reset the ``measurement_flag`` -- a circuit that
-        had its measurement registered before reset cannot register another
-        without rebuilding.
+        After this the circuit behaves like a freshly constructed one (same
+        ``n_qutrit`` and ``initial_state``): gates can be appended and
+        ``measure_all`` can be called again.
         """
         self._operation_set.clear()
+        self._measurement_flag = False
 
     def gate_count(self) -> int:
         """Number of gates operations, excluding measurements"""
@@ -334,8 +365,10 @@ class QutritCircuit:
             raise RuntimeError(
                 "Left-hand circuit contains a measurement; cannot prepend more gates."
             )
+        merged = list(self._operation_set) + list(other.operation_set)
+        self._validate_operations(merged)
         result = QutritCircuit(self.n_qutrit, self.initial_state)
-        result._operation_set = list(self._operation_set) + list(other.operation_set)
+        result._operation_set = merged
         result._measurement_flag = other.measurement_flag
         return result
 

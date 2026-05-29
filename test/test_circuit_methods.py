@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from qutritium import QutritCircuit
+from qutritium import QASMSimulator, QutritCircuit
 from qutritium.gates import CSUM, H3, X01
 
 
@@ -101,6 +101,36 @@ class TestToMatrix:
         qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
         u = qc.to_matrix()
         assert np.allclose(u @ u.conj().T, np.eye(9), atol=1e-12)
+
+
+# ===================================================================
+# reset_circuit (clean slate, including measurement flag)
+# ===================================================================
+class TestResetCircuit:
+    def test_clears_operations(self):
+        qc = QutritCircuit(1, None)
+        qc.append(H3(), first_qutrit=0)
+        qc.measure_all()
+        qc.reset_circuit()
+        assert len(qc) == 0
+
+    def test_clears_measurement_flag(self):
+        qc = QutritCircuit(1, None)
+        qc.measure_all()
+        qc.reset_circuit()
+        assert qc.measurement_flag is False
+
+    def test_can_rebuild_after_reset(self):
+        qc = QutritCircuit(1, None)
+        qc.append(H3(), first_qutrit=0)
+        qc.measure_all()
+        qc.reset_circuit()
+        # full rebuild: append, re-measure, simulate
+        qc.append(X01(), first_qutrit=0)
+        qc.measure_all()
+        sim = QASMSimulator(qc)
+        sim.run(num_shots=100)
+        assert sum(sim.get_counts().values()) == 100
 
 
 # ===================================================================
