@@ -17,7 +17,7 @@ class DensityMatrixSimulator(Simulator):
 
     Evolves the density matrix via ``rho -> U rho U^dag``. Memory scales
     as ``9^n_qutrit``; use only for small registers or mixed states.
-    Otherwise prefer
+    Otherwise, prefer
     :class:`~qutritium.simulator.statevector.QASMSimulator`.
     """
 
@@ -29,7 +29,7 @@ class DensityMatrixSimulator(Simulator):
         Parameters
         ----------
         circuit : QutritCircuit
-            Circuit to simulate. The initial state is promoted to
+            Circuit to simulate. The initial state is now the density matrix
             ``|psi><psi|``.
         """
         super().__init__(circuit)
@@ -128,8 +128,7 @@ class DensityMatrixSimulator(Simulator):
             self._simulation()
 
         n = self.n_qutrit
-        # Reshape the 3^n x 3^n matrix into 2n tensor axes so each qutrit's
-        # row and column indices become separate axes (q and q + n).
+        # Reshape the 3^n x 3^n matrix into 2n tensor axes
         rho = self.state.reshape((3,) * (2 * n))
         # Trace out qutrits not kept, highest index first so the axis
         # labels of the lower (kept) qutrits stay valid as the tensor shrinks.
