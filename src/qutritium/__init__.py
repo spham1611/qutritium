@@ -15,11 +15,13 @@ from qutritium.metrics import (
     trace_distance,
     von_neumann_entropy,
 )
+from qutritium.simulator.density_matrix import DensityMatrixSimulator
 from qutritium.simulator.statevector import QASMSimulator
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 __all__ = [
+    "DensityMatrixSimulator",
     "Instruction",
     "QASMSimulator",
     "QutritCircuit",

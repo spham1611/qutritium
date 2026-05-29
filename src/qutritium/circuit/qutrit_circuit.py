@@ -4,14 +4,13 @@
 """QutritCircuit: container for a sequence of qutrit gate instructions."""
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Iterator, List, Sequence, Union
+from collections.abc import Callable, Iterator, Sequence
+from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
 
 from qutritium.circuit.instruction import Instruction
-from qutritium.gates import CSUM, H3, X01
 from qutritium.gates.base import Gate
 
 # Type alias: an operation is either an Instruction or the literal "measurement"
@@ -48,10 +47,9 @@ class QutritCircuit:
 
         self.n_qutrit: int = n_qutrit
         self._dimension: int = 3 ** n_qutrit
-        self._operation_set: List[_Operation] = []
+        self._operation_set: list[_Operation] = []
         self._measurement_flag: bool = False
         self._measurement_result: list | None = None
-        self.state: NDArray
         self.initial_state: NDArray
 
         if initial_state is not None:
@@ -62,16 +60,14 @@ class QutritCircuit:
                     f"expected {expected_shape}."
                 )
             self.initial_state = np.asarray(initial_state, dtype=complex)
-            self.state = self.initial_state.copy()
         else:
             ket0 = np.zeros((self._dimension, 1), dtype=complex)
             ket0[0, 0] = 1.0
             self.initial_state = ket0
-            self.state = ket0.copy()
 
     def append(
             self,
-            gate: "Gate",
+            gate: Gate,
             first_qutrit: int,
             second_qutrit: int | None = None,
     ) -> None:
@@ -144,12 +140,12 @@ class QutritCircuit:
         self._extend_operation_set(["measurement"])
 
     @property
-    def operation_set(self) -> List[_Operation]:
+    def operation_set(self) -> list[_Operation]:
         """List of operations."""
         return self._operation_set
 
     @operation_set.setter
-    def operation_set(self, ops: List[_Operation]) -> None:
+    def operation_set(self, ops: list[_Operation]) -> None:
         self._operation_set = list(ops)
 
     def _extend_operation_set(self, ops: Sequence[_Operation]) -> None:
@@ -298,7 +294,7 @@ class QutritCircuit:
         return "\n" + "\n".join(lines) + "\n"
 
     def to_matrix(self) -> NDArray[np.complex128]:
-        """Return the final matrix 3^n x 3^n unitary matrix.
+        """Return the final circuit 3^n x 3^n unitary matrix.
 
         Gates are multiplied in time order, most recent on the left
 
@@ -327,7 +323,7 @@ class QutritCircuit:
         meas = " (measured)" if self._measurement_flag else ""
         return f"QutritCircuit(n_qutrit={self.n_qutrit}, ops={len(self._operation_set)}){meas}"
 
-    def __add__(self, other: "QutritCircuit") -> "QutritCircuit":
+    def __add__(self, other: QutritCircuit) -> QutritCircuit:
         """Concatenate two circuits. Left must not have a measurement."""
         if self.n_qutrit != other.n_qutrit:
             raise ValueError(

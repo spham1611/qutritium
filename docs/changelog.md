@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.3.0] - 2026-05-29
+
+### Added
+
+- qutritium.metrics: state_fidelity, trace_distance, purity,
+  von_neumann_entropy, process_fidelity, average_gate_fidelity.
+- Simulator ABC
+- QASMSimulator inherits from Simulator .
+- DensityMatrixSimulator with rho -> U rho U^dag evolution,
+  expectation_value(), and partial_trace().
+- QutritCircuit.depth(), gate_count(), to_matrix().
+- Public CPhaseDag gate.
+
+### Changed
+
+- Instruction.effect_matrix is now lazy (cached_property).
+- QutritCircuit.draw() no longer prints as a side effect.
+
+### Fixed
+
+- statevector_to_state drops numerical-noise coefficients.
+
+### Breaking
+
+- Removed is_dagger= from QutritCircuit.append(); use gate.inverse().
+
 ## [1.2.1] — 2026-05-21
 
 Fix maintainer email address in README.

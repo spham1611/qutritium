@@ -23,7 +23,7 @@ class CSUM(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.csum()
 
-    def inverse(self) -> "CSUMDag":
+    def inverse(self) -> CSUMDag:
         return CSUMDag()
 
 
@@ -36,7 +36,7 @@ class CSUMDag(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.csum_dag()
 
-    def inverse(self) -> "CSUM":
+    def inverse(self) -> CSUM:
         return CSUM()
 
 
@@ -59,7 +59,7 @@ class CPhase(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.cphase()
 
-    def inverse(self) -> "CPhaseDag":
+    def inverse(self) -> CPhaseDag:
         return CPhaseDag()
 
 
@@ -72,7 +72,7 @@ class CPhaseDag(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.cphase().conj().T
 
-    def inverse(self) -> "CPhase":
+    def inverse(self) -> CPhase:
         return CPhase()
 
 
@@ -85,15 +85,15 @@ class SWAP3(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.swap3()
 
-    def inverse(self) -> "SWAP3":
+    def inverse(self) -> SWAP3:
         return SWAP3()
 
 
 __all__ = [
-    "CSUM",
-    "CSUMDag",
     "CNOT3",
+    "CSUM",
+    "SWAP3",
     "CPhase",
     "CPhaseDag",
-    "SWAP3",
+    "CSUMDag",
 ]

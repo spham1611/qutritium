@@ -28,7 +28,7 @@ class I3(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.identity()
 
-    def inverse(self) -> "I3":
+    def inverse(self) -> I3:
         return I3()
 
 
@@ -47,7 +47,7 @@ class X01(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.x01()
 
-    def inverse(self) -> "X01":
+    def inverse(self) -> X01:
         # X² = I  ⟹  X† = X
         return X01()
 
@@ -65,7 +65,7 @@ class X02(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.x02()
 
-    def inverse(self) -> "X02":
+    def inverse(self) -> X02:
         return X02()
 
 
@@ -82,7 +82,7 @@ class X12(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.x12()
 
-    def inverse(self) -> "X12":
+    def inverse(self) -> X12:
         return X12()
 
 
@@ -141,7 +141,7 @@ class Z01(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.z01()
 
-    def inverse(self) -> "Z01":
+    def inverse(self) -> Z01:
         # Z² = I  ⟹  Z† = Z
         return Z01()
 
@@ -158,7 +158,7 @@ class Z02(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.z02()
 
-    def inverse(self) -> "Z02":
+    def inverse(self) -> Z02:
         return Z02()
 
 
@@ -174,7 +174,7 @@ class Z12(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.z12()
 
-    def inverse(self) -> "Z12":
+    def inverse(self) -> Z12:
         return Z12()
 
 
@@ -189,7 +189,7 @@ class XPlus(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.x_plus()
 
-    def inverse(self) -> "XMinus":
+    def inverse(self) -> XMinus:
         return XMinus()
 
 
@@ -202,7 +202,7 @@ class XMinus(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.x_minus()
 
-    def inverse(self) -> "XPlus":
+    def inverse(self) -> XPlus:
         return XPlus()
 
 
@@ -251,7 +251,7 @@ class Rx01(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.rx01(self._params[0])
 
-    def inverse(self) -> "Rx01":
+    def inverse(self) -> Rx01:
         return Rx01(-self._params[0])
 
 
@@ -264,7 +264,7 @@ class Rx02(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.rx02(self._params[0])
 
-    def inverse(self) -> "Rx02":
+    def inverse(self) -> Rx02:
         return Rx02(-self._params[0])
 
 
@@ -277,7 +277,7 @@ class Rx12(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.rx12(self._params[0])
 
-    def inverse(self) -> "Rx12":
+    def inverse(self) -> Rx12:
         return Rx12(-self._params[0])
 
 
@@ -292,7 +292,7 @@ class Ry01(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.ry01(self._params[0])
 
-    def inverse(self) -> "Ry01":
+    def inverse(self) -> Ry01:
         return Ry01(-self._params[0])
 
 
@@ -305,7 +305,7 @@ class Ry02(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.ry02(self._params[0])
 
-    def inverse(self) -> "Ry02":
+    def inverse(self) -> Ry02:
         return Ry02(-self._params[0])
 
 
@@ -318,7 +318,7 @@ class Ry12(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.ry12(self._params[0])
 
-    def inverse(self) -> "Ry12":
+    def inverse(self) -> Ry12:
         return Ry12(-self._params[0])
 
 
@@ -333,7 +333,7 @@ class Rz01(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.rz01(self._params[0])
 
-    def inverse(self) -> "Rz01":
+    def inverse(self) -> Rz01:
         return Rz01(-self._params[0])
 
 
@@ -346,7 +346,7 @@ class Rz02(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.rz02(self._params[0])
 
-    def inverse(self) -> "Rz02":
+    def inverse(self) -> Rz02:
         return Rz02(-self._params[0])
 
 
@@ -359,7 +359,7 @@ class Rz12(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.rz12(self._params[0])
 
-    def inverse(self) -> "Rz12":
+    def inverse(self) -> Rz12:
         return Rz12(-self._params[0])
 
 
@@ -385,7 +385,7 @@ class G01(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.g01(self._params[0], self._params[1])
 
-    def inverse(self) -> "G01":
+    def inverse(self) -> G01:
         return G01(-self._params[0], self._params[1])
 
 
@@ -408,7 +408,7 @@ class G02(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.g02(self._params[0], self._params[1])
 
-    def inverse(self) -> "G02":
+    def inverse(self) -> G02:
         return G02(-self._params[0], self._params[1])
 
 
@@ -431,7 +431,7 @@ class G12(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.g12(self._params[0], self._params[1])
 
-    def inverse(self) -> "G12":
+    def inverse(self) -> G12:
         return G12(-self._params[0], self._params[1])
 
 
@@ -448,7 +448,7 @@ class Ud(Gate):
     def matrix(self) -> NDArray[np.complex128]:
         return em.u_d(self._params[0], self._params[1], self._params[2])
 
-    def inverse(self) -> "Ud":
+    def inverse(self) -> Ud:
         return Ud(-self._params[0], -self._params[1], -self._params[2])
 
 

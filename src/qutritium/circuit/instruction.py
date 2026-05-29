@@ -4,8 +4,9 @@
 """Instruction: one gate applied to specific qutrit(s) in a circuit."""
 from __future__ import annotations
 
+from collections.abc import Sequence
 from functools import cached_property
-from typing import Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy.typing import NDArray
@@ -52,7 +53,7 @@ class Instruction:
             inverse: bool = False,
             custom: bool = False,
             custom_matrix: NDArray | None = None,
-            gate: "Gate | None" = None,
+            gate: Gate | None = None,
     ) -> None:
         """Construct an Instruction.
 
@@ -114,7 +115,7 @@ class Instruction:
         self._is_inverse: bool = inverse
         self._is_custom: bool = custom
         self._is_two_qutrit_gate: bool = second_qutrit is not None
-        self.gate: "Gate | None" = gate  # Gate reference for introspection
+        self.gate: Gate | None = gate  # Gate reference for introspection
 
         if not custom:
             self._verify_gate()
