@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Sequence
-from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -15,7 +14,7 @@ from qutritium.gates.base import Gate
 
 # Type alias: an operation is either an Instruction or the literal "measurement"
 # string sentinel. Used for internal QutritCircuit class only
-_Operation = Union[Instruction, str]
+_Operation = Instruction | str
 
 
 class QutritCircuit:
@@ -170,7 +169,7 @@ class QutritCircuit:
     @property
     def operation_set(self) -> list[_Operation]:
         """List of operations."""
-        return self._operation_set
+        return list(self._operation_set)
 
     @operation_set.setter
     def operation_set(self, ops: list[_Operation]) -> None:

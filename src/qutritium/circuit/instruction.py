@@ -93,6 +93,8 @@ class Instruction:
             If ``gate_type`` is unknown (and ``custom=False``), if
             ``custom=True`` without a ``custom_matrix``, or if
             ``custom_matrix`` has the wrong shape for the gate width.
+            If 2 qutrits is not adjacent, which is not supported
+            in this version.
         """
         # Validate qutrit range
         if not 0 <= first_qutrit < n_qutrit:
@@ -105,6 +107,10 @@ class Instruction:
                 f"second_qutrit={second_qutrit} is out of range "
                 f"[0, {n_qutrit})."
             )
+        if second_qutrit:
+            assert second_qutrit is not None
+            if abs(first_qutrit - second_qutrit) != 1:
+                raise ValueError("Only adjacent two-qutrit gates are currently supported in the core.")
 
         self._type: str = gate_type
         self.n_qutrit: int = n_qutrit
@@ -262,7 +268,12 @@ class Instruction:
 
     @cached_property
     def effect_matrix(self) -> NDArray:
-        """Full-register effect matrix, computed lazily on first access."""
+        """Full-register effect matrix, computed lazily on first access.
+
+        WARNING:
+            This method only computes adjacent qutrits. A more general approach will be shipped
+            in next version.
+        """
         if self._is_two_qutrit_gate:
             assert self.second_qutrit is not None
             lo = min(self.first_qutrit, self.second_qutrit)
