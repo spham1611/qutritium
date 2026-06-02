@@ -30,7 +30,6 @@ GATE_SET: frozenset[str] = frozenset({
     "rz01", "rz02", "rz12",
     "u_d",
     "hdm", "u_ft",
-    # Two-qutrit gates (v1.1.0)
     "csum", "csum_dag", "cphase", "swap3",
 })
 
@@ -38,9 +37,9 @@ GATE_SET: frozenset[str] = frozenset({
 class Instruction:
     """One gate application in a circuit. ``effect_matrix`` is lazy.
 
-    Most users construct ``Instruction`` indirectly via
+    User should construct ``Instruction`` indirectly via
     ``QutritCircuit.append``; the direct constructor is the lower-level
-    path used by the string-based API and by ``SU3Decomposition``.
+    path.
     """
 
     def __init__(
@@ -55,7 +54,7 @@ class Instruction:
             custom_matrix: NDArray | None = None,
             gate: Gate | None = None,
     ) -> None:
-        """Construct an Instruction.
+        """Ctor.
 
         Parameters
         ----------
@@ -271,8 +270,8 @@ class Instruction:
         """Full-register effect matrix, computed lazily on first access.
 
         WARNING:
-            This method only computes adjacent qutrits. A more general approach will be shipped
-            in next version.
+            This method only computes 2 adjacent qutrits. A more general approach
+            will be delivered in upcoming versions.
         """
         if self._is_two_qutrit_gate:
             assert self.second_qutrit is not None

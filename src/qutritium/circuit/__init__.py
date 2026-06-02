@@ -2,9 +2,9 @@
 # See LICENSE.txt for full terms.
 """Circuit construction: gates, instructions, circuits."""
 
-from .instruction import GATE_SET, Instruction
-from .qutrit_circuit import QutritCircuit
-from .utils import print_statevector, statevector_to_state
+from qutritium.circuit.instruction import GATE_SET, Instruction
+from qutritium.circuit.qutrit_circuit import QutritCircuit
+from qutritium.circuit.utils import print_statevector, statevector_to_state
 
 __all__ = [
     "GATE_SET",
@@ -13,4 +13,5 @@ __all__ = [
     "print_statevector",
     "statevector_to_state",
 ]
+
 

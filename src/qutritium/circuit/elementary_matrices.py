@@ -508,10 +508,7 @@ def cnot(control: int, target: int) -> NDArray[np.complex128]:
 
 
 def csum() -> NDArray[np.complex128]:
-    """CSUM gate: |c, t> -> |c, (t + c) mod 3>. 9x9 permutation matrix.
-
-    Ref: Wang et al. (2020), Front. Phys. 8, 589504.
-    """
+    """CSUM gate: |c, t> -> |c, (t + c) mod 3>. 9x9 permutation matrix."""
     mat = np.zeros((9, 9), dtype=complex)
     for c in range(3):
         for t in range(3):

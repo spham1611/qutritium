@@ -12,8 +12,7 @@ from numpy.typing import NDArray
 from qutritium.circuit.instruction import Instruction
 from qutritium.gates.base import Gate
 
-# Type alias: an operation is either an Instruction or the literal "measurement"
-# string sentinel. Used for internal QutritCircuit class only
+# Type alias: Used for internal QutritCircuit class only
 _Operation = Instruction | str
 
 
@@ -26,7 +25,7 @@ class QutritCircuit:
     def __init__(
             self, n_qutrit: int, initial_state: NDArray | None,
     ) -> None:
-        """Construct a QutritCircuit.
+        """Ctor.
 
         Parameters
         ----------
