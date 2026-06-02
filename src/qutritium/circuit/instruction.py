@@ -331,3 +331,9 @@ class Instruction:
             custom_matrix=self.gate_matrix if self._is_custom else None,
             gate=inverted_gate,
         )
+
+
+__all__ = [
+    "GATE_SET",
+    "Instruction",
+]
