@@ -1,7 +1,7 @@
 # MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
 # See LICENSE.txt for full terms.
 
-"""base.py: Container for simulators. Subclasses implement evolution and sampling"""
+"""base.py: Container for simulators. Subclasses implement evolution and sampling."""
 from abc import ABC, abstractmethod
 from collections import Counter
 from typing import TYPE_CHECKING
@@ -88,8 +88,8 @@ class Simulator(ABC):
     def run(self, num_shots: int = 1024) -> None:
         """Evolve the circuit for num_shots times.
 
-        Results stored in ''self._measurement_result'' and can be accessed via :meth:'get_counts'
-        or :meth:'result'
+        Results stored in ``_measurement_result`` and accessed via
+        ``get_counts`` or ``result``.
 
         Parameters
         ----------
@@ -98,7 +98,7 @@ class Simulator(ABC):
         Raises
         ------
         ValueError
-            If 'num_shots' is not an integer
+            If 'num_shots' is not an integer.
         RunTimeError
             If the circuit has no measurement.
         """
@@ -134,12 +134,12 @@ class Simulator(ABC):
         Parameters
         ----------
         plot_type : str, optional
-            ''"histogram"'' (default), ''"line"'', or ''"dot"''.
+            ``"histogram"`` (default), ``"line"``, or ``"dot"``.
 
         Returns
         -------
         matplotlib.figure.Figure
-            matplot Figure object for further improvement
+            matplot Figure object for further improvement.
         """
         if plot_type not in _VALID_PLOT_TYPES:
             raise ValueError(f"'plot_type' must be one of {_VALID_PLOT_TYPES}; got {plot_type}")

@@ -88,7 +88,7 @@ def average_gate_fidelity(
     Raises
     ------
     ValueError
-        Propagated from :func:`process_fidelity`.
+        Propagated from ``process_fidelity``.
 
     Examples
     --------

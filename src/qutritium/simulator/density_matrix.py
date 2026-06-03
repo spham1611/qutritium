@@ -13,18 +13,17 @@ from qutritium.simulator.base import Simulator
 
 
 class DensityMatrixSimulator(Simulator):
-    """Density-matrix simulator for a :class:`QutritCircuit`.
+    """Density-matrix simulator for a ``QutritCircuit``.
 
     Evolves the density matrix via ``rho -> U rho U^dag``. Memory scales
     as ``9^n_qutrit``; use only for small registers or mixed states.
-    Otherwise, prefer
-    :class:`~qutritium.simulator.statevector.QASMSimulator`.
+    Otherwise, prefer ``QASMSimulator``.
     """
 
     name = "density_matrix_simulator"
 
     def __init__(self, circuit: QutritCircuit) -> None:
-        """Initialize a :class:`DensityMatrixSimulator`.
+        """Initialize a ``DensityMatrixSimulator``.
 
         Parameters
         ----------

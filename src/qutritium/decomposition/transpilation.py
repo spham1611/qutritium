@@ -261,7 +261,7 @@ class SU3Decomposition:
     def to_circuit(self) -> QutritCircuit:
         """Build a ``QutritCircuit`` from this decomposition.
 
-        Emits the same factor sequence as :meth:`to_native`, but as
+        Emits the same factor sequence as ``to_native``, but as
         ``G01`` / ``G12`` / ``Ud`` gate objects appended to a fresh
         circuit.
 

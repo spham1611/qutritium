@@ -134,9 +134,8 @@ class QutritCircuit:
     def measure_all(self) -> None:
         """Add measurement. Can only be called once.
 
-        This only add string ''measurement'' to our instruction set -> It
-        will be handled by statevector.py file
-
+        Appends the ``measurement`` sentinel to the operation set; the
+        simulators handle it at sampling time.
         """
         if self._measurement_flag:
             raise RuntimeError("A measurement has already been added to this circuit.")

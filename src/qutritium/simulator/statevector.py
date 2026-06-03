@@ -13,14 +13,11 @@ from qutritium.simulator.base import Simulator
 
 
 class QASMSimulator(Simulator):
-    """Statevector simulator for a :class:`QutritCircuit`.
+    """Statevector simulator for a ``QutritCircuit``.
 
     Applies each gate's full-register matrix to the running statevector
-    and (optionally) samples measurement outcomes. This way
-    of doing computation is generally faster than using
-    :class:`~qutritium.simulator.DensityMatrixSimulator`.
-    However, for mixed state, it is advised to
-    use :class:`~qutritium.simulator.DensityMatrixSimulator`.
+    and (optionally) samples measurement outcomes. Generally faster than
+    ``DensityMatrixSimulator``; for mixed states, use that instead.
     """
 
     name = "qasm_simulator"
