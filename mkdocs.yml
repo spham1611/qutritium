@@ -49,7 +49,8 @@ nav:
   - API Reference:
       - Gates: api/gates.md
       - Circuits: api/circuits.md
-      - Simulator: api/simulator.md
+      - Simulators: api/simulator.md
+      - Metrics: api/metrics.md
       - Decomposition: api/decomposition.md
   - Tutorials:
       - Qutrit Bell State: tutorials/bell-state.md

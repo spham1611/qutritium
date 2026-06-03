@@ -3,14 +3,18 @@
 **A hardware-agnostic Python library for qutrit quantum computing.**
 
 Qutritium provides qutrit (three-level quantum system) gate definitions, circuit
-construction, statevector simulation, and SU(3) decomposition. It runs entirely
-in software — no quantum hardware or cloud account required.
+construction, statevector and density-matrix simulation, metrics, and SU(3)
+decomposition. It runs entirely in software — no quantum hardware or cloud
+account required.
 
 ## Features
 
 - **34 qutrit gates** — 29 single-qutrit (fixed + parametric) and 5 two-qutrit gates
-- **Circuit model** — build and compose qutrit circuits of arbitrary width
-- **Statevector simulator** — exact simulation with Born-rule sampling
+- **Circuit model** — build and compose qutrit circuits of arbitrary width;
+  introspect with `depth()`, `gate_count()`, `to_matrix()`
+- **Two simulators** — exact statevector with Born-rule sampling, and a
+  density-matrix backend (expectation values, partial trace) for mixed states
+- **Metrics** — state/process fidelity, trace distance, purity, von Neumann entropy
 - **SU(3) decomposition** — factor any 3×3 unitary into native rotations
 
 ## Quick Install
