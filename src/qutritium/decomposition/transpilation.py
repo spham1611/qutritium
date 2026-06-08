@@ -146,7 +146,8 @@ class SU3Decomposition:
 
     References
     ----------
-    Vitanov, N. V. (2012). Phys. Rev. A 85, 032331.
+    Vitanov, N. V. (2012). Synthesis of arbitrary SU(3) transformations of
+    atomic qutrits. Phys. Rev. A 85, 032331.
 
     Examples
     --------

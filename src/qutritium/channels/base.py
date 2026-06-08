@@ -1,56 +1,31 @@
 # MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
 # See LICENSE.txt for full terms.
 
-"""container: Container for channel class."""
+"""Channel: a CPTP map stored as Kraus operators."""
 from __future__ import annotations
-
-from typing import List
 
 import numpy as np
 from numpy.typing import NDArray
 
 
 def _completeness_check(kraus_operators: list[NDArray], dimension: int) -> None:
-    """Check completeness of Kraus operators.
-
-    Parameters
-    ----------
-    kraus_operators : list[NDArray]
-        Describe how our density matrix evolve under environment interaction.
-    dimension : int
-        Dimension of qutrits
-
-    Raises
-    -------
-    ValueError
-        If the Kraus operator completeness condition is not satisfied.
-    """
+    """Raise if sum_i K_i^dag K_i != I (trace preservation)."""
     sum_ks = sum(k.conj().T @ k for k in kraus_operators)
     if not np.allclose(sum_ks, np.eye(dimension), atol=1e-8):
         raise ValueError("Sum of Kraus operators does not satisfy completeness condition.")
 
 
 def _dimension_check(kraus_operators: list[NDArray], dimension: int) -> None:
-    """Check dimension of Kraus operators.
-    Parameters
-    ----------
-    kraus_operators : list[NDArray]
-        Describe how our density matrix evolve under environment interaction.
-    dimension : int
-        Dimension of qutrits
-
-    Raises
-    -------
-    ValueError
-        If the dimension of Kraus operator does not match that of density matrix
-    """
+    """Raise if any Kraus operator is not (dimension, dimension)."""
     for k in kraus_operators:
         if k.shape != (dimension, dimension):
-            raise ValueError("Kraus operator is not a square matrix.")
+            raise ValueError(
+                f"Kraus operator must have shape ({dimension}, {dimension}); got {k.shape}."
+            )
 
 
 class Channel:
-    """A CPT map as Kraus operators K_i, with sum of K_i and its dagger = I"""
+    """A CPTP map as Kraus operators K_i, with sum_i K_i^dag K_i = I."""
 
     def __init__(self, kraus_operators: list[NDArray], num_qutrits: int = 1) -> None:
         """Ctor
@@ -65,7 +40,7 @@ class Channel:
         Raises
         ------
         ValueError
-            If the Kraus operator is not a square matrix.
+            If a Kraus operator does not have shape (dimension, dimension).
             If the sum of Kraus operators does not satisfy completeness condition.
             If ``num_qutrits < 1``.
 
@@ -75,7 +50,7 @@ class Channel:
 
         # Validate Kraus operators
         if num_qutrits < 1:
-            raise ValueError("Number of qutrits must be a positive integer greater than 1.")
+            raise ValueError("Number of qutrits must be at least 1.")
         _dimension_check(ks, dimension)
         _completeness_check(ks, dimension)
 
@@ -89,9 +64,9 @@ class Channel:
         return self._dimension  # type: ignore[no-any-return]
 
     @property
-    def kraus(self) -> List[NDArray]:
-        """Kraus operator list."""
-        return self._kraus
+    def kraus(self) -> list[NDArray]:
+        """Kraus operator list (a copy; mutating it does not affect the channel)."""
+        return list(self._kraus)
 
     @kraus.setter
     def kraus(self, kraus_operators: list[NDArray]) -> None:
@@ -104,7 +79,7 @@ class Channel:
         ----------
         kraus_operators : list[NDArray]
         """
-        ks = [np.asarray(k) for k in kraus_operators]
+        ks = [np.asarray(k, dtype=complex) for k in kraus_operators]
         _dimension_check(ks, self.dimension)
         _completeness_check(ks, self.dimension)
         self._kraus = ks
