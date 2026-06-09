@@ -124,7 +124,7 @@ Supporting files at repo root:
 .github/workflows/       # CI (test.yml, docs.yml)
 docs/                    # MkDocs source → spham1611.github.io/qutritium
 examples/                # Bell-state and noise+tomography tutorial notebooks
-test/                    # pytest suite (370 tests)
+test/                    # pytest suite
 legacy/                  # v0.0.x Qiskit-pulse code (archived, not installed)
 ```
 
