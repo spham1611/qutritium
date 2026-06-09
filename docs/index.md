@@ -15,6 +15,10 @@ account required.
 - **Two simulators** — exact statevector with Born-rule sampling, and a
   density-matrix backend (expectation values, partial trace) for mixed states
 - **Metrics** — state/process fidelity, trace distance, purity, von Neumann entropy
+- **Noise modeling** — Kraus channels (depolarizing, dephasing, amplitude damping,
+  Pauli), a simulator-level `NoiseModel`, and classical readout error
+- **State tomography** — mutually-unbiased-basis circuits with linear-inversion
+  reconstruction, plus density-matrix visualization
 - **SU(3) decomposition** — factor any 3×3 unitary into native rotations
 
 ## Quick Install
@@ -40,6 +44,32 @@ sim = QASMSimulator(qc)
 sim.run(num_shots=1000)
 print(sim.get_counts())
 # {'00': ~333, '11': ~333, '22': ~333}
+```
+
+## How it fits together
+
+```text
+  Gate                  qutritium.gates - X01, H3, CSUM, Rx01, ...
+    |                   a unitary; has .matrix() / .inverse()
+    |  qc.append(gate, qutrit)
+    v
+  QutritCircuit         ordered operations (+ measure_all)
+    |                   - each append wraps the gate as an Instruction
+    |                     (gate + target qutrit(s); lazy 3^n x 3^n effect_matrix)
+    |                   - introspect: .draw() .depth() .gate_count() .to_matrix()
+    |  hand the circuit to a simulator
+    v
+  Simulator             QASMSimulator (statevector)
+    |                   DensityMatrixSimulator (rho - mixed states, noise)
+    |                   - optional: .set_noise_model(NoiseModel(...))
+    v
+  results               .get_counts()  .probabilities()  .return_final_state()
+    |
+    +--> tomography.reconstruct_state   counts -> reconstructed rho
+    +--> metrics                        state_fidelity, purity, entropy, ...
+
+  SU3Decomposition(U) --> QutritCircuit   decompose any 3x3 unitary into
+                                          native gates, then run it
 ```
 
 ## Supported by

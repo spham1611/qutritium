@@ -11,6 +11,7 @@ prune docs
 prune examples
 prune .github
 prune scripts
+prune paper
 
 # Exclude development metadata
 exclude .gitignore

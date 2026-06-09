@@ -98,6 +98,32 @@ print(dm.get_counts())
 
 All gates inherit from `Gate` and provide `.matrix()`, `.inverse()`, `.is_unitary()`, `.label`, `.params`.
 
+## How it fits together
+
+```text
+  Gate                  qutritium.gates - X01, H3, CSUM, Rx01, ...
+    |                   a unitary; has .matrix() / .inverse()
+    |  qc.append(gate, qutrit)
+    v
+  QutritCircuit         ordered operations (+ measure_all)
+    |                   - each append wraps the gate as an Instruction
+    |                     (gate + target qutrit(s); lazy 3^n x 3^n effect_matrix)
+    |                   - introspect: .draw() .depth() .gate_count() .to_matrix()
+    |  hand the circuit to a simulator
+    v
+  Simulator             QASMSimulator (statevector)
+    |                   DensityMatrixSimulator (rho - mixed states, noise)
+    |                   - optional: .set_noise_model(NoiseModel(...))
+    v
+  results               .get_counts()  .probabilities()  .return_final_state()
+    |
+    +--> tomography.reconstruct_state   counts -> reconstructed rho
+    +--> metrics                        state_fidelity, purity, entropy, ...
+
+  SU3Decomposition(U) --> QutritCircuit   decompose any 3x3 unitary into
+                                          native gates, then run it
+```
+
 ## Package Structure
 
 ```
