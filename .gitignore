@@ -62,6 +62,12 @@ changes_summary.txt
 # Personal scratch
 _read_plan.py
 
+# Claude Code (never commit per CLAUDE.md)
+.claude/
+
+# Local working spec (not part of the package)
+_v14_spec.md
+
 # Script output artifacts
 scripts/*.png
 scripts/*.pdf

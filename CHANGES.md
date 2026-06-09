@@ -1,5 +1,46 @@
 # Changelog
 
+## [1.4.0] — 2026-06-09
+
+Added `qutritium.channels` — Kraus-operator noise channels (`Channel`,
+`depolarizing_channel`, `dephasing_channel`, `amplitude_damping_channel`,
+`pauli_channel`), a classical `ReadoutError`, and the `NoiseModel` /
+`SPAMNoiseModel` containers. Noise attaches to a simulator with
+`Simulator.set_noise_model`: the `DensityMatrixSimulator` applies Kraus gate and
+prep channels, both backends apply readout error, and the `QASMSimulator` rejects
+Kraus noise.
+
+Added `qutritium.tomography` — single-qutrit mutually-unbiased-basis state
+tomography (`mub_bases`, `state_tomography_circuits`, `reconstruct_state` via
+linear inversion) plus density-matrix visualization (`plot_density_matrix`,
+`plot_tomography_comparison`).
+
+Added `examples/noise_and_tomography.ipynb`. The test suite is now 370 tests.
+
+Fixed wrong-result bugs that shipped in v1.3.0: metrics now normalize kets and
+validate density matrices; the two-qutrit adjacency check no longer admits
+`second_qutrit == 0`; `effect_matrix` orients fixed two-qutrit gates correctly
+when control > target; `Instruction.inverse()` round-trips for custom gates; and
+`run()` clips tiny-negative probabilities before sampling.
+
+Purely additive — no breaking changes.
+
+## [1.3.0] — 2026-05-29
+
+Added `qutritium.metrics` (`state_fidelity`, `trace_distance`, `purity`,
+`von_neumann_entropy`, `process_fidelity`, `average_gate_fidelity`), the
+`Simulator` ABC, and `DensityMatrixSimulator` (with `expectation_value` and
+`partial_trace`). Added `QutritCircuit.depth()`, `gate_count()`, `to_matrix()`,
+and a public `CPhaseDag` gate. `draw()` now returns its string instead of
+printing.
+
+Breaking: removed `is_dagger=` from `QutritCircuit.append()` — pass
+`gate.inverse()` instead.
+
+## [1.2.1] — 2026-05-21
+
+Fixed the maintainer email address in README.
+
 ## [1.2.0] — 2026-05-17
 
 Added GitHub Actions CI (`.github/workflows/test.yml`) for Python 3.10/3.11/3.12/3.13.

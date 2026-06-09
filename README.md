@@ -9,7 +9,7 @@
 
 **A hardware-agnostic Python library for qutrit quantum computing.**
 
-*Build, simulate, and decompose three-level quantum circuits.*
+*Build, simulate, and decompose three-level quantum circuits — with metrics, noise modeling, and state tomography.*
 
 </div>
 
@@ -52,6 +52,25 @@ print(dec.angles)  # nine decomposition angles
 print(dec.reconstruct())  # ≈ U to machine precision
 ```
 
+Add noise on the simulator and reconstruct a state with tomography:
+
+```python
+from qutritium import QutritCircuit, DensityMatrixSimulator
+from qutritium.channels import NoiseModel, depolarizing_channel
+from qutritium.gates import X01
+
+qc = QutritCircuit(1, None)
+qc.append(X01(), first_qutrit=0)
+qc.measure_all()
+
+nm = NoiseModel()
+nm.add_quantum_error(depolarizing_channel(0.1), "X01")  # noise lives on the sim, not the circuit
+dm = DensityMatrixSimulator(qc)
+dm.set_noise_model(nm)
+dm.run(num_shots=2000)
+print(dm.get_counts())
+```
+
 ## Gate Library
 
 ### Single-qutrit gates
@@ -92,7 +111,10 @@ src/qutritium/
 │   ├── instruction.py          # Instruction + GATE_SET
 │   ├── qutrit_circuit.py       # QutritCircuit container
 │   └── utils.py                # Statevector utilities
-├── simulator/           # QASMSimulator (statevector)
+├── simulator/           # QASMSimulator (statevector) + DensityMatrixSimulator
+├── channels/            # Noise channels, NoiseModel, ReadoutError, SPAM
+├── metrics/             # Fidelity, trace distance, purity, entropy
+├── tomography/          # MUB state tomography + visualization
 └── decomposition/       # SU(3) → native rotations
 ```
 
@@ -101,8 +123,8 @@ Supporting files at repo root:
 ```
 .github/workflows/       # CI (test.yml, docs.yml)
 docs/                    # MkDocs source → spham1611.github.io/qutritium
-examples/tutorial.ipynb  # End-to-end Bell state tutorial
-test/                    # pytest suite (168 tests)
+examples/                # Bell-state and noise+tomography tutorial notebooks
+test/                    # pytest suite (370 tests)
 legacy/                  # v0.0.x Qiskit-pulse code (archived, not installed)
 ```
 
@@ -110,7 +132,8 @@ legacy/                  # v0.0.x Qiskit-pulse code (archived, not installed)
 
 Full docs: **<https://spham1611.github.io/qutritium/>**
 
-Tutorial notebook: [`examples/tutorial.ipynb`](examples/tutorial.ipynb)
+Tutorial notebooks: [`examples/tutorial.ipynb`](examples/tutorial.ipynb) (core) and
+[`examples/noise_and_tomography.ipynb`](examples/noise_and_tomography.ipynb) (noise + tomography)
 
 ## History
 
