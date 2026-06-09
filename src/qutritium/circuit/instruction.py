@@ -106,10 +106,8 @@ class Instruction:
                 f"second_qutrit={second_qutrit} is out of range "
                 f"[0, {n_qutrit})."
             )
-        if second_qutrit:
-            assert second_qutrit is not None
-            if abs(first_qutrit - second_qutrit) != 1:
-                raise ValueError("Only adjacent two-qutrit gates are currently supported in the core.")
+        if second_qutrit is not None and abs(first_qutrit - second_qutrit) != 1:
+            raise ValueError("Only adjacent two-qutrit gates are currently supported in the core.")
 
         self._type: str = gate_type
         self.n_qutrit: int = n_qutrit
@@ -129,10 +127,7 @@ class Instruction:
 
         # Validate custom matrix dimensions
         if custom and custom_matrix is not None:
-            if self._is_two_qutrit_gate:
-                expected = 9
-            else:
-                expected = 3
+            expected = 9 if self._is_two_qutrit_gate else 3
             if custom_matrix.shape != (expected, expected):
                 raise ValueError(
                     f"custom_matrix has shape {custom_matrix.shape}; "
@@ -148,9 +143,10 @@ class Instruction:
         else:
             base_matrix = self._resolve_gate_matrix()
 
+        self._base_matrix: NDArray = np.asarray(base_matrix)
         self.gate_matrix: NDArray = (
-            np.asarray(base_matrix).conj().T if self._is_inverse
-            else np.asarray(base_matrix)
+            self._base_matrix.conj().T if self._is_inverse
+            else self._base_matrix
         )
 
     # ------------------------------------------------------------------
@@ -270,8 +266,7 @@ class Instruction:
         """Full-register effect matrix, computed lazily on first access.
 
         WARNING:
-            This method only computes 2 adjacent qutrits. A more general approach
-            will be delivered in upcoming versions.
+            Two-qutrit gates must act on adjacent qutrits in this version.
         """
         if self._is_two_qutrit_gate:
             assert self.second_qutrit is not None
@@ -279,14 +274,22 @@ class Instruction:
             hi = max(self.first_qutrit, self.second_qutrit)
             left_dim = 3 ** lo
             right_dim = 3 ** (self.n_qutrit - hi - 1)
+            block = self.gate_matrix
+            # Reverse the order if the target qutrit number > the control target number
+            # which we would do a swap operation : SWAP @ U @ SWAP to correct the order
+            is_oriented_cnot = (not self._is_custom) and self._type == "CNOT"
+            if self.first_qutrit > self.second_qutrit and not is_oriented_cnot:
+                swap = em.swap3()
+                block = swap @ block @ swap
         else:
             left_dim = 3 ** self.first_qutrit
             right_dim = 3 ** (self.n_qutrit - self.first_qutrit - 1)
+            block = self.gate_matrix
 
         if left_dim == 1 and right_dim == 1:
-            return self.gate_matrix
+            return block
         return np.kron(
-            np.kron(np.eye(left_dim, dtype=complex), self.gate_matrix),
+            np.kron(np.eye(left_dim, dtype=complex), block),
             np.eye(right_dim, dtype=complex),
         )
 
@@ -328,7 +331,7 @@ class Instruction:
             parameter=self.parameter,
             inverse=not self._is_inverse,
             custom=self._is_custom,
-            custom_matrix=self.gate_matrix if self._is_custom else None,
+            custom_matrix=self._base_matrix if self._is_custom else None,
             gate=inverted_gate,
         )
 

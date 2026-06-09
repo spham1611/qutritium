@@ -73,7 +73,28 @@ def print_statevector(state: NDArray[np.complex128], n_qutrit: int) -> None:
         print(f"{state_coeff[i]} |{ket}>{suffix}")
 
 
+def single_matrix_calc(operator: NDArray, qutrit: int, n_qutrit: int) -> NDArray:
+    """Apply operator to a single qutrit. This is for quick kron product implementation.
+
+    Parameters
+    ----------
+    operator : NDArray
+        Single-qutrit operator.
+    qutrit : int
+        Target index
+    n_qutrit : int
+        Number of qutrits
+    Returns
+    -------
+    NDArray
+    """
+    left = np.eye(3 ** qutrit, dtype=complex)
+    right = np.eye(3 ** (n_qutrit - qutrit - 1), dtype=complex)
+    return np.kron(np.kron(left, operator), right)
+
+
 __all__ = [
     "print_statevector",
+    "single_matrix_calc",
     "statevector_to_state",
 ]

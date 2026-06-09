@@ -155,3 +155,21 @@ class TestDraw:
         qc.draw()
         captured = capsys.readouterr()
         assert captured.out == ""
+
+
+# ===================================================================
+# measurement guard (a measurement must remain the final operation)
+# ===================================================================
+class TestMeasurementGuard:
+    def test_append_after_measure_raises(self):
+        qc = QutritCircuit(1, None)
+        qc.append(H3(), first_qutrit=0)
+        qc.measure_all()
+        with pytest.raises(RuntimeError, match="measure"):
+            qc.append(X01(), first_qutrit=0)
+
+    def test_double_measure_raises(self):
+        qc = QutritCircuit(1, None)
+        qc.measure_all()
+        with pytest.raises(RuntimeError):
+            qc.measure_all()

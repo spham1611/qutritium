@@ -50,9 +50,12 @@ nav:
       - Gates: api/gates.md
       - Circuits: api/circuits.md
       - Simulators: api/simulator.md
+      - Channels & Noise: api/channels.md
+      - Tomography: api/tomography.md
       - Metrics: api/metrics.md
       - Decomposition: api/decomposition.md
   - Tutorials:
       - Qutrit Bell State: tutorials/bell-state.md
+      - Noise & Tomography: tutorials/noise-and-tomography.md
   - Legacy Code: legacy.md
   - Changelog: changelog.md

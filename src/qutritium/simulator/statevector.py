@@ -4,12 +4,17 @@
 """Statevector simulator. Applies gates sequentially, samples Born-rule outcomes."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 from numpy.typing import NDArray
 
 from qutritium.circuit.instruction import Instruction
 from qutritium.circuit.qutrit_circuit import QutritCircuit
 from qutritium.simulator.base import Simulator
+
+if TYPE_CHECKING:
+    from qutritium.channels.noise_model import NoiseModel
 
 
 class QASMSimulator(Simulator):
@@ -32,9 +37,6 @@ class QASMSimulator(Simulator):
         super().__init__(circuit)
         self.initial_state = self.circuit.initial_state
         self.state: NDArray = self.initial_state.copy()
-
-        # TODO: SPAM Model
-        # self._spam_error
 
     def _simulation(self) -> None:
         """Run the simulator."""
@@ -67,6 +69,23 @@ class QASMSimulator(Simulator):
         if not self._simulation_flag:
             self._simulation()
         return self.state @ self.state.conj().T  # type: ignore[no-any-return]
+
+    def set_noise_model(self, noise_model: NoiseModel) -> None:
+        """Set the noise model.
+
+        However, this only accepts the readout error only!
+
+        Raises
+        ------
+        NotImplementedError
+            If the model carries Kraus (gate or prep) errors.
+        RuntimeError
+            If the simulation has already run.
+        """
+        if noise_model.has_kraus_errors:
+            raise NotImplementedError(
+                "QASMSimulator can not represent Kraus noise. Use DensityMatrixSimulator instead.")
+        super().set_noise_model(noise_model)
 
 
 __all__ = ["QASMSimulator"]

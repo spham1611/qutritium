@@ -467,18 +467,37 @@ class UFT(Gate):
 
 
 __all__ = [
-    # Fixed gates
-    "I3", "X01", "X02", "X12",
-    "Y01", "Y02", "Y12",
-    "Z01", "Z02", "Z12",
-    "XPlus", "XMinus",
-    "H3", "S3", "T3", "UFT",
-    # Parametric rotation gates
-    "Rx01", "Rx02", "Rx12",
-    "Ry01", "Ry02", "Ry12",
-    "Rz01", "Rz02", "Rz12",
     # Generalized rotations
-    "G01", "G02", "G12",
+    "G01",
+    "G02",
+    "G12",
+    "H3",
+    # Fixed gates
+    "I3",
+    "S3",
+    "T3",
+    "UFT",
+    "X01",
+    "X02",
+    "X12",
+    "Y01",
+    "Y02",
+    "Y12",
+    "Z01",
+    "Z02",
+    "Z12",
+    # Parametric rotation gates
+    "Rx01",
+    "Rx02",
+    "Rx12",
+    "Ry01",
+    "Ry02",
+    "Ry12",
+    "Rz01",
+    "Rz02",
+    "Rz12",
     # Diagonal phase gate
     "Ud",
+    "XMinus",
+    "XPlus",
 ]

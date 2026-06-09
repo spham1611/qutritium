@@ -164,7 +164,7 @@ class SU3Decomposition:
         Parameters
         ----------
         su3 : NDArray
-            Shape ``(3, 3)``. Must be unitary to within ``atol=1e-6``.
+            Shape ``(3, 3)``. Must be unitary to within ``atol=1e-8``.
         qutrit_index : int
             Index of the qutrit this unitary acts on.
         n_qutrits : int
@@ -179,7 +179,7 @@ class SU3Decomposition:
             raise ValueError(
                 f"su3 must have shape (3, 3); got {su3.shape}."
             )
-        if not np.allclose(su3 @ su3.conj().T, np.eye(3), atol=1e-6):
+        if not np.allclose(su3 @ su3.conj().T, np.eye(3), atol=1e-8):
             raise ValueError("su3 is not unitary.")
         self.su3: NDArray = su3
         self.qutrit_index: int = qutrit_index

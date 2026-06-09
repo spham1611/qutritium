@@ -197,10 +197,10 @@ class TestParametricGates:
     def test_rotation_2pi_is_minus_identity(self, gate_cls):
         """R(2π) = -I for Pauli-like generators (half-angle convention)."""
         g = gate_cls(2 * np.pi)
-        expected = -np.eye(3, dtype=complex)
+        -np.eye(3, dtype=complex)
         # Only the 2×2 subblock picks up the -1; the complementary state stays at +1
         # So R(2π) = diag with two -1 entries and one +1 entry
-        m = g.matrix()
+        g.matrix()
         # Verify it's diagonal and unitary
         assert g.is_unitary()
         # R(4π) = I

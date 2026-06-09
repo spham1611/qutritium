@@ -4,12 +4,18 @@
 """Density-matrix simulator."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 from numpy.typing import NDArray
 
 from qutritium.circuit.instruction import Instruction
 from qutritium.circuit.qutrit_circuit import QutritCircuit
+from qutritium.circuit.utils import single_matrix_calc
 from qutritium.simulator.base import Simulator
+
+if TYPE_CHECKING:
+    from qutritium.channels.base import Channel
 
 
 class DensityMatrixSimulator(Simulator):
@@ -35,16 +41,43 @@ class DensityMatrixSimulator(Simulator):
         psi = self.circuit.initial_state
         self.state: NDArray = psi @ psi.conj().T
 
+    def _apply_channel(self, channel: Channel, qutrit: int | None) -> None:
+        """Apply a single-qutrit channel. If qutrit is None, apply all
+
+        Parameters
+        ----------
+        channel : Channel
+        qutrit : int | None
+        """
+        targets = range(self.n_qutrit) if qutrit is None else (qutrit,)
+        for q in targets:
+            embedded = [single_matrix_calc(k, q, self.n_qutrit) for k in channel.kraus]
+            self.state = sum(e @ self.state @ e.conj().T for e in embedded).astype(
+                np.complex128
+            )
+
     def _simulation(self) -> None:
-        """Evolve the density matrix through the gate sequence."""
+        """Evolve the density matrix through the gate sequence, now adding noise channels."""
         if self._simulation_flag:
             return
+        noise_mod = self._noise_model
+        # Apply Prep Error
+        if noise_mod is not None:
+            for channel, qutrit in noise_mod.prep_errors:
+                self._apply_channel(channel, qutrit)
         operations = (self._operation_set[:-1] if self._measurement_flag
                       else self._operation_set)
+        # Gate Errors, applying Kraus depends on type of gates
         for operation in operations:
             assert isinstance(operation, Instruction)
             unitary = operation.effect_matrix
             self.state = unitary @ self.state @ unitary.conj().T
+            if noise_mod is not None:
+                label = operation.gate.label if operation.gate is not None else operation.type
+                channel = noise_mod.error_for(label)  # type: ignore[assignment]
+                # Assume the first qutrit has error (in the case of 2-qutrit gate)
+                if channel is not None:
+                    self._apply_channel(channel, operation.first_qutrit)
         self._simulation_flag = True
 
     def probabilities(self) -> NDArray[np.float64]:

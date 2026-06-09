@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.4.0] - 2026-06-09
+
+### Added
+
+- `qutritium.channels`: `Channel` (Kraus CPTP map), preset channels
+  (`depolarizing_channel`, `dephasing_channel`, `amplitude_damping_channel`,
+  `pauli_channel`), `ReadoutError` confusion matrix, `NoiseModel`, and
+  `SPAMNoiseModel`.
+- `Simulator.set_noise_model`: attach noise to a simulator. The
+  `DensityMatrixSimulator` applies Kraus gate/prep channels interleaved with
+  the unitary evolution; both backends apply readout error at sampling time.
+  `QASMSimulator` rejects Kraus noise (`NotImplementedError`).
+- `qutritium.tomography`: single-qutrit MUB state tomography — `mub_bases`,
+  `state_tomography_circuits`, `reconstruct_state` (linear inversion), plus
+  `plot_density_matrix` and `plot_tomography_comparison` (matplotlib).
+
+### Fixed
+
+These wrong-result bugs shipped in v1.3.0 and are corrected here:
+
+- `metrics`: kets are normalized and density matrices validated (Hermitian,
+  unit trace) before use; `state_fidelity` / `purity` / `von_neumann_entropy`
+  no longer return wrong values for unnormalized or invalid inputs.
+- `instruction`: the two-qutrit adjacency check no longer lets
+  `second_qutrit == 0` slip through; `effect_matrix` SWAP-conjugates
+  fixed-orientation two-qutrit gates (CSUM / CSUMDag / CPhase / SWAP) when
+  `control > target`; `Instruction.inverse()` round-trips for custom
+  instructions.
+- `simulator`: `run()` clips tiny-negative probabilities before sampling;
+  `RunTimeError` -> `RuntimeError`.
+- `elementary_matrices`: added the missing `__all__`.
+
+### Breaking
+
+- None. v1.4.0 is purely additive. (The pre-1.0 `add_SPAM_noise` method does
+  not exist in the hardware-agnostic package; use `SPAMNoiseModel` with
+  `set_noise_model` instead.)
+
 ## [1.3.0] - 2026-05-29
 
 ### Added

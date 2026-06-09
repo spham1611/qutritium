@@ -312,10 +312,7 @@ class QutritCircuit:
             for i, step in enumerate(steps):
                 cell = step.get(q, "")
                 w = col_widths[i]
-                if cell:
-                    padded = f" {cell} ".center(w + 4, "─")
-                else:
-                    padded = "─" * (w + 4)
+                padded = f" {cell} ".center(w + 4, "─") if cell else "─" * (w + 4)
                 segments.append(padded)
             lines.append(prefix + "".join(segments) + "─")
 

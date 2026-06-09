@@ -18,18 +18,36 @@ _EIG_TOL: float = 1e-12
 def _as_density_matrix(
         state: NDArray[np.complex128],
 ) -> NDArray[np.complex128]:
-    """Promote a ket to |psi><psi|; pass a density matrix through unchanged."""
-    arr = np.asarray(state, dtype=np.complex128)
-    if arr.ndim == 1:
-        ket = arr.reshape(-1, 1)
+    """Promote a ket to |psi><psi|; validate and pass a density matrix through.
+
+    Kets (shape ``(d,)`` or ``(d, 1)``) are normalized before forming the
+    outer product.
+
+    Raises
+    ------
+    ValueError
+        If the shape is unsupported, a ket has zero norm, or a matrix is
+        not Hermitian / not trace-1.
+    """
+    arr_state = np.asarray(state, dtype=np.complex128)
+    if arr_state.ndim == 1 or (arr_state.ndim == 2 and arr_state.shape[1] == 1):
+        ket = arr_state.reshape(-1, 1)
+        norm = np.linalg.norm(ket)
+        if norm == 0.0:
+            raise ValueError("State vector has zero norm; cannot normalize.")
+        ket = ket / norm
         return ket @ ket.conj().T  # type: ignore[no-any-return]
-    if arr.ndim == 2 and arr.shape[1] == 1:
-        return arr @ arr.conj().T  # type: ignore[no-any-return]
-    if arr.ndim == 2 and arr.shape[0] == arr.shape[1]:
-        return arr
+    if arr_state.ndim == 2 and arr_state.shape[0] == arr_state.shape[1]:
+        if not np.allclose(arr_state, arr_state.conj().T, atol=1e-8):
+            raise ValueError("Density matrix is not Hermitian.")
+        if not np.isclose(np.trace(arr_state), 1.0, atol=1e-8):
+            raise ValueError(
+                f"Density matrix must have unit trace; got {np.trace(arr_state):.6g}."
+            )
+        return arr_state
     raise ValueError(
         f"Expected ket of shape (d,) or (d, 1), or density matrix (d, d); "
-        f"got shape {arr.shape}."
+        f"got shape {arr_state.shape}."
     )
 
 
@@ -49,7 +67,7 @@ def _check_square_matrix(arr: NDArray, name: str) -> None:
         )
 
 
-def _check_unitary(arr: NDArray, name: str, atol: float = 1e-6) -> None:
+def _check_unitary(arr: NDArray, name: str, atol: float = 1e-8) -> None:
     """Raise ValueError unless arr @ arr.conj().T equals the identity.
 
     Tolerance matches ``SU3Decomposition.__init__``.

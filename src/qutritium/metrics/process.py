@@ -24,7 +24,7 @@ def process_fidelity(
 ) -> float:
     """Process fidelity F = |tr(U_ideal^dag U_actual)|^2 / d^2.
 
-    Inputs are validated as unitary to within ``atol=1e-6``. For
+    Inputs are validated as unitary to within ``atol=1e-8``. For
     channel-vs-channel fidelity, use the Choi-matrix framework
     coming in v1.4.
 

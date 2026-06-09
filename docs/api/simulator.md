@@ -58,22 +58,31 @@ measurement required).
 
 Pure-state density matrix $|\psi\rangle\langle\psi|$.
 
-**`add_SPAM_noise(p_prep, p_meas, error_type="Pauli_error")`**
+**`set_noise_model(noise_model)`** *(shared `Simulator` method)*
 
-State-preparation and measurement Pauli noise. *(Will be superseded by the
-v1.4 `NoiseModel` framework.)*
+Hand a `NoiseModel` or `SPAMNoiseModel` to the simulator before you call `run()`.
+The `DensityMatrixSimulator` folds Kraus gate/prep channels into the evolution,
+and readout error is applied at sampling time on either backend. The
+`QASMSimulator` takes readout-only models and turns down anything with Kraus
+noise (`NotImplementedError`). Set it before running — the simulation is cached,
+so a late model raises `RuntimeError` and you'll want a fresh simulator instead.
+The full story is on the [Channels & Noise](channels.md) page.
 
 ```python
-from qutritium import QutritCircuit, QASMSimulator
-from qutritium.gates import H3
+from qutritium import QutritCircuit, DensityMatrixSimulator
+from qutritium.channels import NoiseModel, depolarizing_channel
+from qutritium.gates import X01
 
 qc = QutritCircuit(1, None)
-qc.append(H3(), first_qutrit=0)
+qc.append(X01(), first_qutrit=0)
 qc.measure_all()
 
-sim = QASMSimulator(qc)
-sim.run(num_shots=3000)
-print(sim.get_counts())        # {'0': ~1000, '1': ~1000, '2': ~1000}
+nm = NoiseModel()
+nm.add_quantum_error(depolarizing_channel(0.05), "X01")   # 5% depolarizing after each X01
+dm = DensityMatrixSimulator(qc)
+dm.set_noise_model(nm)
+dm.run(num_shots=2000)
+print(dm.get_counts())
 ```
 
 ---

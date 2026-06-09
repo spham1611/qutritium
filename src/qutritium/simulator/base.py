@@ -2,6 +2,8 @@
 # See LICENSE.txt for full terms.
 
 """base.py: Container for simulators. Subclasses implement evolution and sampling."""
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from collections import Counter
 from typing import TYPE_CHECKING
@@ -13,6 +15,8 @@ from qutritium.circuit.qutrit_circuit import QutritCircuit
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
+
+    from qutritium.channels.noise_model import NoiseModel
 
 _VALID_PLOT_TYPES: tuple[str, ...] = ("histogram", "line", "dot")
 
@@ -71,6 +75,7 @@ class Simulator(ABC):
         self._measurement_flag = qc.measurement_flag
         self._measurement_result: list[str] = []
         self._simulation_flag = False
+        self._noise_model: NoiseModel | None = None
 
     @abstractmethod
     def _simulation(self) -> None:
@@ -99,7 +104,7 @@ class Simulator(ABC):
         ------
         ValueError
             If 'num_shots' is not an integer.
-        RunTimeError
+        RuntimeError
             If the circuit has no measurement.
         """
         if num_shots <= 0:
@@ -109,8 +114,11 @@ class Simulator(ABC):
         if not self._simulation_flag:
             self._simulation()
 
-        # Distribution
+        # Clip tiny negative entries.
         probs = self.probabilities()
+        if self._noise_model is not None and self._noise_model.readout is not None:
+            probs = self._noise_model.readout.apply(probs)
+        probs = np.clip(probs, 0.0, None)
         probs = probs / np.sum(probs)
         rng = np.random.default_rng()
         sample = rng.choice(len(probs), size=num_shots, p=probs)
@@ -128,7 +136,23 @@ class Simulator(ABC):
             raise RuntimeError("No measurement result; call run() first")
         return self._measurement_result
 
-    def plot(self, plot_type: str = "histogram") -> "Figure":
+    def set_noise_model(self, noise_model: NoiseModel) -> None:
+        """Attach a noise model. Set it before the first run().
+
+        The simulation is cached once it runs, so a model attached afterward
+        would be silently ignored — we raise instead.
+
+        Raises
+        ------
+        RuntimeError
+            If the simulation has already run.
+        """
+        if self._simulation_flag:
+            raise RuntimeError("Attach the noise model before the first run(); "
+                               "build a fresh simulator to change it.")
+        self._noise_model = noise_model
+
+    def plot(self, plot_type: str = "histogram") -> Figure:
         """Using matplotlib to plot the measurement-count distribution.
 
         Parameters

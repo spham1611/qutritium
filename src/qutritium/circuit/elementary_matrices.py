@@ -541,3 +541,61 @@ def swap3() -> NDArray[np.complex128]:
         for b in range(3):
             mat[3 * b + a, 3 * a + b] = 1.0
     return mat
+
+
+__all__ = [
+    "OMEGA_DEFAULT",
+    # Constants
+    "PI",
+    # Two-qutrit gates
+    "cnot",
+    "cphase",
+    "csum",
+    "csum_dag",
+    "g01",
+    "g02",
+    "g12",
+    "hdm",
+    # Other single-qutrit gates
+    "identity",
+    # Gell-Mann generators
+    "lambda_1",
+    "lambda_2",
+    "lambda_3",
+    "lambda_4",
+    "lambda_5",
+    "lambda_6",
+    "lambda_7",
+    "lambda_8",
+    "r01",
+    "r02",
+    "r12",
+    # Rotations
+    "rx01",
+    "rx02",
+    "rx12",
+    "ry01",
+    "ry02",
+    "ry12",
+    "rz01",
+    "rz02",
+    "rz12",
+    "sdg",
+    "swap3",
+    "tdg",
+    "u_d",
+    "u_ft",
+    # Subspace Pauli gates
+    "x01",
+    "x02",
+    "x12",
+    "x_minus",
+    # Shifts
+    "x_plus",
+    "y01",
+    "y02",
+    "y12",
+    "z01",
+    "z02",
+    "z12",
+]

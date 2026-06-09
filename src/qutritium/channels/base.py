@@ -28,7 +28,7 @@ class Channel:
     """A CPTP map as Kraus operators K_i, with sum_i K_i^dag K_i = I."""
 
     def __init__(self, kraus_operators: list[NDArray], num_qutrits: int = 1) -> None:
-        """Ctor
+        """Ctor.
 
         Parameters
         ----------
@@ -43,7 +43,6 @@ class Channel:
             If a Kraus operator does not have shape (dimension, dimension).
             If the sum of Kraus operators does not satisfy completeness condition.
             If ``num_qutrits < 1``.
-
         """
         dimension = 3 ** num_qutrits
         ks = [np.asarray(k, dtype=complex) for k in kraus_operators]
@@ -70,7 +69,7 @@ class Channel:
 
     @kraus.setter
     def kraus(self, kraus_operators: list[NDArray]) -> None:
-        """Modify the Kraus operator list, assume a complete reset
+        """Modify the Kraus operator list, assume a complete reset.
 
         Would raise if ``kraus_operators`` do not satisfy the above
         conditions. If they do, the Kraus operator list is replaced.
@@ -78,6 +77,7 @@ class Channel:
         Parameters
         ----------
         kraus_operators : list[NDArray]
+            List of Kraus operators.
         """
         ks = [np.asarray(k, dtype=complex) for k in kraus_operators]
         _dimension_check(ks, self.dimension)
@@ -87,3 +87,6 @@ class Channel:
     def apply_kraus_op(self, rho: NDArray) -> NDArray:
         """Apply channel to density matrix."""
         return sum(k @ rho @ k.conj().T for k in self._kraus)  # type: ignore[no-any-return]
+
+
+__all__ = ["Channel"]
