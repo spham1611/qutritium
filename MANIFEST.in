@@ -17,6 +17,8 @@ prune theory
 # Exclude development metadata
 exclude .gitignore
 exclude mkdocs.yml
+exclude CONTRIBUTING.md
+exclude RELEASING.md
 
 # Exclude any caches/artifacts
 global-exclude __pycache__
