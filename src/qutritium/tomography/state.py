@@ -73,6 +73,35 @@ def _counts_to_probs(counts_basis: list[dict[str, int]]) -> NDArray:
     return np.asarray(probs, dtype=float)
 
 
+def _project_closest_rho(rho: NDArray) -> NDArray[np.complex128]:
+    """Project a unit-trace Hermitian matrix onto the closest density matrix.
+
+    The linear least squares method in ``reconstruct_state`` can have negative
+    entries -> To solve it, we implement algorithm introduced by
+    Smollin, Gambetta & Smith (2012) which 'redistribute' the negative probabilities
+    to other indices. The idea is to 0 out and spread the deficit over the rest.
+
+    References
+    ----------
+    Smolin, J. A., Gambetta, J. M. & Smith, G. (2012). Efficient method for
+    computing the maximum-likelihood quantum state from measurements with
+    additive Gaussian noise. Phys. Rev. Lett. 108, 070502.
+    """
+    # eigh (rho is Hermitian) returns real eigenvalues ascending; reverse to descending.
+    eigen_vals, eigen_vecs = np.linalg.eigh(rho)
+    lam = eigen_vals[::-1].copy()
+    a = 0.0
+    for i in range(len(lam) - 1, -1, -1):
+        if lam[i] + a / (i + 1) < 0:
+            a += lam[i]
+            lam[i] = 0.0
+        else:
+            lam[: i + 1] += a / (i + 1)
+            break
+    lam = lam[::-1]
+    return (eigen_vecs * lam) @ eigen_vecs.conj().T  # type: ignore[no-any-return]
+
+
 def state_tomography_circuits(prep: QutritCircuit) -> list[QutritCircuit]:
     """Build the four MUB measurement circuits.
 
@@ -112,7 +141,7 @@ def state_tomography_circuits(prep: QutritCircuit) -> list[QutritCircuit]:
 
 def reconstruct_state(counts_basis: list[dict[str, int]],
                       method: str = "lls") -> NDArray[np.complex128]:
-    """Reconstruct rho from MUB measurement counts via linear inversion.
+    """Reconstruct rho from MUB measurement counts via linear least squares.
 
     If we write the density matrix in the generalized Gell-Mann (GGM) basis,
 
@@ -126,6 +155,8 @@ def reconstruct_state(counts_basis: list[dict[str, int]],
 
     with ``A[m, i] = (1/2) Tr(P_m lambda_i)`` over the 12 MUB projectors ``P_m``
     and ``y_m = p_m - 1/3`` (``p_m`` is the measured probability of that outcome).
+    After constructing ``rho``, user can choose the approximate the ``rho`` using
+    ``_project_closest_rho`` which guarantees density matrix condition of semi-positive.
 
     Parameters
     ----------
@@ -133,18 +164,22 @@ def reconstruct_state(counts_basis: list[dict[str, int]],
         Four MUB count-dicts in ``state_tomography_circuits`` order, each
         mapping an outcome label to its shot count.
     method : str, optional
-        Only ``"lls"`` or ``"linear_least_squares"`` is available.
+        ``"lls"`` / ``"linear_least_squares"`` for raw linear inversion, or
+        ``"projected_lls"`` / ``"mle"`` to add the Smolin maximum-likelihood
+        projection onto the closest physical state. Anything else raises.
 
     Returns
     -------
     NDArray[np.complex128]
         Shape ``(3, 3)``. This is an estimate and may be slightly non-PSD,
-        since linear inversion does not enforce positivity.
+        since linear inversion does not enforce positivity. It is advised
+        to use ``"projected_lls"`` option -> enforce such condition.
 
     Raises
     ------
     NotImplementedError
-        If ``method`` is not ``"lls"`` or ``"linear_least_squares"``.
+        If ``method`` is none of ``"lls"``, ``"linear_least_squares"``,
+        ``"projected_lls"``, or ``"mle"``.
     ValueError
         Propagated from ``_counts_to_probs`` on malformed counts.
 
@@ -153,10 +188,10 @@ def reconstruct_state(counts_basis: list[dict[str, int]],
     Thew, R. T., Nemoto, K., White, A. G. & Munro, W. J. (2002). Qudit
     quantum-state tomography. Phys. Rev. A 66, 012303.
     """
-    if method not in ("lls", "linear_least_squares"):
+    if method not in ("lls", "linear_least_squares", "projected_lls", "mle"):
         raise NotImplementedError(
-            f"Method {method!r} is not implemented in this version; "
-            f"only 'linear_least_squares' ('lls') is available."
+            f"Method {method!r} is not implemented in this version; only "
+            f"'lls' / 'linear_least_squares', 'projected_lls', or 'mle' is available."
         )
 
     projectors = _mub_projectors()
@@ -167,8 +202,12 @@ def reconstruct_state(counts_basis: list[dict[str, int]],
         [[0.5 * np.real(np.trace(proj @ gen)) for gen in lamd] for proj in projectors]
     )
     y = p - 1.0 / 3.0
+    # lls solver using numpy library
     s, *_ = np.linalg.lstsq(a_mat, y, rcond=None)
     rho = np.eye(3, dtype=complex) / 3.0 + 0.5 * sum(si * gen for si, gen in zip(s, lamd, strict=True))
+    # 'mle' is an alias for the Smolin maximum-likelihood projection.
+    if method in ("projected_lls", "mle"):
+        rho = _project_closest_rho(rho)
     return rho  # type: ignore[no-any-return]
 
 

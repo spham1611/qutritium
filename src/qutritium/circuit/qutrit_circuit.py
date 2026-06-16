@@ -116,18 +116,8 @@ class QutritCircuit:
                 f"{gate.label} is a 1-qutrit gate and does not accept second_qutrit."
             )
 
-        mat = gate.matrix()
-
-        # Build Instruction with Gate reference preserved
-        ins = Instruction(
-            gate_type=gate.label,
-            n_qutrit=self.n_qutrit,
-            first_qutrit=first_qutrit,
-            second_qutrit=second_qutrit,
-            parameter=list(gate.params) if gate.params else None,
-            custom=True,
-            custom_matrix=np.asarray(mat, dtype=complex),
-            gate=gate,
+        ins = Instruction._from_gate(
+            gate, self.n_qutrit, first_qutrit, second_qutrit
         )
         self._extend_operation_set([ins])
 

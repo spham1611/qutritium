@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from qutritium import DensityMatrixSimulator, QASMSimulator, QutritCircuit
-from qutritium.channels import (depolarizing_channel, NoiseModel, ReadoutError, SPAMNoiseModel)
+from qutritium.channels import depolarizing_channel, NoiseModel, ReadoutError, SPAMNoiseModel
 from qutritium.gates import H3, X01
 
 

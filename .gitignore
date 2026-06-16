@@ -44,6 +44,13 @@ nosetests.xml
 # mkdocs build output
 site/
 
+# LaTeX build artifacts (theory/ source compiles to a committed PDF)
+*.aux
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
 # Logs / temp
 *.log
 *.tmp
@@ -65,8 +72,8 @@ _read_plan.py
 # Claude Code (never commit per CLAUDE.md)
 .claude/
 
-# Local working spec (not part of the package)
-_v14_spec.md
+# Local working specs (not part of the package)
+_v*_spec.md
 
 # Script output artifacts
 scripts/*.png

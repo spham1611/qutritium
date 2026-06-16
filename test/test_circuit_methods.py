@@ -4,8 +4,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from qutritium import QASMSimulator, QutritCircuit
-from qutritium.gates import CSUM, H3, X01
+import qutritium.circuit.elementary_matrices as em
+from qutritium import Instruction, QASMSimulator, QutritCircuit, SU3Decomposition
+from qutritium.gates import CSUM, H3, Rx01, X01
 
 
 # ===================================================================
@@ -173,3 +174,45 @@ class TestMeasurementGuard:
         qc.measure_all()
         with pytest.raises(RuntimeError):
             qc.measure_all()
+
+
+class TestFromGate:
+    def test_matrix_matches_gate(self):
+        ins = Instruction._from_gate(H3(), n_qutrit=1, first_qutrit=0)
+        assert ins._is_custom and ins.gate is not None
+        assert np.allclose(ins.gate_matrix, H3().matrix())
+
+    def test_append_unchanged(self):
+        qc = QutritCircuit(1, None)
+        qc.append(Rx01(0.6), first_qutrit=0)
+        qc.append(X01(), first_qutrit=0)
+        ins = qc.operation_set[0]
+        assert ins.type == "Rx01" and list(ins.parameter) == [0.6]
+        assert np.allclose(ins.gate_matrix, Rx01(0.6).matrix())
+
+
+class ToNativeGatePath:
+    def test_reconstructs_unitary(self):
+        # to_native factors (with the virtual-Z phases) still compose to U
+        u = H3().matrix()
+        dec = SU3Decomposition(u, qutrit_index=0, n_qutrits=1)
+        a = dec.angles
+        product = (em.u_d(a.phi6, a.phi5, a.phi4)
+                   @ dec.to_native().instructions[2].gate_matrix
+                   @ dec.to_native().instructions[1].gate_matrix
+                   @ dec.to_native().instructions[0].gate_matrix)
+        assert np.allclose(product, u, atol=1e-6)
+
+    def test_instructions_carry_gate_refs(self):
+        dec = SU3Decomposition(H3().matrix(), qutrit_index=0, n_qutrits=1)
+        native = dec.to_native()
+        assert [i.type for i in native.instructions] == ["G01", "G12", "G01"]
+        assert all(i.gate is not None and i._is_custom for i in native.instructions)
+
+    def test_matrices_identical_to_string_path(self):
+        dec = SU3Decomposition(H3().matrix(), qutrit_index=0, n_qutrits=1)
+        a = dec.angles
+        native = dec.to_native()
+        assert np.allclose(native.instructions[0].gate_matrix, em.g01(a.theta1, a.phi1))
+        assert np.allclose(native.instructions[1].gate_matrix, em.g12(a.theta2, a.phi2))
+        assert np.allclose(native.instructions[2].gate_matrix, em.g01(a.theta3, a.phi3))

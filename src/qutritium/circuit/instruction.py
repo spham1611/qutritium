@@ -149,6 +149,29 @@ class Instruction:
             else self._base_matrix
         )
 
+    @classmethod
+    def _from_gate(cls,
+                   gate: Gate,
+                   n_qutrit: int,
+                   first_qutrit: int,
+                   second_qutrit: int | None = None, ) -> Instruction:
+        """Wrap a ``Gate`` as a custom-matrix ``Instruction``.
+
+        The one canonical ``Gate`` -> ``Instruction`` path: both
+        ``QutritCircuit.append`` and ``SU3Decomposition.to_native`` come
+        through here, taking the matrix straight from ``gate.matrix()``.
+        """
+        return cls(
+            gate_type=gate.label,
+            n_qutrit=n_qutrit,
+            first_qutrit=first_qutrit,
+            second_qutrit=second_qutrit,
+            parameter=list(gate.params) if gate.params is not None else None,
+            custom=True,
+            custom_matrix=np.asarray(gate.matrix(), dtype=complex),
+            gate=gate,
+        )
+
     # ------------------------------------------------------------------
     # Gate name -> matrix dispatch
     # ------------------------------------------------------------------

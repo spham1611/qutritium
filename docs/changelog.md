@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.5.0] - 2026-06-17
+
+### Added
+
+- `qutritium.tomography`: single-qutrit process tomography —
+  `process_tomography_circuits` (12 MUB input states, each measured in all four
+  MUBs), `reconstruct_process` (Choi-matrix reconstruction by linear inversion),
+  and `choi_to_kraus` (Kraus operators from the Choi spectrum).
+- `reconstruct_state(method="projected_lls")`: projects the linear-inversion
+  estimate onto the closest physical (positive, unit-trace) density matrix via
+  the Smolin–Gambetta–Smith (2012) algorithm.
+- `examples/process_tomography.ipynb` tutorial.
+
+### Breaking
+
+- None. v1.5.0 is purely additive.
+
+### Deferred
+
+- OpenQASM 3 import/export moved to v2.0.
+
 ## [1.4.0] - 2026-06-09
 
 ### Added

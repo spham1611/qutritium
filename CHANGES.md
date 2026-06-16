@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.5.0] — 2026-06-17
+
+Added single-qutrit **process tomography** to `qutritium.tomography`:
+`process_tomography_circuits` builds the 12 MUB input states and their MUB
+measurement circuits, `reconstruct_process` inverts the resulting counts into a
+Choi matrix by linear least squares, and `choi_to_kraus` reads Kraus operators
+off the Choi spectrum. `reconstruct_state` gains a `"projected_lls"` method that
+projects the linear-inversion estimate onto the closest physical density matrix
+(Smolin, Gambetta & Smith, 2012).
+
+Added `examples/process_tomography.ipynb`. The test suite is now 380 tests.
+
+OpenQASM 3 import/export is deferred to v2.0. Purely additive — no breaking
+changes.
+
 ## [1.4.0] — 2026-06-09
 
 Added `qutritium.channels` — Kraus-operator noise channels (`Channel`,

@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 import qutritium.circuit.elementary_matrices as em
-from qutritium import (purity, QutritCircuit, state_fidelity, von_neumann_entropy)
+from qutritium import purity, QutritCircuit, state_fidelity, von_neumann_entropy
 from qutritium.circuit.instruction import Instruction
 from qutritium.gates import CNOT3, CPhase, CSUM, CSUMDag, Rx01, SWAP3
 

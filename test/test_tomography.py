@@ -131,7 +131,7 @@ class TestReconstructState:
 
     def test_unknown_method_raises(self):
         with pytest.raises(NotImplementedError):
-            reconstruct_state(_exact_counts(_prep_rho(None)), method="mle")
+            reconstruct_state(_exact_counts(_prep_rho(None)), method="bayesian")
 
     def test_wrong_basis_count_raises(self):
         with pytest.raises(ValueError, match="4 MUBs"):
@@ -140,3 +140,34 @@ class TestReconstructState:
     def test_zero_counts_raises(self):
         with pytest.raises(ValueError, match="zero"):
             reconstruct_state([{"0": 0, "1": 0, "2": 0}] * 4)
+
+
+class TestProjectedLLS:
+    def test_projection_clips_known_spectrum(self):
+        # eigenvalues (1.2, -0.1, -0.1) -> (1, 0, 0): walk-up zeroes both
+        # negatives and pushes the deficit onto the top eigenvalue
+        from qutritium.tomography.state import _project_closest_rho
+        rho = np.diag([1.2, -0.1, -0.1]).astype(complex)
+        assert np.allclose(_project_closest_rho(rho), np.diag([1.0, 0, 0]))
+
+    def test_projected_state_is_physical(self):
+        counts = [{"0": 9, "1": 1, "2": 0}, {"0": 4, "1": 3, "2": 3},
+                  {"0": 3, "1": 4, "2": 3}, {"0": 3, "1": 3, "2": 4}]  # tiny shots
+        rho = reconstruct_state(counts, method="projected_lls")
+        vals = np.linalg.eigvalsh(rho)
+        assert vals.min() >= -1e-12
+        assert np.trace(rho).real == pytest.approx(1.0)
+
+    def test_matches_lls_when_already_physical(self):
+        rho_true = np.diag([0.5, 0.3, 0.2]).astype(complex)
+        counts = _exact_counts(rho_true)  # the existing helper
+        a = reconstruct_state(counts, method="lls")
+        b = reconstruct_state(counts, method="projected_lls")
+        assert np.allclose(a, b, atol=1e-6)
+
+    def test_mle_is_alias_for_projected_lls(self):
+        counts = [{"0": 9, "1": 1, "2": 0}, {"0": 4, "1": 3, "2": 3},
+                  {"0": 3, "1": 4, "2": 3}, {"0": 3, "1": 3, "2": 4}]
+        a = reconstruct_state(counts, method="projected_lls")
+        b = reconstruct_state(counts, method="mle")
+        assert np.allclose(a, b)

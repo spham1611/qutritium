@@ -219,7 +219,7 @@ class SU3Decomposition:
         )
 
     def to_native(self) -> NativeDecomposition:
-        """Native ``g01``/``g12`` instructions plus two virtual-Z phases.
+        """Native ``G01``/``G12`` instructions plus two virtual-Z phases.
 
         The diagonal ``u_d`` factor is folded into two virtual-Z angles
         applied to the ``{|0>,|1>}`` and ``{|1>,|2>}`` subspaces.
@@ -229,33 +229,16 @@ class SU3Decomposition:
         NativeDecomposition
             ``(phases, instructions)`` with ``phases = [phase01, phase12]``
             and three ``Instruction`` objects in the order
-            ``g01, g12, g01``.
+            ``G01, G12, G01``.
         """
-        a = self.angles
-        phase01 = a.phi6 - a.phi5
-        phase12 = a.phi5 - a.phi4
+        from qutritium.gates import G01, G12
+        angles = self.angles
+        phase01 = angles.phi6 - angles.phi5
+        phase12 = angles.phi5 - angles.phi4
         instructions = [
-            Instruction(
-                gate_type="g01",
-                first_qutrit=self.qutrit_index,
-                second_qutrit=None,
-                n_qutrit=self.n_qutrits,
-                parameter=[a.theta1, a.phi1],
-            ),
-            Instruction(
-                gate_type="g12",
-                first_qutrit=self.qutrit_index,
-                second_qutrit=None,
-                n_qutrit=self.n_qutrits,
-                parameter=[a.theta2, a.phi2],
-            ),
-            Instruction(
-                gate_type="g01",
-                first_qutrit=self.qutrit_index,
-                second_qutrit=None,
-                n_qutrit=self.n_qutrits,
-                parameter=[a.theta3, a.phi3],
-            ),
+            Instruction._from_gate(G01(angles.theta1, angles.phi1), self.n_qutrits, self.qutrit_index),
+            Instruction._from_gate(G12(angles.theta2, angles.phi2), self.n_qutrits, self.qutrit_index),
+            Instruction._from_gate(G01(angles.theta3, angles.phi3), self.n_qutrits, self.qutrit_index),
         ]
         return NativeDecomposition(np.array([phase01, phase12]), instructions)
 

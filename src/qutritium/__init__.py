@@ -18,7 +18,7 @@ from qutritium.metrics import (
 from qutritium.simulator.density_matrix import DensityMatrixSimulator
 from qutritium.simulator.statevector import QASMSimulator
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 __all__ = [
     "DensityMatrixSimulator",

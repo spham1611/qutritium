@@ -101,7 +101,7 @@ def plot_tomography_comparison(
         fidelity: float | None = None,
         title: str = "State tomography",
 ) -> Figure:
-    """Side-by-side cityscape of ideal vs reconstructed rho.
+    """Cityscape of ideal vs reconstructed rho.
 
     Rows are ideal / estimated, columns are Re / Im. Pass ``fidelity`` to
     annotate the suptitle.

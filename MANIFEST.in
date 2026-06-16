@@ -12,6 +12,7 @@ prune examples
 prune .github
 prune scripts
 prune paper
+prune theory
 
 # Exclude development metadata
 exclude .gitignore
