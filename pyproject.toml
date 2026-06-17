@@ -1,7 +1,7 @@
 # pyproject.toml -- v1.5.0
 # Single source of truth for build, deps, and tooling configs.
 #
-# Supports Python 3.10 through 3.14 and newest versions of Numpy, Scipy and Matplot
+# Supports Python 3.10 through 3.14 and newest versions of Numpy and Matplotlib
 
 [build-system]
 requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
@@ -43,7 +43,6 @@ classifiers = [
 # Runtime dependencies
 dependencies = [
     "numpy>=2.0",
-    "scipy>=1.13",
 ]
 
 [project.optional-dependencies]

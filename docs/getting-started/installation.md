@@ -18,7 +18,6 @@ pip install -e ".[dev,plot]"
 
 - Python ≥ 3.10
 - numpy ≥ 2.0
-- scipy ≥ 1.13
 
 Optional:
 

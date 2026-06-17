@@ -13,7 +13,7 @@ abstract: >-
   density-matrix simulators, Kraus-operator noise channels, fidelity and
   entropy metrics, single-qutrit state and process tomography, and SU(3)
   decomposition into native subspace rotations. From v1.0.0
-  onward the package is hardware-agnostic (numpy/scipy only); earlier
+  onward the package is hardware-agnostic (numpy only); earlier
   0.0.x releases shipped Qiskit-pulse-based calibration routines for IBM
   quantum hardware and are preserved as a historical record under the
   legacy/ directory.

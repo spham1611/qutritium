@@ -12,6 +12,8 @@ projects the linear-inversion estimate onto the closest physical density matrix
 
 Added `examples/process_tomography.ipynb`. The test suite is now 380 tests.
 
+Dropped the unused `scipy` runtime dependency — `qutritium` now needs only NumPy.
+
 OpenQASM 3 import/export is deferred to v2.0. Purely additive — no breaking
 changes.
 

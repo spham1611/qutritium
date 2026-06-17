@@ -13,6 +13,11 @@
   the Smolin–Gambetta–Smith (2012) algorithm.
 - `examples/process_tomography.ipynb` tutorial.
 
+### Changed
+
+- Dropped the unused `scipy` runtime dependency; `qutritium` now requires only
+  NumPy. (`scipy` was declared but never imported.)
+
 ### Breaking
 
 - None. v1.5.0 is purely additive.

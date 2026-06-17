@@ -12,7 +12,7 @@ bug report includes:
 
 - the qutritium version
   (`python -c "import qutritium; print(qutritium.__version__)"`) and your
-  Python / NumPy / SciPy versions,
+  Python / NumPy versions,
 - a minimal snippet that reproduces the problem,
 - what you expected versus what happened, with the full traceback.
 
@@ -53,7 +53,7 @@ mypy src/qutritium           # type check (non-strict)
 - Every module ends with an `__all__`, and every new file carries the MIT
   license header.
 - Use `numpy.typing.NDArray` for array annotations.
-- Keep runtime dependencies minimal — currently only NumPy and SciPy. A new
+- Keep runtime dependencies minimal — currently only NumPy. A new
   runtime dependency needs maintainer sign-off; optional tooling goes in an
   extras group (`[plot]`, `[dev]`, `[docs]`).
 - Hardware-specific code (pulse-level control, vendor backends) is intentionally
