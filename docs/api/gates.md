@@ -106,6 +106,7 @@ All matrices are 9×9 unitary.
 ## References
 
 - Bertlmann, R. A. & Krammer, P. (2008). arXiv:0806.1174 — Gell-Mann matrices $\lambda_1$–$\lambda_8$
-- Ringbauer, M. et al. (2022). *Nat. Phys.* 18, 1053 — Generalized rotations, T3 gate
+- Ringbauer, M. et al. (2022). *Nat. Phys.* 18, 1053 — Generalized rotations, native trapped-ion gate set
+- Howard, M. & Vala, J. (2012). *Phys. Rev. A* 86, 022316 — Qudit T gate (`T3`)
 - Wang, Y. et al. (2020). *Front. Phys.* 8, 589504 — CSUM, qutrit gate compilation
 - Vitanov, N. V. (2012). *Phys. Rev. A* 85, 032331 — SU(3) decomposition
