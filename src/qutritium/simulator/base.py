@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """base.py: Container for simulators. Subclasses implement evolution and sampling."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -35,17 +36,10 @@ def _index_to_ket_label(i: int, n_qutrit: int) -> str:
     Returns
     -------
     ket_label : str
-
-    Examples: As we see that the qutrit order should be: "q_0 q_1 ... q_{n-1}"
-    --------
-    >>> _index_to_ket_label(5, 3)
-    '012'
-    >>> _index_to_ket_label(3, 2)
-    '10'
     """
-    assert 0 <= i < 3 ** n_qutrit, (
-        f"i={i} out of [0, {3 ** n_qutrit}) for n_qutrit={n_qutrit}."
-    )
+    assert (
+            0 <= i < 3 ** n_qutrit
+    ), f"i={i} out of [0, {3 ** n_qutrit}) for n_qutrit={n_qutrit}."
     digits: list[str] = []
     # Loop LSB
     for _ in range(n_qutrit):
@@ -103,14 +97,16 @@ class Simulator(ABC):
         Raises
         ------
         ValueError
-            If 'num_shots' is not an integer.
+            If ``num_shots`` is zero or negative.
         RuntimeError
             If the circuit has no measurement.
         """
         if num_shots <= 0:
             raise ValueError("'num_shots' must be a positive integer")
         if not self._measurement_flag:
-            raise RuntimeError("Circuit has no measurement; please call measure_all() before calling run()")
+            raise RuntimeError(
+                "Circuit has no measurement; please call measure_all() before calling run()"
+            )
         if not self._simulation_flag:
             self._simulation()
 
@@ -122,7 +118,9 @@ class Simulator(ABC):
         probs = probs / np.sum(probs)
         rng = np.random.default_rng()
         sample = rng.choice(len(probs), size=num_shots, p=probs)
-        self._measurement_result = list(_index_to_ket_label(int(i), self.n_qutrit) for i in sample)
+        self._measurement_result = list(
+            _index_to_ket_label(int(i), self.n_qutrit) for i in sample
+        )
 
     def get_counts(self) -> dict[str, int]:
         """Measurement histogram."""
@@ -148,8 +146,10 @@ class Simulator(ABC):
             If the simulation has already run.
         """
         if self._simulation_flag:
-            raise RuntimeError("Attach the noise model before the first run(); "
-                               "build a fresh simulator to change it.")
+            raise RuntimeError(
+                "Attach the noise model before the first run(); "
+                "build a fresh simulator to change it."
+            )
         self._noise_model = noise_model
 
     def plot(self, plot_type: str = "histogram") -> Figure:
@@ -166,12 +166,15 @@ class Simulator(ABC):
             matplot Figure object for further improvement.
         """
         if plot_type not in _VALID_PLOT_TYPES:
-            raise ValueError(f"'plot_type' must be one of {_VALID_PLOT_TYPES}; got {plot_type}")
+            raise ValueError(
+                f"'plot_type' must be one of {_VALID_PLOT_TYPES}; got {plot_type}"
+            )
 
         counts = self.get_counts()
         keys = list(counts.keys())
         values = list(counts.values())
         from matplotlib import pyplot as plt
+
         fig, ax = plt.subplots()
         if plot_type == "histogram":
             ax.bar(keys, values)

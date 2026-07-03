@@ -1,4 +1,4 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Internal numerical helpers for the metrics module.
@@ -6,6 +6,7 @@
 All names are underscore-prefixed and excluded from ``__all__``. Do not
 import these from outside ``qutritium.metrics``.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -54,17 +55,13 @@ def _as_density_matrix(
 def _check_same_dim(a: NDArray, b: NDArray) -> None:
     """Raise ValueError if a and b have mismatched shapes."""
     if a.shape != b.shape:
-        raise ValueError(
-            f"Operands have mismatched shapes: {a.shape} vs {b.shape}."
-        )
+        raise ValueError(f"Operands have mismatched shapes: {a.shape} vs {b.shape}.")
 
 
 def _check_square_matrix(arr: NDArray, name: str) -> None:
     """Raise ValueError unless arr is a 2D square array."""
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
-        raise ValueError(
-            f"{name} must be a square 2D matrix; got shape {arr.shape}."
-        )
+        raise ValueError(f"{name} must be a square 2D matrix; got shape {arr.shape}.")
 
 
 def _check_unitary(arr: NDArray, name: str, atol: float = 1e-8) -> None:
@@ -74,9 +71,7 @@ def _check_unitary(arr: NDArray, name: str, atol: float = 1e-8) -> None:
     """
     product = arr @ arr.conj().T
     if not np.allclose(product, np.eye(arr.shape[0]), atol=atol):
-        raise ValueError(
-            f"{name} is not unitary (||U U† - I|| > {atol})."
-        )
+        raise ValueError(f"{name} is not unitary (||U U† - I|| > {atol}).")
 
 
 def _matrix_sqrt_hermitian(

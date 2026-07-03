@@ -1,14 +1,39 @@
 # Changelog
 
+## [1.5.1] - 2026-07-03
+
+### Changed
+
+- Renamed `QASMSimulator` to `StatevectorSimulator`: the class evolves a
+  statevector, and there is no QASM layer (OpenQASM was dropped). Its `name`
+  attribute is now `"statevector_simulator"`.
+
+### Fixed
+
+- `NoiseModel.add_quantum_error` / `add_prep_error` now reject multi-qutrit
+  channels and negative qutrit indices with a clear `ValueError`, and
+  `DensityMatrixSimulator` reports an out-of-range channel target by index
+  instead of failing inside NumPy.
+
+### Deprecated
+
+- `QASMSimulator` stays importable as an alias for `StatevectorSimulator` but now
+  emits a `DeprecationWarning` on instantiation and will be removed in v2.0.
+  Switch imports to `StatevectorSimulator`.
+
+### Breaking
+
+- None. The alias keeps existing code working (with a warning).
+
 ## [1.5.0] - 2026-06-17
 
 ### Added
 
 - `qutritium.tomography`: single-qutrit process tomography —
   `process_tomography_circuits` (12 MUB input states, each measured in all four
-  MUBs), `reconstruct_process` (Choi-matrix reconstruction by linear inversion),
+  MUBs), `reconstruct_process` (Choi-matrix reconstruction by linear least squares),
   and `choi_to_kraus` (Kraus operators from the Choi spectrum).
-- `reconstruct_state(method="projected_lls")`: projects the linear-inversion
+- `reconstruct_state(method="projected_lls")`: projects the linear-least-squares
   estimate onto the closest physical (positive, unit-trace) density matrix via
   the Smolin–Gambetta–Smith (2012) algorithm.
 - `examples/process_tomography.ipynb` tutorial.
@@ -37,9 +62,10 @@
 - `Simulator.set_noise_model`: attach noise to a simulator. The
   `DensityMatrixSimulator` applies Kraus gate/prep channels interleaved with
   the unitary evolution; both backends apply readout error at sampling time.
-  `QASMSimulator` rejects Kraus noise (`NotImplementedError`).
+  `QASMSimulator` (renamed `StatevectorSimulator` in v1.5.1) rejects Kraus
+  noise (`NotImplementedError`).
 - `qutritium.tomography`: single-qutrit MUB state tomography — `mub_bases`,
-  `state_tomography_circuits`, `reconstruct_state` (linear inversion), plus
+  `state_tomography_circuits`, `reconstruct_state` (linear least squares), plus
   `plot_density_matrix` and `plot_tomography_comparison` (matplotlib).
 
 ### Fixed
@@ -71,7 +97,7 @@ These wrong-result bugs shipped in v1.3.0 and are corrected here:
 - qutritium.metrics: state_fidelity, trace_distance, purity,
   von_neumann_entropy, process_fidelity, average_gate_fidelity.
 - Simulator ABC
-- QASMSimulator inherits from Simulator .
+- QASMSimulator (renamed StatevectorSimulator in v1.5.1) inherits from Simulator.
 - DensityMatrixSimulator with rho -> U rho U^dag evolution,
   expectation_value(), and partial_trace().
 - QutritCircuit.depth(), gate_count(), to_matrix().

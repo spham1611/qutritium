@@ -5,12 +5,13 @@ Migrated from the v0.0.1 ``test/VM_test/VM_test.py`` (which was a top-level
 script using ``src.X`` imports). Restructured as proper pytest tests.
 Updated for v1.1.0: uses Gate-based ``append()`` API.
 """
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from qutritium import QASMSimulator, QutritCircuit, SU3Decomposition
+from qutritium import QutritCircuit, StatevectorSimulator, SU3Decomposition
 from qutritium.gates import CSUM, H3, Rx01
 
 
@@ -56,9 +57,7 @@ def test_uft_decomposition_roundtrip() -> None:
     """The discrete Fourier matrix U_ft should round-trip to fidelity ~1."""
     omega = np.exp(1j * 2 * np.pi / 3)
     u_ft = (1 / np.sqrt(3)) * np.array(
-        [[omega, 1.0, np.conj(omega)],
-         [1.0, 1.0, 1.0],
-         [np.conj(omega), 1.0, omega]],
+        [[omega, 1.0, np.conj(omega)], [1.0, 1.0, 1.0], [np.conj(omega), 1.0, omega]],
         dtype=complex,
     )
     dec = SU3Decomposition(u_ft, qutrit_index=0, n_qutrits=1)
@@ -86,7 +85,7 @@ def test_two_qutrit_hadamard_csum_distribution() -> None:
     qc.append(H3(), first_qutrit=0)
     qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
     qc.measure_all()
-    sim = QASMSimulator(qc)
+    sim = StatevectorSimulator(qc)
     sim.run(num_shots=20_000)
     counts = sim.get_counts()
     assert set(counts.keys()) <= {"00", "11", "22"}
@@ -97,7 +96,7 @@ def test_two_qutrit_hadamard_csum_distribution() -> None:
 def test_simulator_run_without_measurement_raises() -> None:
     qc = QutritCircuit(1, None)
     qc.append(H3(), first_qutrit=0)
-    sim = QASMSimulator(qc)
+    sim = StatevectorSimulator(qc)
     with pytest.raises(RuntimeError):
         sim.run(num_shots=100)
 
@@ -105,7 +104,7 @@ def test_simulator_run_without_measurement_raises() -> None:
 def test_simulator_run_with_invalid_shots_raises() -> None:
     qc = QutritCircuit(1, None)
     qc.measure_all()
-    sim = QASMSimulator(qc)
+    sim = StatevectorSimulator(qc)
     with pytest.raises(ValueError):
         sim.run(num_shots=0)
 
@@ -114,7 +113,7 @@ def test_density_matrix_is_hermitian_psd() -> None:
     """Pure-state density matrix from the simulator must be Hermitian and PSD."""
     qc = QutritCircuit(1, None)
     qc.append(H3(), first_qutrit=0)
-    sim = QASMSimulator(qc)
+    sim = StatevectorSimulator(qc)
     rho = sim.density_matrix()
     assert np.allclose(rho, rho.conj().T)
     eigvals = np.linalg.eigvalsh(rho)

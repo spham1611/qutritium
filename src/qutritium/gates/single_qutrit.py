@@ -1,4 +1,4 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Single-qutrit Gate classes wrapping the matrices in elementary_matrices.
@@ -6,6 +6,7 @@
 Convention: R_{axis,ij}(theta) = exp(-i theta/2 * sigma_{axis,ij})
 Ref: Bertlmann & Krammer (2008), arXiv:0806.1174.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -14,10 +15,10 @@ from numpy.typing import NDArray
 import qutritium.circuit.elementary_matrices as em
 from qutritium.gates.base import Gate
 
-
 # ===================================================================
 # Fixed (zero-parameter) gates
 # ===================================================================
+
 
 class I3(Gate):
     """Qutrit identity gate (3×3)."""
@@ -33,6 +34,7 @@ class I3(Gate):
 
 
 # --- Subspace Pauli-X ---
+
 
 class X01(Gate):
     """Pauli-X in {|0⟩, |1⟩} subspace.
@@ -88,6 +90,7 @@ class X12(Gate):
 
 # --- Subspace Pauli-Y ---
 
+
 class Y01(Gate):
     """Pauli-Y in {|0⟩, |1⟩} subspace.
 
@@ -128,6 +131,7 @@ class Y12(Gate):
 
 
 # --- Subspace Pauli-Z ---
+
 
 class Z01(Gate):
     """Pauli-Z in {|0⟩, |1⟩} subspace.
@@ -180,6 +184,7 @@ class Z12(Gate):
 
 # --- Cyclic shift ---
 
+
 class XPlus(Gate):
     """Cyclic shift |i> -> |i+1 mod 3>. X+^3 = I."""
 
@@ -207,6 +212,7 @@ class XMinus(Gate):
 
 
 # --- Discrete gates with default ω ---
+
 
 class H3(Gate):
     """Qutrit Hadamard (DFT F3/sqrt3). Creates equal superposition from |0>."""
@@ -241,6 +247,7 @@ class T3(Gate):
 # --- Parametric rotation gates ---
 
 # --- Rx ---
+
 
 class Rx01(Gate):
     """Rx in {|0⟩, |1⟩}."""
@@ -283,6 +290,7 @@ class Rx12(Gate):
 
 # --- Ry ---
 
+
 class Ry01(Gate):
     """Ry in {|0⟩, |1⟩}."""
 
@@ -323,6 +331,7 @@ class Ry12(Gate):
 
 
 # --- Rz ---
+
 
 class Rz01(Gate):
     """Rz in {|0⟩, |1⟩}."""
@@ -365,6 +374,7 @@ class Rz12(Gate):
 
 # --- Generalized rotations g_ij(theta, phi) ---
 # Native gate in trapped-ion implementations (Ringbauer et al., Nat. Phys. 18, 1053)
+
 
 class G01(Gate):
     """Generalized rotation in {|0⟩, |1⟩} with azimuthal phase φ.
@@ -439,6 +449,7 @@ class G12(Gate):
 # Three-parameter diagonal phase gate
 # ===================================================================
 
+
 class Ud(Gate):
     """Diagonal phase: diag(e^{i*phi1}, e^{i*phi2}, e^{i*phi3}). Virtual-Z in hardware."""
 
@@ -455,6 +466,7 @@ class Ud(Gate):
 # ===================================================================
 # Convenience: Fourier-related gate
 # ===================================================================
+
 
 class UFT(Gate):
     """Fourier-related gate U_FT."""

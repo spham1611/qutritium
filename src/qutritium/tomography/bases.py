@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Mutually unbiased bases for qutrit tomography."""
+
 from __future__ import annotations
 
 import numpy as np

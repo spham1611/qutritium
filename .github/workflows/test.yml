@@ -31,7 +31,7 @@ jobs:
         run: |
           python -c "import qutritium; print('qutritium', qutritium.__version__)"
           python -c "from qutritium.circuit import QutritCircuit"
-          python -c "from qutritium.simulator import QASMSimulator"
+          python -c "from qutritium.simulator import StatevectorSimulator"
           python -c "from qutritium.gates import H3, X12, CSUM, Rx01"
           python -c "from qutritium.decomposition import SU3Decomposition"
 

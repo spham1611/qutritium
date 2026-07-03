@@ -4,6 +4,7 @@ Reconstruction is checked two ways: from exact (analytic) Born counts, which
 is deterministic and must be near-perfect; and from a sampled simulation,
 which must clear the fidelity > 0.95 acceptance threshold.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -11,8 +12,8 @@ import pytest
 
 from qutritium import (
     DensityMatrixSimulator,
-    QASMSimulator,
     QutritCircuit,
+    StatevectorSimulator,
     state_fidelity,
 )
 from qutritium.gates import G01, H3, X01
@@ -120,14 +121,16 @@ class TestReconstructState:
         rho_true = _prep_rho(H3())
         counts = []
         for circ in state_tomography_circuits(prep):
-            sim = QASMSimulator(circ)
+            sim = StatevectorSimulator(circ)
             sim.run(num_shots=50_000)
             counts.append(sim.get_counts())
         assert state_fidelity(rho_true, reconstruct_state(counts)) > 0.95
 
     @pytest.mark.parametrize("method", ["lls", "linear_least_squares"])
     def test_valid_methods(self, method):
-        reconstruct_state(_exact_counts(_prep_rho(None)), method=method)  # must not raise
+        reconstruct_state(
+            _exact_counts(_prep_rho(None)), method=method
+        )  # must not raise
 
     def test_unknown_method_raises(self):
         with pytest.raises(NotImplementedError):
@@ -147,12 +150,17 @@ class TestProjectedLLS:
         # eigenvalues (1.2, -0.1, -0.1) -> (1, 0, 0): walk-up zeroes both
         # negatives and pushes the deficit onto the top eigenvalue
         from qutritium.tomography.state import _project_closest_rho
+
         rho = np.diag([1.2, -0.1, -0.1]).astype(complex)
         assert np.allclose(_project_closest_rho(rho), np.diag([1.0, 0, 0]))
 
     def test_projected_state_is_physical(self):
-        counts = [{"0": 9, "1": 1, "2": 0}, {"0": 4, "1": 3, "2": 3},
-                  {"0": 3, "1": 4, "2": 3}, {"0": 3, "1": 3, "2": 4}]  # tiny shots
+        counts = [
+            {"0": 9, "1": 1, "2": 0},
+            {"0": 4, "1": 3, "2": 3},
+            {"0": 3, "1": 4, "2": 3},
+            {"0": 3, "1": 3, "2": 4},
+        ]  # tiny shots
         rho = reconstruct_state(counts, method="projected_lls")
         vals = np.linalg.eigvalsh(rho)
         assert vals.min() >= -1e-12
@@ -166,8 +174,12 @@ class TestProjectedLLS:
         assert np.allclose(a, b, atol=1e-6)
 
     def test_mle_is_alias_for_projected_lls(self):
-        counts = [{"0": 9, "1": 1, "2": 0}, {"0": 4, "1": 3, "2": 3},
-                  {"0": 3, "1": 4, "2": 3}, {"0": 3, "1": 3, "2": 4}]
+        counts = [
+            {"0": 9, "1": 1, "2": 0},
+            {"0": 4, "1": 3, "2": 3},
+            {"0": 3, "1": 4, "2": 3},
+            {"0": 3, "1": 3, "2": 4},
+        ]
         a = reconstruct_state(counts, method="projected_lls")
         b = reconstruct_state(counts, method="mle")
         assert np.allclose(a, b)

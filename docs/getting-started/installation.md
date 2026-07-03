@@ -1,6 +1,6 @@
 # Installation
 
-## From PyPI (when available)
+## From PyPI
 
 ```bash
 pip install qutritium

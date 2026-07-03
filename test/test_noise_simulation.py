@@ -6,13 +6,20 @@ Organized as:
   3. Readout errors (both backends, deterministic)
   4. set_noise_model guards
 """
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from qutritium import DensityMatrixSimulator, QASMSimulator, QutritCircuit
-from qutritium.channels import depolarizing_channel, NoiseModel, ReadoutError, SPAMNoiseModel
+from qutritium import DensityMatrixSimulator, QutritCircuit, StatevectorSimulator
+from qutritium.channels import (
+    Channel,
+    NoiseModel,
+    ReadoutError,
+    SPAMNoiseModel,
+    depolarizing_channel,
+)
 from qutritium.gates import H3, X01
 
 
@@ -82,7 +89,7 @@ class TestReadoutErrors:
     def test_readout_on_statevector(self):
         nm = NoiseModel()
         nm.add_readout_error(_collapse_to_zero())
-        sim = QASMSimulator(_h3_measured())
+        sim = StatevectorSimulator(_h3_measured())
         sim.set_noise_model(nm)
         sim.run(num_shots=500)
         assert sim.get_counts() == {"0": 500}
@@ -104,16 +111,20 @@ class TestNoiseModelGuards:
         nm = NoiseModel()
         nm.add_quantum_error(depolarizing_channel(0.1), "X01")
         with pytest.raises(NotImplementedError):
-            QASMSimulator(QutritCircuit(1, None)).set_noise_model(nm)
+            StatevectorSimulator(QutritCircuit(1, None)).set_noise_model(nm)
 
     def test_statevector_accepts_readout_only(self):
         nm = NoiseModel()
         nm.add_readout_error(ReadoutError(np.eye(3)))
-        QASMSimulator(QutritCircuit(1, None)).set_noise_model(nm)  # must not raise
+        StatevectorSimulator(QutritCircuit(1, None)).set_noise_model(
+            nm
+        )  # must not raise
 
     def test_spam_rejected_by_statevector(self):
         with pytest.raises(NotImplementedError):
-            QASMSimulator(QutritCircuit(1, None)).set_noise_model(SPAMNoiseModel(0.05, 0.05, 1))
+            StatevectorSimulator(QutritCircuit(1, None)).set_noise_model(
+                SPAMNoiseModel(0.05, 0.05, 1)
+            )
 
     def test_cannot_set_after_run(self):
         sim = DensityMatrixSimulator(_h3_measured())
@@ -125,3 +136,25 @@ class TestNoiseModelGuards:
         sim = DensityMatrixSimulator(QutritCircuit(1, None))
         sim.set_noise_model(NoiseModel())
         sim.set_noise_model(NoiseModel())  # allowed before any run
+
+    def test_multi_qutrit_channel_rejected_by_gate_error(self):
+        two_qutrit = Channel([np.eye(9)], num_qutrits=2)
+        with pytest.raises(ValueError, match="single-qutrit"):
+            NoiseModel().add_quantum_error(two_qutrit, "CSUM")
+
+    def test_multi_qutrit_channel_rejected_by_prep_error(self):
+        two_qutrit = Channel([np.eye(9)], num_qutrits=2)
+        with pytest.raises(ValueError, match="single-qutrit"):
+            NoiseModel().add_prep_error(two_qutrit)
+
+    def test_negative_prep_qutrit_rejected(self):
+        with pytest.raises(ValueError, match="non-negative"):
+            NoiseModel().add_prep_error(depolarizing_channel(0.1), qutrit=-1)
+
+    def test_out_of_range_prep_qutrit_rejected_at_run(self):
+        nm = NoiseModel()
+        nm.add_prep_error(depolarizing_channel(0.1), qutrit=5)
+        sim = DensityMatrixSimulator(_h3_measured())
+        sim.set_noise_model(nm)
+        with pytest.raises(ValueError, match="out of range"):
+            sim.run(num_shots=10)

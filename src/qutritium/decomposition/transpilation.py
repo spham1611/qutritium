@@ -1,10 +1,11 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
-"""SU(3) -> native qutrit rotations via the Vitanov (2012) decomposition.
+"""U(3) -> native qutrit rotations via the Vitanov (2012) SU(3) synthesis.
 
 See ``SU3Decomposition`` docstring for the factor sequence and reference.
 """
+
 from __future__ import annotations
 
 from typing import NamedTuple
@@ -20,7 +21,8 @@ _PI: float = float(np.pi)
 
 
 class DecompositionAngles(NamedTuple):
-    """Nine angles from the SU(3) decomposition."""
+    """Nine angles parameterizing a single-qutrit U(3) unitary."""
+
     theta1: float
     theta2: float
     theta3: float
@@ -34,6 +36,7 @@ class DecompositionAngles(NamedTuple):
 
 class NativeDecomposition(NamedTuple):
     """Native decomposition result: phases + instructions."""
+
     phases: NDArray
     instructions: list[Instruction]
 
@@ -110,22 +113,41 @@ def _extract_angles(unitary: NDArray) -> DecompositionAngles:
         phi_2 = float(np.angle(unitary[2, 1])) - phi_4 + _PI / 2
         phi_1 = float(np.angle(-unitary[2, 0])) - phi_2 - phi_4
         theta_1 = 2 * _safe_arccos(
-            float(np.clip(np.round(np.absolute(unitary[2, 1]) / sin_half_theta2, 6), -1.0, 1.0))
+            float(
+                np.clip(
+                    np.round(np.absolute(unitary[2, 1]) / sin_half_theta2, 6), -1.0, 1.0
+                )
+            )
         )
         theta_3 = 2 * _safe_arccos(
-            float(np.clip(np.round(np.absolute(unitary[1, 2]) / sin_half_theta2, 6), -1.0, 1.0))
+            float(
+                np.clip(
+                    np.round(np.absolute(unitary[1, 2]) / sin_half_theta2, 6), -1.0, 1.0
+                )
+            )
         )
         phi_5 = float(np.angle(unitary[1, 2])) + phi_2 + _PI / 2
-        phi_3 = float(
-            np.angle(
-                np.cos(theta_1 / 2) * np.cos(theta_2 / 2) * np.cos(theta_3 / 2)
-                - unitary[1, 1] * np.exp(-1j * phi_5)
-            )
-        ) + phi_1
+        phi_3 = (
+                float(
+                    np.angle(
+                        np.cos(theta_1 / 2) * np.cos(theta_2 / 2) * np.cos(theta_3 / 2)
+                        - unitary[1, 1] * np.exp(-1j * phi_5)
+                    )
+                )
+                + phi_1
+        )
         phi_6 = float(np.angle(-unitary[0, 2])) + phi_3 + phi_2
 
     return DecompositionAngles(
-        theta_1, theta_2, theta_3, phi_1, phi_2, phi_3, phi_4, phi_5, phi_6,
+        theta_1,
+        theta_2,
+        theta_3,
+        phi_1,
+        phi_2,
+        phi_3,
+        phi_4,
+        phi_5,
+        phi_6,
     )
 
 
@@ -133,7 +155,7 @@ def _extract_angles(unitary: NDArray) -> DecompositionAngles:
 # Decomposition class
 # ---------------------------------------------------------------------------
 class SU3Decomposition:
-    """Decompose an SU(3) unitary into native qutrit rotations.
+    """Decompose an arbitrary single-qutrit unitary (U(3)) into native qutrit rotations.
 
     Implements the nine-angle decomposition of Vitanov (2012):
 
@@ -148,18 +170,10 @@ class SU3Decomposition:
     ----------
     Vitanov, N. V. (2012). Synthesis of arbitrary SU(3) transformations of
     atomic qutrits. Phys. Rev. A 85, 032331.
-
-    Examples
-    --------
-    >>> from qutritium.gates import H3
-    >>> import numpy as np
-    >>> dec = SU3Decomposition(H3().matrix(), qutrit_index=0, n_qutrits=1)
-    >>> np.allclose(dec.reconstruct(), H3().matrix())
-    True
     """
 
     def __init__(self, su3: NDArray, qutrit_index: int, n_qutrits: int) -> None:
-        """Construct an SU(3) decomposition.
+        """Ctor.
 
         Parameters
         ----------
@@ -176,9 +190,7 @@ class SU3Decomposition:
             If ``su3`` is not ``(3, 3)`` or fails the unitarity check.
         """
         if su3.shape != (3, 3):
-            raise ValueError(
-                f"su3 must have shape (3, 3); got {su3.shape}."
-            )
+            raise ValueError(f"su3 must have shape (3, 3); got {su3.shape}.")
         if not np.allclose(su3 @ su3.conj().T, np.eye(3), atol=1e-8):
             raise ValueError("su3 is not unitary.")
         self.su3: NDArray = su3
@@ -232,13 +244,20 @@ class SU3Decomposition:
             ``G01, G12, G01``.
         """
         from qutritium.gates import G01, G12
+
         angles = self.angles
         phase01 = angles.phi6 - angles.phi5
         phase12 = angles.phi5 - angles.phi4
         instructions = [
-            Instruction._from_gate(G01(angles.theta1, angles.phi1), self.n_qutrits, self.qutrit_index),
-            Instruction._from_gate(G12(angles.theta2, angles.phi2), self.n_qutrits, self.qutrit_index),
-            Instruction._from_gate(G01(angles.theta3, angles.phi3), self.n_qutrits, self.qutrit_index),
+            Instruction._from_gate(
+                G01(angles.theta1, angles.phi1), self.n_qutrits, self.qutrit_index
+            ),
+            Instruction._from_gate(
+                G12(angles.theta2, angles.phi2), self.n_qutrits, self.qutrit_index
+            ),
+            Instruction._from_gate(
+                G01(angles.theta3, angles.phi3), self.n_qutrits, self.qutrit_index
+            ),
         ]
         return NativeDecomposition(np.array([phase01, phase12]), instructions)
 
@@ -256,6 +275,7 @@ class SU3Decomposition:
             ``qutrit_index`` up to global phase.
         """
         from qutritium.gates import G01, G12, Ud
+
         qc = QutritCircuit(n_qutrit=self.n_qutrits, initial_state=None)
         a = self.angles
         qc.append(G01(a.theta1, a.phi1), first_qutrit=self.qutrit_index)

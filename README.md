@@ -26,7 +26,7 @@ pip install -e ".[dev]"          # editable + dev tools
 ## Quick Start
 
 ```python
-from qutritium import QutritCircuit, QASMSimulator
+from qutritium import QutritCircuit, StatevectorSimulator
 from qutritium.gates import H3, CSUM
 import numpy as np
 
@@ -36,7 +36,7 @@ qc.append(H3(), first_qutrit=0)
 qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
 qc.measure_all()
 
-sim = QASMSimulator(qc)
+sim = StatevectorSimulator(qc)
 sim.run(num_shots=10_000)
 print(sim.get_counts())   # {'00': ~3333, '11': ~3333, '22': ~3333}
 ```
@@ -89,13 +89,14 @@ print(dm.get_counts())
 
 ### Two-qutrit gates
 
-| Gate      | Action                                          |
-|-----------|-------------------------------------------------|
-| `CSUM`    | \|c,t⟩ → \|c, (t+c) mod 3⟩                      |
-| `CSUMDag` | \|c,t⟩ → \|c, (t−c) mod 3⟩ (CSUM inverse)       |
-| `CPhase`  | \|c,t⟩ → ω^{c·t} \|c,t⟩                         |
-| `SWAP3`   | \|a,b⟩ → \|b,a⟩                                 |
-| `CNOT3`   | Legacy v0.0.1 CNOT (= CSUM on adjacent qutrits) |
+| Gate        | Action                                          |
+|-------------|-------------------------------------------------|
+| `CSUM`      | \|c,t⟩ → \|c, (t+c) mod 3⟩                      |
+| `CSUMDag`   | \|c,t⟩ → \|c, (t−c) mod 3⟩ (CSUM inverse)       |
+| `CPhase`    | \|c,t⟩ → ω^{c·t} \|c,t⟩                         |
+| `CPhaseDag` | \|c,t⟩ → ω^{−c·t} \|c,t⟩ (CPhase inverse)       |
+| `SWAP3`     | \|a,b⟩ → \|b,a⟩                                 |
+| `CNOT3`     | Legacy v0.0.1 CNOT (= CSUM on adjacent qutrits) |
 
 All gates inherit from `Gate` and provide `.matrix()`, `.inverse()`, `.is_unitary()`, `.label`, `.params`.
 
@@ -112,7 +113,7 @@ All gates inherit from `Gate` and provide `.matrix()`, `.inverse()`, `.is_unitar
     |                   - introspect: .draw() .depth() .gate_count() .to_matrix()
     |  hand the circuit to a simulator
     v
-  Simulator             QASMSimulator (statevector)
+  Simulator             StatevectorSimulator (psi - pure states)
     |                   DensityMatrixSimulator (rho - mixed states, noise)
     |                   - optional: .set_noise_model(NoiseModel(...))
     v
@@ -133,13 +134,13 @@ src/qutritium/
 ├── gates/               # Gate objects
 │   ├── base.py          #   Gate ABC + _DaggerGate
 │   ├── single_qutrit.py #   29 single-qutrit gates
-│   └── two_qutrit.py    #   5 two-qutrit gates
+│   └── two_qutrit.py    #   6 two-qutrit gates
 ├── circuit/             # Circuit infrastructure
 │   ├── elementary_matrices.py  # Raw 3×3 / 9×9 unitaries
 │   ├── instruction.py          # Instruction + GATE_SET
 │   ├── qutrit_circuit.py       # QutritCircuit container
 │   └── utils.py                # Statevector utilities
-├── simulator/           # QASMSimulator (statevector) + DensityMatrixSimulator
+├── simulator/           # StatevectorSimulator + DensityMatrixSimulator
 ├── channels/            # Noise channels, NoiseModel, ReadoutError, SPAM
 ├── metrics/             # Fidelity, trace distance, purity, entropy
 ├── tomography/          # MUB state + process tomography + visualization
@@ -149,7 +150,7 @@ src/qutritium/
 Supporting files at repo root:
 
 ```
-.github/workflows/       # CI (test.yml, docs.yml)
+.github/workflows/       # CI + release (test.yml, docs.yml, release.yml)
 docs/                    # MkDocs source → spham1611.github.io/qutritium
 examples/                # Bell-state, noise+tomography, process-tomography notebooks
 test/                    # pytest suite
@@ -171,12 +172,16 @@ presented at the **Munich Quantum Software Conference 2023** and funded by a
 **Unitary Fund** microgrant. The v1.0.0 release pivoted to a hardware-agnostic
 library; the original pulse code is preserved under `legacy/`.
 
-## Authors
+## Author
 
 - **[Son Pham](https://github.com/spham1611)** — Duke University · sph40@duke.edu
-- **[Tien Nguyen](https://github.com/ngdnhtien)** — École Polytechnique, France · tienphys@gmail.com
-- **[Bao Bach](https://github.com/bachbao)** — University of Delaware, USA · bachgiabao12@gmail.com
-- **[Charlie (abdomsisn)](https://github.com/abdomsisn)** — Duke University · abdomsisn.haobei@gmail.com
+
+## Acknowledgments
+
+- **[Tien Nguyen](https://github.com/ngdnhtien)** (École Polytechnique, France) and
+  **[Bao Bach](https://github.com/bachbao)** (University of Delaware, USA) — contributors
+  to the original Qiskit-pulse calibration code preserved under `legacy/`
+- **[Charlie He](https://github.com/abdomsisn)** (Duke University) — insight on qutrit physics
 
 ## License
 

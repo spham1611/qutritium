@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Channel: a CPTP map stored as Kraus operators."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -12,7 +13,9 @@ def _completeness_check(kraus_operators: list[NDArray], dimension: int) -> None:
     """Raise if sum_i K_i^dag K_i != I (trace preservation)."""
     sum_ks = sum(k.conj().T @ k for k in kraus_operators)
     if not np.allclose(sum_ks, np.eye(dimension), atol=1e-8):
-        raise ValueError("Sum of Kraus operators does not satisfy completeness condition.")
+        raise ValueError(
+            "Sum of Kraus operators does not satisfy completeness condition."
+        )
 
 
 def _dimension_check(kraus_operators: list[NDArray], dimension: int) -> None:

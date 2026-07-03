@@ -6,15 +6,16 @@ Each class pins a specific bug so it cannot silently return:
   3. CSUM/CSUMDag control/target swap when control > target
   4. Instruction.inverse() round-trip for custom (append-path) instructions
 """
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
 import qutritium.circuit.elementary_matrices as em
-from qutritium import purity, QutritCircuit, state_fidelity, von_neumann_entropy
+from qutritium import QutritCircuit, purity, state_fidelity, von_neumann_entropy
 from qutritium.circuit.instruction import Instruction
-from qutritium.gates import CNOT3, CPhase, CSUM, CSUMDag, Rx01, SWAP3
+from qutritium.gates import CNOT3, CSUM, SWAP3, CPhase, CSUMDag, Rx01
 
 _SWAP9 = em.swap3()
 
@@ -42,7 +43,9 @@ class TestMetricsNormalization:
 
     def test_zero_norm_ket_raises(self):
         with pytest.raises(ValueError, match="zero norm"):
-            state_fidelity(np.zeros(3, dtype=complex), np.array([1, 0, 0], dtype=complex))
+            state_fidelity(
+                np.zeros(3, dtype=complex), np.array([1, 0, 0], dtype=complex)
+            )
 
     def test_non_unit_trace_matrix_raises(self):
         bad = 2 * np.eye(3, dtype=complex) / 3  # trace 2
@@ -50,7 +53,9 @@ class TestMetricsNormalization:
             purity(bad)
 
     def test_non_hermitian_matrix_raises(self):
-        bad = np.array([[1, 1, 0], [0, 0, 0], [0, 0, 0]], dtype=complex)  # trace 1, not Hermitian
+        bad = np.array(
+            [[1, 1, 0], [0, 0, 0], [0, 0, 0]], dtype=complex
+        )  # trace 1, not Hermitian
         with pytest.raises(ValueError, match="Hermitian"):
             purity(bad)
 
@@ -79,21 +84,29 @@ def _effect(gate, first, second):
 
 
 class TestTwoQutritOrientation:
-    @pytest.mark.parametrize("gate,mat", [
-        (CSUM(), em.csum()),
-        (CSUMDag(), em.csum_dag()),
-        (CPhase(), em.cphase()),
-        (SWAP3(), em.swap3()),
-    ], ids=["CSUM", "CSUMDag", "CPhase", "SWAP3"])
+    @pytest.mark.parametrize(
+        "gate,mat",
+        [
+            (CSUM(), em.csum()),
+            (CSUMDag(), em.csum_dag()),
+            (CPhase(), em.cphase()),
+            (SWAP3(), em.swap3()),
+        ],
+        ids=["CSUM", "CSUMDag", "CPhase", "SWAP3"],
+    )
     def test_forward_is_raw_matrix(self, gate, mat):
         assert np.allclose(_effect(gate, 0, 1), mat)
 
-    @pytest.mark.parametrize("gate,mat", [
-        (CSUM(), em.csum()),
-        (CSUMDag(), em.csum_dag()),
-        (CPhase(), em.cphase()),
-        (SWAP3(), em.swap3()),
-    ], ids=["CSUM", "CSUMDag", "CPhase", "SWAP3"])
+    @pytest.mark.parametrize(
+        "gate,mat",
+        [
+            (CSUM(), em.csum()),
+            (CSUMDag(), em.csum_dag()),
+            (CPhase(), em.cphase()),
+            (SWAP3(), em.swap3()),
+        ],
+        ids=["CSUM", "CSUMDag", "CPhase", "SWAP3"],
+    )
     def test_reversed_is_swap_conjugated(self, gate, mat):
         assert np.allclose(_effect(gate, 1, 0), _SWAP9 @ mat @ _SWAP9)
 
@@ -108,7 +121,9 @@ class TestTwoQutritOrientation:
 
     def test_noncustom_cnot_unaffected_both_orders(self):
         for first, second in [(0, 1), (1, 0)]:
-            ins = Instruction("CNOT", n_qutrit=2, first_qutrit=first, second_qutrit=second)
+            ins = Instruction(
+                "CNOT", n_qutrit=2, first_qutrit=first, second_qutrit=second
+            )
             assert np.allclose(ins.effect_matrix, em.cnot(control=first, target=second))
 
     def test_cnot3_reversed_swaps(self):

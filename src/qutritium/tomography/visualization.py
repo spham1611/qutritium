@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Density-matrix visualization: cityscape, Hinton, and ideal rho vs reconstructed rho."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -37,6 +38,7 @@ def _bar3d(ax, part: NDArray, label: str) -> None:
 def _hinton(ax, matrix: NDArray, label: str) -> None:
     """Hinton diagram: square area ~ |value|, white +, black -."""
     from matplotlib.patches import Rectangle
+
     max_w = float(np.abs(matrix).max()) or 1.0
     d = matrix.shape[0]
     ax.set_facecolor("lightgray")
@@ -44,8 +46,15 @@ def _hinton(ax, matrix: NDArray, label: str) -> None:
     for (i, j), w in np.ndenumerate(matrix):
         size = np.sqrt(abs(w) / max_w)
         color = "white" if w >= 0 else "black"
-        ax.add_patch(Rectangle((j - size / 2, i - size / 2), size, size,
-                               facecolor=color, edgecolor="gray"))
+        ax.add_patch(
+            Rectangle(
+                (j - size / 2, i - size / 2),
+                size,
+                size,
+                facecolor=color,
+                edgecolor="gray",
+            )
+        )
     ax.set_title(label)
     ax.set_xticks(range(d))
     ax.set_yticks(range(d))
@@ -54,7 +63,9 @@ def _hinton(ax, matrix: NDArray, label: str) -> None:
 
 
 def plot_density_matrix(
-        rho: NDArray, style: str = "city", title: str = "Density matrix",
+        rho: NDArray,
+        style: str = "city",
+        title: str = "Density matrix",
 ) -> Figure:
     """Plot Re(rho) and Im(rho) as a cityscape or Hinton diagram.
 
@@ -82,6 +93,7 @@ def plot_density_matrix(
     _validate_square(rho)
 
     from matplotlib import pyplot as plt
+
     fig = plt.figure(figsize=(10, 4))
     parts = [(rho.real, "Re(rho)"), (rho.imag, "Im(rho)")]
     for i, (part, label) in enumerate(parts, start=1):
@@ -123,15 +135,16 @@ def plot_tomography_comparison(
     _validate_square(ideal)
     _validate_square(est)
     if ideal.shape != est.shape:
-        raise ValueError(
-            f"shapes differ: {ideal.shape} vs {est.shape}."
-        )
+        raise ValueError(f"shapes differ: {ideal.shape} vs {est.shape}.")
 
     from matplotlib import pyplot as plt
+
     fig = plt.figure(figsize=(10, 8))
     panels = [
-        (ideal.real, "ideal  Re"), (ideal.imag, "ideal  Im"),
-        (est.real, "estimated  Re"), (est.imag, "estimated  Im"),
+        (ideal.real, "ideal  Re"),
+        (ideal.imag, "ideal  Im"),
+        (est.real, "estimated  Re"),
+        (est.imag, "estimated  Im"),
     ]
     for i, (part, label) in enumerate(panels, start=1):
         ax = fig.add_subplot(2, 2, i, projection="3d")

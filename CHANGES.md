@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.1] — 2026-07-03
+
+Renamed `QASMSimulator` to `StatevectorSimulator` — the class evolves a
+statevector, and there is no QASM layer (OpenQASM was dropped from the roadmap).
+`QASMSimulator` stays as a deprecated alias that warns on instantiation and will
+be removed in v2.0; switch imports to `StatevectorSimulator`. No breaking
+changes — old code still runs.
+
+`NoiseModel.add_quantum_error`/`add_prep_error` now reject multi-qutrit channels
+and negative qutrit indices with a clear `ValueError` instead of crashing later
+inside NumPy.
+
 ## [1.5.0] — 2026-06-17
 
 Added single-qutrit **process tomography** to `qutritium.tomography`:
@@ -7,7 +19,7 @@ Added single-qutrit **process tomography** to `qutritium.tomography`:
 measurement circuits, `reconstruct_process` inverts the resulting counts into a
 Choi matrix by linear least squares, and `choi_to_kraus` reads Kraus operators
 off the Choi spectrum. `reconstruct_state` gains a `"projected_lls"` method that
-projects the linear-inversion estimate onto the closest physical density matrix
+projects the linear-least-squares estimate onto the closest physical density matrix
 (Smolin, Gambetta & Smith, 2012).
 
 Added `examples/process_tomography.ipynb`. The test suite is now 380 tests.
@@ -24,12 +36,12 @@ Added `qutritium.channels` — Kraus-operator noise channels (`Channel`,
 `pauli_channel`), a classical `ReadoutError`, and the `NoiseModel` /
 `SPAMNoiseModel` containers. Noise attaches to a simulator with
 `Simulator.set_noise_model`: the `DensityMatrixSimulator` applies Kraus gate and
-prep channels, both backends apply readout error, and the `QASMSimulator` rejects
-Kraus noise.
+prep channels, both backends apply readout error, and the `QASMSimulator`
+(renamed `StatevectorSimulator` in v1.5.1) rejects Kraus noise.
 
 Added `qutritium.tomography` — single-qutrit mutually-unbiased-basis state
 tomography (`mub_bases`, `state_tomography_circuits`, `reconstruct_state` via
-linear inversion) plus density-matrix visualization (`plot_density_matrix`,
+linear least squares) plus density-matrix visualization (`plot_density_matrix`,
 `plot_tomography_comparison`).
 
 Added `examples/noise_and_tomography.ipynb`. The test suite is now 370 tests.

@@ -6,13 +6,22 @@ Organized as:
   3. ReadoutError confusion matrix
   4. NoiseModel container + SPAMNoiseModel
 """
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from qutritium.channels import (amplitude_damping_channel, Channel, dephasing_channel, depolarizing_channel, NoiseModel,
-                                pauli_channel, ReadoutError, SPAMNoiseModel)
+from qutritium.channels import (
+    Channel,
+    NoiseModel,
+    ReadoutError,
+    SPAMNoiseModel,
+    amplitude_damping_channel,
+    dephasing_channel,
+    depolarizing_channel,
+    pauli_channel,
+)
 
 I3 = np.eye(3, dtype=complex)
 
@@ -57,7 +66,9 @@ class TestChannel:
 # ===================================================================
 class TestDepolarizing:
     def test_p1_gives_maximally_mixed(self):
-        assert np.allclose(depolarizing_channel(1.0).apply_kraus_op(_ket_rho(0)), I3 / 3)
+        assert np.allclose(
+            depolarizing_channel(1.0).apply_kraus_op(_ket_rho(0)), I3 / 3
+        )
 
     def test_p0_is_identity(self):
         rho = _ket_rho(2)
@@ -84,19 +95,27 @@ class TestDephasing:
         assert np.allclose(out, np.diag([0.5, 0.5, 0.0]))
 
     def test_p0_is_identity(self):
-        assert np.allclose(dephasing_channel(0.0).apply_kraus_op(self._PLUS), self._PLUS)
+        assert np.allclose(
+            dephasing_channel(0.0).apply_kraus_op(self._PLUS), self._PLUS
+        )
 
 
 class TestAmplitudeDamping:
     def test_single_step_2_to_1(self):
-        assert np.allclose(amplitude_damping_channel(1.0).apply_kraus_op(_ket_rho(2)), _ket_rho(1))
+        assert np.allclose(
+            amplitude_damping_channel(1.0).apply_kraus_op(_ket_rho(2)), _ket_rho(1)
+        )
 
     def test_single_step_1_to_0(self):
-        assert np.allclose(amplitude_damping_channel(1.0).apply_kraus_op(_ket_rho(1)), _ket_rho(0))
+        assert np.allclose(
+            amplitude_damping_channel(1.0).apply_kraus_op(_ket_rho(1)), _ket_rho(0)
+        )
 
     @pytest.mark.parametrize("gamma", [0.0, 0.4, 1.0])
     def test_ground_state_is_fixed(self, gamma):
-        assert np.allclose(amplitude_damping_channel(gamma).apply_kraus_op(_ket_rho(0)), _ket_rho(0))
+        assert np.allclose(
+            amplitude_damping_channel(gamma).apply_kraus_op(_ket_rho(0)), _ket_rho(0)
+        )
 
     def test_steady_state_relaxes_to_ground(self):
         ch = amplitude_damping_channel(1.0)
@@ -146,7 +165,9 @@ class TestReadoutError:
 
     def test_apply_mixes_probabilities(self):
         a = np.array([[0.9, 0.05, 0.05], [0.05, 0.9, 0.05], [0.05, 0.05, 0.9]])
-        assert np.allclose(ReadoutError(a).apply(np.array([1.0, 0.0, 0.0])), [0.9, 0.05, 0.05])
+        assert np.allclose(
+            ReadoutError(a).apply(np.array([1.0, 0.0, 0.0])), [0.9, 0.05, 0.05]
+        )
 
     def test_non_square_raises(self):
         with pytest.raises(ValueError, match="square"):

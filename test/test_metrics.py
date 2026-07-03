@@ -1,14 +1,5 @@
-"""Tests for the qutritium.metrics subpackage.
+"""Tests for the qutritium.metrics subpackage."""
 
-Organized by metric:
-  1. state_fidelity   (pure-pure, pure-mixed, mixed-mixed, symmetry, bounds)
-  2. trace_distance   (identical, orthogonal, symmetry, bounds)
-  3. purity           (pure, maximally mixed, bounds)
-  4. von_neumann_entropy (pure, maximally mixed, base conversion)
-  5. process_fidelity (identity check, X01 vs I, bounds)
-  6. average_gate_fidelity (consistency with process_fidelity)
-  7. Input validation
-"""
 from __future__ import annotations
 
 import numpy as np
@@ -32,9 +23,11 @@ _KET2 = np.array([0, 0, 1], dtype=complex)
 _MAX_MIXED = np.eye(3, dtype=complex) / 3
 _X01 = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]], dtype=complex)
 _H3 = (1 / np.sqrt(3)) * np.array(
-    [[1, 1, 1],
-     [1, np.exp(2j * np.pi / 3), np.exp(4j * np.pi / 3)],
-     [1, np.exp(4j * np.pi / 3), np.exp(2j * np.pi / 3)]],
+    [
+        [1, 1, 1],
+        [1, np.exp(2j * np.pi / 3), np.exp(4j * np.pi / 3)],
+        [1, np.exp(4j * np.pi / 3), np.exp(2j * np.pi / 3)],
+    ],
     dtype=complex,
 )
 
@@ -72,7 +65,8 @@ class TestStateFidelity:
         """Fidelity should agree whether |psi> is passed as ket or |psi><psi|."""
         rho = np.outer(_KET0, _KET0.conj())
         assert state_fidelity(_KET0, _KET1) == pytest.approx(
-            state_fidelity(rho, _KET1), abs=1e-12,
+            state_fidelity(rho, _KET1),
+            abs=1e-12,
         )
 
     def test_pure_vs_maximally_mixed(self):
@@ -95,10 +89,7 @@ class TestStateFidelity:
         psi = _random_pure_state(seed=3)
         phi = _random_pure_state(seed=4)
         expected = abs(np.vdot(psi, phi)) ** 2
-        # Two eigendecompositions through _matrix_sqrt_hermitian on a
-        # rank-1 input lose ~7-8 digits relative to the direct
-        # |<psi|phi>|^2 formula. Default pytest.approx tolerance (rel=1e-6)
-        # is well within the achievable precision.
+        # rank-1 sqrt path loses ~7 digits; default rel=1e-6 is fine.
         assert state_fidelity(psi, phi) == pytest.approx(expected)
 
     def test_bounded_in_unit_interval(self):
@@ -115,9 +106,7 @@ class TestStateFidelity:
         """
         rho = np.diag([0.5, 0.3, 0.2]).astype(complex)
         sigma = np.diag([0.4, 0.4, 0.2]).astype(complex)
-        expected = (
-                           np.sqrt(0.5 * 0.4) + np.sqrt(0.3 * 0.4) + np.sqrt(0.2 * 0.2)
-                   ) ** 2
+        expected = (np.sqrt(0.5 * 0.4) + np.sqrt(0.3 * 0.4) + np.sqrt(0.2 * 0.2)) ** 2
         assert state_fidelity(rho, sigma) == pytest.approx(expected)
 
 
@@ -135,7 +124,8 @@ class TestTraceDistance:
         rho = _random_density_matrix(seed=5)
         sigma = _random_density_matrix(seed=6)
         assert trace_distance(rho, sigma) == pytest.approx(
-            trace_distance(sigma, rho), abs=1e-12,
+            trace_distance(sigma, rho),
+            abs=1e-12,
         )
 
     def test_non_negative(self):
@@ -261,10 +251,13 @@ class TestAverageGateFidelity:
     def test_lower_bound_is_one_over_d_plus_one(self):
         """F_avg >= 1/(d+1) when F_pro = 0 (impossible for pure unitaries
         but the formula should respect the floor for any non-negative F_pro)."""
-        # Use a Haar-random unitary pair and check the bound
         rng = np.random.default_rng(8)
-        u1 = np.linalg.qr(rng.standard_normal((3, 3)) + 1j * rng.standard_normal((3, 3)))[0]
-        u2 = np.linalg.qr(rng.standard_normal((3, 3)) + 1j * rng.standard_normal((3, 3)))[0]
+        u1 = np.linalg.qr(
+            rng.standard_normal((3, 3)) + 1j * rng.standard_normal((3, 3))
+        )[0]
+        u2 = np.linalg.qr(
+            rng.standard_normal((3, 3)) + 1j * rng.standard_normal((3, 3))
+        )[0]
         f_avg = average_gate_fidelity(u1, u2)
         assert f_avg >= 1.0 / 4.0 - 1e-12
 
@@ -298,7 +291,8 @@ class TestInputValidation:
 
     def test_process_fidelity_rejects_non_unitary_ideal(self):
         non_unitary = np.array(
-            [[1, 0, 0], [0, 1, 0], [0, 0, 2]], dtype=complex,
+            [[1, 0, 0], [0, 1, 0], [0, 0, 2]],
+            dtype=complex,
         )
         eye3 = np.eye(3, dtype=complex)
         with pytest.raises(ValueError, match="not unitary"):
@@ -306,7 +300,8 @@ class TestInputValidation:
 
     def test_process_fidelity_rejects_non_unitary_actual(self):
         non_unitary = np.array(
-            [[1, 0, 0], [0, 1, 0], [0, 0, 2]], dtype=complex,
+            [[1, 0, 0], [0, 1, 0], [0, 0, 2]],
+            dtype=complex,
         )
         eye3 = np.eye(3, dtype=complex)
         with pytest.raises(ValueError, match="not unitary"):

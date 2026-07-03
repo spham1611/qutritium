@@ -20,21 +20,12 @@ $|\psi\rangle\langle\psi|$ internally.
 
 **`state_fidelity(rho, sigma) → float`**
 
-Uhlmann fidelity between two states:
-
 $$
 F(\rho, \sigma) = \left(\mathrm{tr}\sqrt{\sqrt{\rho}\,\sigma\,\sqrt{\rho}}\right)^2.
 $$
 
 Reduces to $|\langle\psi|\phi\rangle|^2$ for pure states. Symmetric, in
 $[0, 1]$; equals 1 iff $\rho = \sigma$.
-
-```python
-import numpy as np
-psi = np.array([1, 0, 0], dtype=complex)
-state_fidelity(psi, psi)                       # 1.0
-state_fidelity(psi, np.eye(3) / 3)             # 1/3  (pure vs maximally mixed)
-```
 
 **`trace_distance(rho, sigma) → float`**
 
@@ -64,16 +55,12 @@ $$
 $\log_{\text{base}} d$ for the maximally mixed state. Numerical-zero
 eigenvalues are dropped before the log.
 
-```python
-von_neumann_entropy(np.eye(3) / 3)             # log2(3) ≈ 1.585
-```
-
 ---
 
 ## Process metrics
 
 Both take two unitaries of shape `(d, d)`; inputs are validated to be unitary
-(`atol=1e-6`).
+(`atol=1e-8`).
 
 **`process_fidelity(u_ideal, u_actual) → float`**
 
@@ -93,14 +80,30 @@ The Haar-average of `state_fidelity` between $U_{\text{ideal}}|\psi\rangle$
 and $U_{\text{actual}}|\psi\rangle$ over input states — the figure of merit
 quoted in experimental gate-characterization work.
 
+---
+
+## Examples
+
 ```python
 import numpy as np
 from qutritium.gates import X01
-from qutritium import average_gate_fidelity
+from qutritium import (
+    state_fidelity, trace_distance, purity, von_neumann_entropy,
+    process_fidelity, average_gate_fidelity,
+)
+
+psi = np.array([1, 0, 0], dtype=complex)
+mixed = np.eye(3) / 3
+
+state_fidelity(psi, psi)      # 1.0
+state_fidelity(psi, mixed)    # 1/3  (pure vs maximally mixed)
+trace_distance(psi, mixed)    # 2/3
+purity(mixed)                 # 1/3
+von_neumann_entropy(mixed)    # log2(3) ≈ 1.585
 
 u = X01().matrix()
-average_gate_fidelity(u, u)                     # 1.0
-average_gate_fidelity(np.eye(3, dtype=complex), u)   # 1/3
+process_fidelity(u, u)                            # 1.0
+average_gate_fidelity(np.eye(3, dtype=complex), u)  # 1/3
 ```
 
 ## Notes

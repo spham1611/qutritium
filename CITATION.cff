@@ -22,21 +22,13 @@ authors:
   - family-names: Pham
     given-names: Son
     affiliation: "Duke University"
-  - family-names: Nguyen
-    given-names: Tien
-    affiliation: "École Polytechnique, France"
-  - family-names: Bach
-    given-names: Bao
-    affiliation: "University of Delaware, USA"
-  - family-names: He
-    given-names: Charlie
-    affiliation: "Duke University, USA"
+    orcid: "https://orcid.org/0009-0007-8139-6797"
 
 repository-code: "https://github.com/spham1611/qutritium"
 url: "https://github.com/spham1611/qutritium"
 license: MIT
-version: "1.5.0"
-date-released: "2026-06-17"
+version: "1.5.1"
+date-released: "2026-07-03"
 
 keywords:
   - quantum computing

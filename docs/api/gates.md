@@ -15,6 +15,8 @@ Every gate inherits from `qutritium.gates.Gate` and provides:
 - `.inverse()` → `Gate` — the conjugate transpose gate
 - `.is_unitary()` → `bool` — verify unitarity
 
+---
+
 ## Single-qutrit fixed gates
 
 All matrices are 3×3 unitary.
@@ -55,6 +57,8 @@ All matrices are 3×3 unitary.
 | `T3()`     | $\mathrm{diag}(1, \omega^{1/3}, \omega^{-1/3})$. $T^9 = I$        |
 | `UFT()`    | Fourier-related gate $U_{FT}$                                     |
 
+---
+
 ## Single-qutrit parametric gates
 
 ### Subspace rotations
@@ -77,8 +81,6 @@ Convention: $R_{\text{axis},ij}(\theta) = \exp(-i\theta/2 \cdot \sigma_{\text{ax
 
 $g_{ij}(\theta, \phi) = \exp\bigl(-i\tfrac{\theta}{2}(\cos\phi\, X_{ij} + \sin\phi\, Y_{ij})\bigr)$
 
-Native gate in trapped-ion implementations (Ringbauer et al., *Nat. Phys.* 18, 1053, 2022).
-
 | Gate        | Parameters |
 |-------------|------------|
 | `G01(θ, φ)` | 2          |
@@ -91,17 +93,38 @@ Native gate in trapped-ion implementations (Ringbauer et al., *Nat. Phys.* 18, 1
 |------------------|------------|--------------------------------------------------------|
 | `Ud(φ₁, φ₂, φ₃)` | 3          | $\mathrm{diag}(e^{i\phi_1}, e^{i\phi_2}, e^{i\phi_3})$ |
 
+---
+
 ## Two-qutrit gates
 
 All matrices are 9×9 unitary.
 
-| Gate        | Action                                          | Reference          |
-|-------------|-------------------------------------------------|--------------------|
-| `CSUM()`    | $\|c, t\rangle \to \|c, (t{+}c) \bmod 3\rangle$ | Wang et al. (2020) |
-| `CSUMDag()` | $\|c, t\rangle \to \|c, (t{-}c) \bmod 3\rangle$ | CSUM inverse       |
-| `CPhase()`  | $\|c, t\rangle \to \omega^{ct}\|c, t\rangle$    | Qutrit CZ analogue |
-| `CNOT3()`   | Legacy CNOT from v0.0.1                         | Equivalent to CSUM |
-| `SWAP3()`   | $\|a, b\rangle \to \|b, a\rangle$               | Self-inverse       |
+| Gate          | Action                                          |
+|---------------|-------------------------------------------------|
+| `CSUM()`      | $\|c, t\rangle \to \|c, (t{+}c) \bmod 3\rangle$ |
+| `CSUMDag()`   | $\|c, t\rangle \to \|c, (t{-}c) \bmod 3\rangle$ |
+| `CPhase()`    | $\|c, t\rangle \to \omega^{ct}\|c, t\rangle$    |
+| `CPhaseDag()` | $\|c, t\rangle \to \omega^{-ct}\|c, t\rangle$   |
+| `CNOT3()`     | Legacy CNOT from v0.0.1                         |
+| `SWAP3()`     | $\|a, b\rangle \to \|b, a\rangle$               |
+
+---
+
+## Examples
+
+```python
+from qutritium import QutritCircuit
+from qutritium.gates import H3, Rx01, CSUM
+
+qc = QutritCircuit(2, None)
+qc.append(H3(), first_qutrit=0)
+qc.append(Rx01(0.5), first_qutrit=0)
+qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
+
+g = Rx01(0.5)
+print(g.inverse().params)  # (-0.5,)
+print(g.is_unitary())  # True
+```
 
 ## References
 
@@ -109,4 +132,3 @@ All matrices are 9×9 unitary.
 - Ringbauer, M. et al. (2022). *Nat. Phys.* 18, 1053 — Generalized rotations, native trapped-ion gate set
 - Howard, M. & Vala, J. (2012). *Phys. Rev. A* 86, 022316 — Qudit T gate (`T3`)
 - Wang, Y. et al. (2020). *Front. Phys.* 8, 589504 — CSUM, qutrit gate compilation
-- Vitanov, N. V. (2012). *Phys. Rev. A* 85, 032331 — SU(3) decomposition

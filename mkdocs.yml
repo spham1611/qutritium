@@ -57,5 +57,6 @@ nav:
   - Tutorials:
       - Qutrit Bell State: tutorials/bell-state.md
       - Noise & Tomography: tutorials/noise-and-tomography.md
+      - Process Tomography: tutorials/process-tomography.md
   - Legacy Code: legacy.md
   - Changelog: changelog.md

@@ -1,4 +1,4 @@
-"""Tests for DensityMatrixSimulator and cross-backend agreement with QASMSimulator.
+"""Tests for DensityMatrixSimulator and cross-backend agreement with StatevectorSimulator.
 
 Organized as:
   1. Cross-backend: DM counts and final state match the statevector sim
@@ -7,6 +7,7 @@ Organized as:
   4. partial_trace (Bell -> I/3 is the key indexing check)
   5. Index/endianness convention (qutrit 0 most significant)
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -14,11 +15,11 @@ import pytest
 
 from qutritium import (
     DensityMatrixSimulator,
-    QASMSimulator,
     QutritCircuit,
+    StatevectorSimulator,
     state_fidelity,
 )
-from qutritium.gates import CSUM, H3, Rx01, X01
+from qutritium.gates import CSUM, H3, X01, Rx01
 
 
 def _bell_circuit(measured: bool = True) -> QutritCircuit:
@@ -67,7 +68,7 @@ class TestCrossBackend:
     @pytest.mark.parametrize("qc", _standard_circuits())
     def test_counts_agree_within_sampling(self, qc):
         shots = 20_000
-        sv = QASMSimulator(qc)
+        sv = StatevectorSimulator(qc)
         dm = DensityMatrixSimulator(qc)
         sv.run(num_shots=shots)
         dm.run(num_shots=shots)
@@ -81,7 +82,7 @@ class TestCrossBackend:
 
     @pytest.mark.parametrize("qc", _standard_circuits())
     def test_final_state_fidelity_is_one(self, qc):
-        sv = QASMSimulator(qc)
+        sv = StatevectorSimulator(qc)
         dm = DensityMatrixSimulator(qc)
         rho_dm = dm.return_final_state()
         rho_sv = sv.density_matrix()
@@ -176,6 +177,7 @@ class TestPartialTrace:
         # |+>|0> with |+> = (|0>+|1>)/sqrt2 on qutrit 0 (via Rx01? no—use H3 truncated)
         # Build |+>_{01} on qutrit 0 by Ry01(pi/2): keeps within {0,1}
         from qutritium.gates import Ry01
+
         qc = QutritCircuit(2, None)
         qc.append(Ry01(np.pi / 2), first_qutrit=0)  # (|0>+|1>)/sqrt2 on qutrit 0
         dm = DensityMatrixSimulator(qc)
@@ -208,7 +210,7 @@ class TestIndexConvention:
         qc = QutritCircuit(2, None)
         qc.append(X01(), first_qutrit=0)
         qc.measure_all()
-        sim = QASMSimulator(qc)
+        sim = StatevectorSimulator(qc)
         sim.run(num_shots=100)
         assert sim.get_counts() == {"10": 100}
 

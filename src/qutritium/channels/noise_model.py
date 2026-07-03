@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """NoiseMode: attach to simulator."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -46,14 +47,37 @@ class NoiseModel:
         self._readout: ReadoutError | None = None
 
     def add_quantum_error(self, channel: Channel, gate_label: str) -> None:
-        """Apply ``channel`` after every gate whose label matches ``gate_label``."""
+        """Apply ``channel`` after every gate whose label matches ``gate_label``.
+
+        Raises
+        ------
+        ValueError
+            If ``channel`` is not single-qutrit.
+        """
+        if channel.num_qutrits != 1:
+            raise ValueError(
+                f"Only single-qutrit channels are supported; "
+                f"got a {channel.num_qutrits}-qutrit channel."
+            )
         self._gate_errors[gate_label] = channel
 
     def add_prep_error(self, channel: Channel, qutrit: int | None = None) -> None:
         """Apply ``channel`` before all gates.
 
         If ``qutrit`` is None, apply to all qutrits.
+
+        Raises
+        ------
+        ValueError
+            If ``channel`` is not single-qutrit, or ``qutrit`` is negative.
         """
+        if channel.num_qutrits != 1:
+            raise ValueError(
+                f"Only single-qutrit channels are supported; "
+                f"got a {channel.num_qutrits}-qutrit channel."
+            )
+        if qutrit is not None and qutrit < 0:
+            raise ValueError(f"Qutrit index must be non-negative; got {qutrit}.")
         self._prep_errors.append((channel, qutrit))
 
     def add_readout_error(self, readout: ReadoutError) -> None:
@@ -106,12 +130,18 @@ class SPAMNoiseModel(NoiseModel):
             If ``p_prep`` and ``p_meas`` are not within [0, 1].
         """
         if not 0 <= p_prep <= 1 or not 0 <= p_meas <= 1:
-            raise ValueError(f"Prep error and measurement error are outside [0, 1]; "
-                             f"got {p_prep} and {p_meas}.")
+            raise ValueError(
+                f"Prep error and measurement error are outside [0, 1]; "
+                f"got {p_prep} and {p_meas}."
+            )
         super().__init__()
-        prep = pauli_channel({"x_plus": p_prep / 2, "x_minus": p_prep / 2, "identity": 1 - p_prep})
+        prep = pauli_channel(
+            {"x_plus": p_prep / 2, "x_minus": p_prep / 2, "identity": 1 - p_prep}
+        )
         self.add_prep_error(prep)
-        self.add_readout_error(ReadoutError(_symmetric_confusion_matrix(p_meas, n_qutrit)))
+        self.add_readout_error(
+            ReadoutError(_symmetric_confusion_matrix(p_meas, n_qutrit))
+        )
 
 
 __all__ = ["NoiseModel", "SPAMNoiseModel"]

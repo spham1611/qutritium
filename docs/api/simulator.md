@@ -2,13 +2,13 @@
 
 Two simulators share a common base (`Simulator`):
 
-- **`QASMSimulator`** — exact statevector evolution. Fast; pure states only.
+- **`StatevectorSimulator`** — exact statevector evolution. Fast; pure states only.
 - **`DensityMatrixSimulator`** — density-matrix evolution
   $\rho \to U\rho U^\dagger$. Heavier (memory $\sim 9^{n}$) but represents
-  mixed states — the backend for noise (v1.4) and tomography.
+  mixed states — the backend for noise and tomography.
 
 ```python
-from qutritium import QASMSimulator, DensityMatrixSimulator
+from qutritium import StatevectorSimulator, DensityMatrixSimulator
 ```
 
 Both consume a `QutritCircuit` and expose the same measurement API
@@ -38,6 +38,16 @@ Histogram of sampled outcomes (base-3 ket labels, qutrit 0 leftmost). Call
 
 Raw ordered list of sampled outcomes.
 
+**`set_noise_model(noise_model)`**
+
+Hand a `NoiseModel` or `SPAMNoiseModel` to the simulator before you call `run()`.
+The `DensityMatrixSimulator` folds Kraus gate/prep channels into the evolution,
+and readout error is applied at sampling time on either backend. The
+`StatevectorSimulator` takes readout-only models and turns down anything with Kraus
+noise (`NotImplementedError`). Set it before running — the simulation is cached,
+so a late model raises `RuntimeError` and you'll want a fresh simulator instead.
+The full story is on the [Channels & Noise](channels.md) page.
+
 **`plot(plot_type="histogram") → Figure`**
 
 Plot the counts. Types: `"histogram"`, `"line"`, `"dot"`. Requires
@@ -45,7 +55,7 @@ matplotlib (`pip install qutritium[plot]`).
 
 ---
 
-## QASMSimulator
+## StatevectorSimulator
 
 Statevector backend. In addition to the shared API:
 
@@ -57,33 +67,6 @@ measurement required).
 **`density_matrix() → NDArray`**
 
 Pure-state density matrix $|\psi\rangle\langle\psi|$.
-
-**`set_noise_model(noise_model)`** *(shared `Simulator` method)*
-
-Hand a `NoiseModel` or `SPAMNoiseModel` to the simulator before you call `run()`.
-The `DensityMatrixSimulator` folds Kraus gate/prep channels into the evolution,
-and readout error is applied at sampling time on either backend. The
-`QASMSimulator` takes readout-only models and turns down anything with Kraus
-noise (`NotImplementedError`). Set it before running — the simulation is cached,
-so a late model raises `RuntimeError` and you'll want a fresh simulator instead.
-The full story is on the [Channels & Noise](channels.md) page.
-
-```python
-from qutritium import QutritCircuit, DensityMatrixSimulator
-from qutritium.channels import NoiseModel, depolarizing_channel
-from qutritium.gates import X01
-
-qc = QutritCircuit(1, None)
-qc.append(X01(), first_qutrit=0)
-qc.measure_all()
-
-nm = NoiseModel()
-nm.add_quantum_error(depolarizing_channel(0.05), "X01")   # 5% depolarizing after each X01
-dm = DensityMatrixSimulator(qc)
-dm.set_noise_model(nm)
-dm.run(num_shots=2000)
-print(dm.get_counts())
-```
 
 ---
 
@@ -113,6 +96,31 @@ Output is indexed in ascending qutrit order, shape $(3^k, 3^k)$ with
 $k = \texttt{len(keep\_indices)}$. Raises `ValueError` for empty, duplicate,
 or out-of-range indices.
 
+---
+
+## Examples
+
+### Noise on the density-matrix backend
+
+```python
+from qutritium import QutritCircuit, DensityMatrixSimulator
+from qutritium.channels import NoiseModel, depolarizing_channel
+from qutritium.gates import X01
+
+qc = QutritCircuit(1, None)
+qc.append(X01(), first_qutrit=0)
+qc.measure_all()
+
+nm = NoiseModel()
+nm.add_quantum_error(depolarizing_channel(0.05), "X01")  # 5% depolarizing after each X01
+dm = DensityMatrixSimulator(qc)
+dm.set_noise_model(nm)
+dm.run(num_shots=2000)
+print(dm.get_counts())
+```
+
+### Entanglement via partial trace and expectation values
+
 ```python
 import numpy as np
 from qutritium import QutritCircuit, DensityMatrixSimulator
@@ -141,8 +149,9 @@ A noiseless circuit gives the same measurement statistics on both simulators,
 and `state_fidelity` between the two final states is 1:
 
 ```python
-from qutritium import state_fidelity
-sv, dm = QASMSimulator(qc), DensityMatrixSimulator(qc)
+from qutritium import StatevectorSimulator, DensityMatrixSimulator, state_fidelity
+
+sv, dm = StatevectorSimulator(qc), DensityMatrixSimulator(qc)
 print(state_fidelity(dm.return_final_state(), sv.density_matrix()))  # ≈ 1
 ```
 
@@ -150,5 +159,5 @@ print(state_fidelity(dm.return_final_state(), sv.density_matrix()))  # ≈ 1
 
 - Statevector memory scales as $3^n$; density-matrix as $9^n$. Practical
   limits are roughly $n \le 10$ (statevector) and $n \le 6$ (density matrix).
-- Noise channels and readout error arrive in v1.4 via a `NoiseModel` set on
+- Noise channels and readout error are provided via a `NoiseModel` set on
   the density-matrix simulator.

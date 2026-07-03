@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Standard single-qutrit noise channels as Kraus operator."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -25,14 +26,25 @@ def _validate_unitary_name(name: str) -> NDArray[np.complex128]:
     Returns if it is correct.
     """
     names = {
-        "identity": em.identity, "x_plus": em.x_plus, "x_minus": em.x_minus,
-        "z": _clock, "z2": lambda: _clock() @ _clock(),
-        "x01": em.x01, "x02": em.x02, "x12": em.x12,
-        "y01": em.y01, "y02": em.y02, "y12": em.y12,
-        "z01": em.z01, "z02": em.z02, "z12": em.z12,
+        "identity": em.identity,
+        "x_plus": em.x_plus,
+        "x_minus": em.x_minus,
+        "z": _clock,
+        "z2": lambda: _clock() @ _clock(),
+        "x01": em.x01,
+        "x02": em.x02,
+        "x12": em.x12,
+        "y01": em.y01,
+        "y02": em.y02,
+        "y12": em.y12,
+        "z01": em.z01,
+        "z02": em.z02,
+        "z12": em.z12,
     }
     if name not in names:
-        raise ValueError(f"Unknown Pauli operator {name!r}; supported: {sorted(names)}.")
+        raise ValueError(
+            f"Unknown Pauli operator {name!r}; supported: {sorted(names)}."
+        )
     return names[name]()
 
 
@@ -80,7 +92,9 @@ def dephasing_channel(p: float) -> Channel:
     return Channel(kraus)
 
 
-def amplitude_damping_channel(gamma_10: float, gamma_21: float | None = None) -> Channel:
+def amplitude_damping_channel(
+        gamma_10: float, gamma_21: float | None = None
+) -> Channel:
     """Ladder decay.
 
     This is for one rung only with the nearest neighbor transition. The channel equation
@@ -102,7 +116,9 @@ def amplitude_damping_channel(gamma_10: float, gamma_21: float | None = None) ->
         gamma_21 = gamma_10
     _validate_p(gamma_21, p_name="gamma_21")
     _validate_p(gamma_10, p_name="gamma_10")
-    kraus_0 = np.diag([1, np.sqrt(1 - gamma_10), np.sqrt(1 - gamma_21)]).astype(np.complex128)
+    kraus_0 = np.diag([1, np.sqrt(1 - gamma_10), np.sqrt(1 - gamma_21)]).astype(
+        np.complex128
+    )
     kraus_1 = np.zeros((3, 3)).astype(np.complex128)
     kraus_1[0, 1] = np.sqrt(gamma_10)
     kraus_2 = np.zeros((3, 3)).astype(np.complex128)
@@ -133,7 +149,11 @@ def pauli_channel(probabilities: dict[str, float]) -> Channel:
     total = sum(probabilities.values())
     if not np.isclose(total, 1, atol=1e-8):
         raise ValueError("Completeness condition is not satisfied.")
-    kraus = [np.sqrt(prob) * _validate_unitary_name(name) for name, prob in probabilities.items() if prob > 0]
+    kraus = [
+        np.sqrt(prob) * _validate_unitary_name(name)
+        for name, prob in probabilities.items()
+        if prob > 0
+    ]
     return Channel(kraus)
 
 

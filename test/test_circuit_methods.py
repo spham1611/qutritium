@@ -1,11 +1,12 @@
 """Tests for QutritCircuit introspection methods: gate_count, depth, to_matrix, draw."""
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
 import qutritium.circuit.elementary_matrices as em
-from qutritium import Instruction, QASMSimulator, QutritCircuit, SU3Decomposition
+from qutritium import Instruction, QutritCircuit, StatevectorSimulator, SU3Decomposition
 from qutritium.gates import CSUM, H3, Rx01, X01
 
 
@@ -129,7 +130,7 @@ class TestResetCircuit:
         # full rebuild: append, re-measure, simulate
         qc.append(X01(), first_qutrit=0)
         qc.measure_all()
-        sim = QASMSimulator(qc)
+        sim = StatevectorSimulator(qc)
         sim.run(num_shots=100)
         assert sum(sim.get_counts().values()) == 100
 
@@ -191,16 +192,18 @@ class TestFromGate:
         assert np.allclose(ins.gate_matrix, Rx01(0.6).matrix())
 
 
-class ToNativeGatePath:
+class TestToNativeGatePath:
     def test_reconstructs_unitary(self):
         # to_native factors (with the virtual-Z phases) still compose to U
         u = H3().matrix()
         dec = SU3Decomposition(u, qutrit_index=0, n_qutrits=1)
         a = dec.angles
-        product = (em.u_d(a.phi6, a.phi5, a.phi4)
-                   @ dec.to_native().instructions[2].gate_matrix
-                   @ dec.to_native().instructions[1].gate_matrix
-                   @ dec.to_native().instructions[0].gate_matrix)
+        product = (
+                em.u_d(a.phi6, a.phi5, a.phi4)
+                @ dec.to_native().instructions[2].gate_matrix
+                @ dec.to_native().instructions[1].gate_matrix
+                @ dec.to_native().instructions[0].gate_matrix
+        )
         assert np.allclose(product, u, atol=1e-6)
 
     def test_instructions_carry_gate_refs(self):

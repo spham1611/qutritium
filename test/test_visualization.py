@@ -1,4 +1,5 @@
 """Smoke tests for qutritium.visualization (matplotlib, Agg backend)."""
+
 from __future__ import annotations
 
 import numpy as np

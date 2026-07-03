@@ -1,11 +1,12 @@
 """Tests for qutritium.tomography.process and the PSD projection."""
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
 from qutritium import DensityMatrixSimulator
-from qutritium.channels import depolarizing_channel, NoiseModel
+from qutritium.channels import NoiseModel, depolarizing_channel
 from qutritium.gates import CSUM, H3, I3, X01
 from qutritium.tomography import (
     choi_to_kraus,
@@ -33,7 +34,9 @@ def _run_pt(gate, noise_model=None):
                 dm = DensityMatrixSimulator(circ)
                 dm.set_noise_model(noise_model)
                 probs = dm.probabilities()
-                per_basis.append({str(k): round(float(p) * 90_000) for k, p in enumerate(probs)})
+                per_basis.append(
+                    {str(k): round(float(p) * 90_000) for k, p in enumerate(probs)}
+                )
         counts.append(per_basis)
     return reconstruct_process(counts, inputs)
 

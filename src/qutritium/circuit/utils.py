@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Statevector display helpers and unitarity check."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -12,7 +13,8 @@ _ZERO_TOL: float = 1e-10
 
 
 def statevector_to_state(
-    state: NDArray[np.complex128], n_qutrit: int,
+        state: NDArray[np.complex128],
+        n_qutrit: int,
 ) -> tuple[list[complex], list[str]]:
     """Extract non-zero ``(coefficient, ket-label)`` pairs from a statevector.
 

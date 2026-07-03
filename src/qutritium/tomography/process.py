@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Single-qutrit process tomography: Choi-matrix reconstruction from MUB data."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -11,7 +12,11 @@ import qutritium.circuit.elementary_matrices as em
 from qutritium.circuit.qutrit_circuit import QutritCircuit
 from qutritium.gates.base import Gate
 from qutritium.tomography.bases import mub_bases
-from qutritium.tomography.state import _MUBWrapper, reconstruct_state, state_tomography_circuits
+from qutritium.tomography.state import (
+    _MUBWrapper,
+    reconstruct_state,
+    state_tomography_circuits,
+)
 
 
 def _shift_from_zero(k: int) -> NDArray[np.complex128]:
@@ -21,7 +26,9 @@ def _shift_from_zero(k: int) -> NDArray[np.complex128]:
     return em.x01() if k == 1 else em.x02()
 
 
-def process_tomography_circuits(gate: Gate) -> tuple[list[list[QutritCircuit]], list[NDArray]]:
+def process_tomography_circuits(
+        gate: Gate,
+) -> tuple[list[list[QutritCircuit]], list[NDArray]]:
     """Build the circuits for single-qutrit process tomography of ``gate``.
 
     Same idea as state tomography, one level up: we prepare the 12 MUB states,
@@ -50,8 +57,10 @@ def process_tomography_circuits(gate: Gate) -> tuple[list[list[QutritCircuit]], 
         If ``gate`` acts on more than one qutrit.
     """
     if gate.num_qutrits != 1:
-        raise ValueError(f"Process tomography only process single-qutrit gate in this version."
-                         f"; got a {gate.num_qutrits} qutrits.")
+        raise ValueError(
+            f"Process tomography only process single-qutrit gate in this version."
+            f"; got a {gate.num_qutrits} qutrits."
+        )
     circuit_groups: list[list[QutritCircuit]] = []
     input_states: list[NDArray] = []
     for b, basis in enumerate(mub_bases()):
@@ -62,16 +71,18 @@ def process_tomography_circuits(gate: Gate) -> tuple[list[list[QutritCircuit]], 
             # Shift the state |0> -> |k> -> B_b |k> -> |v_b^(k)>
             prep_unitary = basis @ _shift_from_zero(k)
             if not np.allclose(prep_unitary, np.eye(3)):
-                prep.append(_MUBWrapper(prep_unitary, label=f"prep{b}{k}"), first_qutrit=0)
+                prep.append(
+                    _MUBWrapper(prep_unitary, label=f"prep{b}{k}"), first_qutrit=0
+                )
             prep.append(gate, first_qutrit=0)
             # Measure MUB basis
             circuit_groups.append(state_tomography_circuits(prep))
     return circuit_groups, input_states
 
 
-def reconstruct_process(counts_per_input: list[list[dict[str, int]]],
-                        input_states: list[NDArray]
-                        ) -> NDArray[np.complex128]:
+def reconstruct_process(
+        counts_per_input: list[list[dict[str, int]]], input_states: list[NDArray]
+) -> NDArray[np.complex128]:
     """Reconstruct a channel's Choi matrix from process-tomography counts.
 
     First we run ``reconstruct_state`` on each group of counts to get the
@@ -115,7 +126,9 @@ def reconstruct_process(counts_per_input: list[list[dict[str, int]]],
         raise ValueError("Process tomography needs at least 9 input states.")
 
     output_groups = [reconstruct_state(counts) for counts in counts_per_input]
-    r_in = np.column_stack([np.asarray(rho, dtype=np.complex128).flatten() for rho in input_states])
+    r_in = np.column_stack(
+        [np.asarray(rho, dtype=np.complex128).flatten() for rho in input_states]
+    )
     r_out = np.column_stack([rho.flatten() for rho in output_groups])
     # Solve for M matrix
     transfer_m, *_ = np.linalg.lstsq(r_in.T, r_out.T, rcond=None)
@@ -165,7 +178,8 @@ def choi_to_kraus(choi: NDArray, atol: float = 1e-8) -> list[NDArray[np.complex1
     eigvals, eigvecs = np.linalg.eigh(choi)
     kraus = [
         np.sqrt(val) * eigvecs[:, index].reshape(3, 3)
-        for index, val in reversed(list(enumerate(eigvals))) if val > atol
+        for index, val in reversed(list(enumerate(eigvals)))
+        if val > atol
     ]
     return kraus
 

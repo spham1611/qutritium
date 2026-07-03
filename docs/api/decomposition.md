@@ -1,13 +1,20 @@
 # Decomposition API Reference
 
-## Overview
-
 `SU3Decomposition` factors any single-qutrit unitary into a fixed sequence of
 **native two-level rotations** plus a diagonal phase — the qutrit analogue of
-the qubit ZYZ Euler decomposition. This is what lets you take an arbitrary
-$3\times3$ unitary and run it on hardware whose native operations are
-subspace rotations (e.g. trapped-ion $g_{01}$ / $g_{12}$ drives) plus
-virtual-Z phases.
+the qubit ZYZ Euler decomposition.
+
+```python
+from qutritium import SU3Decomposition
+```
+
+---
+
+## Overview
+
+This is what lets you take an arbitrary $3\times3$ unitary and run it on
+hardware whose native operations are subspace rotations (e.g. trapped-ion
+$g_{01}$ / $g_{12}$ drives) plus virtual-Z phases.
 
 The factorization (Vitanov, *Phys. Rev. A* **85**, 032331, 2012) is:
 
@@ -50,10 +57,6 @@ $U \in U(3)$.
 
 ## SU3Decomposition
 
-```python
-from qutritium import SU3Decomposition
-```
-
 ### Constructor
 
 ```python
@@ -61,7 +64,7 @@ SU3Decomposition(su3: NDArray, qutrit_index: int, n_qutrits: int)
 ```
 
 - `su3` — the $3\times3$ unitary to decompose. Validated to be unitary
-  ($U U^\dagger = I$) within `atol=1e-6`; raises `ValueError` otherwise.
+  ($U U^\dagger = I$) within `atol=1e-8`; raises `ValueError` otherwise.
 - `qutrit_index` — which qutrit in the register this unitary acts on (used by
   `to_native` / `to_circuit`).
 - `n_qutrits` — total qutrit count in the target register.
@@ -115,11 +118,10 @@ objects appended to a fresh `QutritCircuit` you can simulate directly.
 
 ## Examples
 
-### Decompose and verify
-
 ```python
 import numpy as np
 from qutritium import SU3Decomposition
+from qutritium.gates import H3
 
 # Haar-ish random unitary via QR
 rng = np.random.default_rng(42)
@@ -127,33 +129,20 @@ A = rng.standard_normal((3, 3)) + 1j * rng.standard_normal((3, 3))
 Q, _ = np.linalg.qr(A)
 
 dec = SU3Decomposition(Q, qutrit_index=0, n_qutrits=1)
-
-# Process fidelity between reconstruction and the original
 fid = np.abs(np.trace(Q.conj().T @ dec.reconstruct())) / 3
 print(f"Fidelity: {fid:.10f}")   # 1.0000000000
-```
 
-### Recover a known gate's angles
+# Recover a known gate's angles
+dec2 = SU3Decomposition(H3().matrix(), qutrit_index=0, n_qutrits=1)
+print(dec2.angles)                                     # the nine angles that build H3
+print(np.allclose(dec2.reconstruct(), H3().matrix()))  # True
 
-```python
-from qutritium.gates import H3
-from qutritium import SU3Decomposition
-
-dec = SU3Decomposition(H3().matrix(), qutrit_index=0, n_qutrits=1)
-print(dec.angles)          # the nine angles that build H3
-print(np.allclose(dec.reconstruct(), H3().matrix()))   # True
-```
-
-### Compile to a native circuit
-
-```python
-qc = dec.to_circuit()
+# Compile to a native circuit
+qc = dec2.to_circuit()
 print(qc)                  # QutritCircuit(n_qutrit=1, ops=4)  -> G01, G12, G01, Ud
 
-native = dec.to_native()
+native = dec2.to_native()
 print(native.phases)       # [phase01, phase12]  virtual-Z angles
-for ins in native.instructions:
-    print(ins.type, ins.parameter)   # g01 [...], g12 [...], g01 [...]
 ```
 
 ## Notes

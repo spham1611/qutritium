@@ -23,9 +23,9 @@ qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
 ## 2. Inspect the statevector
 
 ```python
-from qutritium import QASMSimulator
+from qutritium import StatevectorSimulator
 
-sim = QASMSimulator(qc)
+sim = StatevectorSimulator(qc)
 state = sim.return_final_state()
 
 from qutritium.circuit.utils import print_statevector
@@ -45,7 +45,7 @@ State:
 
 ```python
 qc.measure_all()
-sim = QASMSimulator(qc)
+sim = StatevectorSimulator(qc)
 sim.run(num_shots=3000)
 counts = sim.get_counts()
 print(counts)
@@ -57,12 +57,12 @@ print(counts)
 ```python
 import numpy as np
 
-sim2 = QASMSimulator(QutritCircuit(2, None))
+sim2 = StatevectorSimulator(QutritCircuit(2, None))
 # Rebuild without measurement for density matrix
 qc2 = QutritCircuit(2, None)
 qc2.append(H3(), first_qutrit=0)
 qc2.append(CSUM(), first_qutrit=0, second_qutrit=1)
-sim2 = QASMSimulator(qc2)
+sim2 = StatevectorSimulator(qc2)
 rho = sim2.density_matrix()
 
 # The partial trace over qutrit B should give a maximally mixed state

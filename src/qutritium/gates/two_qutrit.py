@@ -1,10 +1,11 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Two-qutrit gates: CSUM, CPhase, SWAP3, CNOT3.
 
 Ref: Wang et al., Front. Phys. 8, 589504 (2020).
 """
+
 from __future__ import annotations
 
 import numpy as np

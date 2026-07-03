@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """State-level metrics: compare two density matrices (or pure states)."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -36,16 +37,6 @@ def state_fidelity(
     ------
     ValueError
         On malformed input or dimension mismatch.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> psi = np.array([1, 0, 0], dtype=complex)
-    >>> state_fidelity(psi, psi)
-    1.0
-    >>> phi = np.array([0, 1, 0], dtype=complex)
-    >>> state_fidelity(psi, phi)
-    0.0
     """
     rho_mat = _as_density_matrix(rho)
     sigma_mat = _as_density_matrix(sigma)
@@ -80,14 +71,6 @@ def trace_distance(
     ------
     ValueError
         On malformed input or dimension mismatch.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> psi = np.array([1, 0, 0], dtype=complex)
-    >>> phi = np.array([0, 1, 0], dtype=complex)
-    >>> trace_distance(psi, phi)
-    1.0
     """
     rho_mat = _as_density_matrix(rho)
     sigma_mat = _as_density_matrix(sigma)
@@ -117,16 +100,6 @@ def purity(rho: NDArray[np.complex128]) -> float:
     ------
     ValueError
         On malformed input.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> psi = np.array([1, 0, 0], dtype=complex)
-    >>> purity(psi)
-    1.0
-    >>> mixed = np.eye(3, dtype=complex) / 3
-    >>> round(purity(mixed), 10)
-    0.3333333333
     """
     rho_mat = _as_density_matrix(rho)
     return float(np.real(np.trace(rho_mat @ rho_mat)))
@@ -158,16 +131,6 @@ def von_neumann_entropy(
     ------
     ValueError
         On malformed input or invalid ``base``.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> psi = np.array([1, 0, 0], dtype=complex)
-    >>> von_neumann_entropy(psi)
-    0.0
-    >>> mixed = np.eye(3, dtype=complex) / 3
-    >>> round(von_neumann_entropy(mixed), 6)  # log_2(3)
-    1.584963
     """
     if base <= 0 or base == 1:
         raise ValueError(f"base must be positive and != 1; got {base}.")

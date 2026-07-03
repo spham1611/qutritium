@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Instruction: one gate applied to specific qutrit(s) in a circuit."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -16,22 +17,44 @@ import qutritium.circuit.elementary_matrices as em
 if TYPE_CHECKING:
     from qutritium.gates.base import Gate
 
-GATE_SET: frozenset[str] = frozenset({
-    "identity",
-    "x_plus", "x_minus",
-    "sdg", "tdg",
-    "CNOT",
-    "g01", "g02", "g12",
-    "x01", "x02", "x12",
-    "y01", "y02", "y12",
-    "z01", "z02", "z12",
-    "rx01", "rx02", "rx12",
-    "ry01", "ry02", "ry12",
-    "rz01", "rz02", "rz12",
-    "u_d",
-    "hdm", "u_ft",
-    "csum", "csum_dag", "cphase", "swap3",
-})
+GATE_SET: frozenset[str] = frozenset(
+    {
+        "identity",
+        "x_plus",
+        "x_minus",
+        "sdg",
+        "tdg",
+        "CNOT",
+        "g01",
+        "g02",
+        "g12",
+        "x01",
+        "x02",
+        "x12",
+        "y01",
+        "y02",
+        "y12",
+        "z01",
+        "z02",
+        "z12",
+        "rx01",
+        "rx02",
+        "rx12",
+        "ry01",
+        "ry02",
+        "ry12",
+        "rz01",
+        "rz02",
+        "rz12",
+        "u_d",
+        "hdm",
+        "u_ft",
+        "csum",
+        "csum_dag",
+        "cphase",
+        "swap3",
+    }
+)
 
 
 class Instruction:
@@ -98,16 +121,16 @@ class Instruction:
         # Validate qutrit range
         if not 0 <= first_qutrit < n_qutrit:
             raise IndexError(
-                f"first_qutrit={first_qutrit} is out of range "
-                f"[0, {n_qutrit})."
+                f"first_qutrit={first_qutrit} is out of range " f"[0, {n_qutrit})."
             )
         if second_qutrit is not None and not 0 <= second_qutrit < n_qutrit:
             raise IndexError(
-                f"second_qutrit={second_qutrit} is out of range "
-                f"[0, {n_qutrit})."
+                f"second_qutrit={second_qutrit} is out of range " f"[0, {n_qutrit})."
             )
         if second_qutrit is not None and abs(first_qutrit - second_qutrit) != 1:
-            raise ValueError("Only adjacent two-qutrit gates are currently supported in the core.")
+            raise ValueError(
+                "Only adjacent two-qutrit gates are currently supported in the core."
+            )
 
         self._type: str = gate_type
         self.n_qutrit: int = n_qutrit
@@ -145,16 +168,17 @@ class Instruction:
 
         self._base_matrix: NDArray = np.asarray(base_matrix)
         self.gate_matrix: NDArray = (
-            self._base_matrix.conj().T if self._is_inverse
-            else self._base_matrix
+            self._base_matrix.conj().T if self._is_inverse else self._base_matrix
         )
 
     @classmethod
-    def _from_gate(cls,
-                   gate: Gate,
-                   n_qutrit: int,
-                   first_qutrit: int,
-                   second_qutrit: int | None = None, ) -> Instruction:
+    def _from_gate(
+            cls,
+            gate: Gate,
+            n_qutrit: int,
+            first_qutrit: int,
+            second_qutrit: int | None = None,
+    ) -> Instruction:
         """Wrap a ``Gate`` as a custom-matrix ``Instruction``.
 
         The one canonical ``Gate`` -> ``Instruction`` path: both

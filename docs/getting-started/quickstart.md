@@ -25,9 +25,9 @@ qc.measure_all()
 ## Simulating
 
 ```python
-from qutritium import QASMSimulator
+from qutritium import StatevectorSimulator
 
-sim = QASMSimulator(qc)
+sim = StatevectorSimulator(qc)
 sim.run(num_shots=3000)
 print(sim.get_counts())
 # {'00': ~1000, '11': ~1000, '22': ~1000}
@@ -39,7 +39,7 @@ print(sim.get_counts())
 qc2 = QutritCircuit(1, None)
 qc2.append(H3(), first_qutrit=0)
 
-sim2 = QASMSimulator(qc2)
+sim2 = StatevectorSimulator(qc2)
 state = sim2.return_final_state()
 print(state)  # 3×1 column vector with amplitudes 1/√3
 ```
@@ -53,7 +53,7 @@ print(state)  # 3×1 column vector with amplitudes 1/√3
 `Ry01(θ)`, `Ry02(θ)`, `Ry12(θ)`, `Rz01(φ)`, `Rz02(φ)`, `Rz12(φ)`,
 `G01(θ, φ)`, `G02(θ, φ)`, `G12(θ, φ)`, `Ud(φ₁, φ₂, φ₃)`
 
-**Two-qutrit gates:** `CSUM`, `CSUMDag`, `CNOT3`, `CPhase`, `SWAP3`
+**Two-qutrit gates:** `CSUM`, `CSUMDag`, `CNOT3`, `CPhase`, `CPhaseDag`, `SWAP3`
 
 ## SU(3) decomposition
 

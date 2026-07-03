@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Single-qutrit state tomography."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -123,7 +124,9 @@ def state_tomography_circuits(prep: QutritCircuit) -> list[QutritCircuit]:
         If ``prep`` is not single-qutrit or already contains a measurement.
     """
     if prep.n_qutrit != 1:
-        raise ValueError(f"State tomography is single-qutrit only in v1.4; got {prep.n_qutrit}.")
+        raise ValueError(
+            f"State tomography is single-qutrit only in v1.4; got {prep.n_qutrit}."
+        )
     if prep.measurement_flag:
         raise ValueError("Prep must not contain a measurement.")
 
@@ -139,8 +142,9 @@ def state_tomography_circuits(prep: QutritCircuit) -> list[QutritCircuit]:
     return circuits
 
 
-def reconstruct_state(counts_basis: list[dict[str, int]],
-                      method: str = "lls") -> NDArray[np.complex128]:
+def reconstruct_state(
+        counts_basis: list[dict[str, int]], method: str = "lls"
+) -> NDArray[np.complex128]:
     """Reconstruct rho from MUB measurement counts via linear least squares.
 
     If we write the density matrix in the generalized Gell-Mann (GGM) basis,
@@ -164,7 +168,7 @@ def reconstruct_state(counts_basis: list[dict[str, int]],
         Four MUB count-dicts in ``state_tomography_circuits`` order, each
         mapping an outcome label to its shot count.
     method : str, optional
-        ``"lls"`` / ``"linear_least_squares"`` for raw linear inversion, or
+        ``"lls"`` / ``"linear_least_squares"`` for raw linear least squares, or
         ``"projected_lls"`` / ``"mle"`` to add the Smolin maximum-likelihood
         projection onto the closest physical state. Anything else raises.
 
@@ -172,7 +176,7 @@ def reconstruct_state(counts_basis: list[dict[str, int]],
     -------
     NDArray[np.complex128]
         Shape ``(3, 3)``. This is an estimate and may be slightly non-PSD,
-        since linear inversion does not enforce positivity. It is advised
+        since linear least squares does not enforce positivity. It is advised
         to use ``"projected_lls"`` option -> enforce such condition.
 
     Raises
@@ -196,15 +200,25 @@ def reconstruct_state(counts_basis: list[dict[str, int]],
 
     projectors = _mub_projectors()
     p = _counts_to_probs(counts_basis)
-    lamd = [em.lambda_1(), em.lambda_2(), em.lambda_3(), em.lambda_4(),
-            em.lambda_5(), em.lambda_6(), em.lambda_7(), em.lambda_8()]
+    lamd = [
+        em.lambda_1(),
+        em.lambda_2(),
+        em.lambda_3(),
+        em.lambda_4(),
+        em.lambda_5(),
+        em.lambda_6(),
+        em.lambda_7(),
+        em.lambda_8(),
+    ]
     a_mat = np.array(
         [[0.5 * np.real(np.trace(proj @ gen)) for gen in lamd] for proj in projectors]
     )
     y = p - 1.0 / 3.0
     # lls solver using numpy library
     s, *_ = np.linalg.lstsq(a_mat, y, rcond=None)
-    rho = np.eye(3, dtype=complex) / 3.0 + 0.5 * sum(si * gen for si, gen in zip(s, lamd, strict=True))
+    rho = np.eye(3, dtype=complex) / 3.0 + 0.5 * sum(
+        si * gen for si, gen in zip(s, lamd, strict=True)
+    )
     # 'mle' is an alias for the Smolin maximum-likelihood projection.
     if method in ("projected_lls", "mle"):
         rho = _project_closest_rho(rho)

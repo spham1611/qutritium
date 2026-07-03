@@ -9,7 +9,7 @@ account required.
 
 ## Features
 
-- **34 qutrit gates** — 29 single-qutrit (fixed + parametric) and 5 two-qutrit gates
+- **35 qutrit gates** — 29 single-qutrit (fixed + parametric) and 6 two-qutrit gates
 - **Circuit model** — build and compose qutrit circuits of arbitrary width;
   introspect with `depth()`, `gate_count()`, `to_matrix()`
 - **Two simulators** — exact statevector with Born-rule sampling, and a
@@ -17,8 +17,10 @@ account required.
 - **Metrics** — state/process fidelity, trace distance, purity, von Neumann entropy
 - **Noise modeling** — Kraus channels (depolarizing, dephasing, amplitude damping,
   Pauli), a simulator-level `NoiseModel`, and classical readout error
-- **State tomography** — mutually-unbiased-basis circuits with linear-inversion
-  reconstruction, plus density-matrix visualization
+- **State and process tomography** — mutually-unbiased-basis circuits with
+  linear-least-squares reconstruction (optionally projected onto the closest
+  physical state), Choi-matrix process reconstruction with Kraus extraction,
+  plus density-matrix visualization
 - **SU(3) decomposition** — factor any 3×3 unitary into native rotations
 
 ## Quick Install
@@ -30,7 +32,7 @@ pip install qutritium
 ## Quick Example
 
 ```python
-from qutritium import QutritCircuit, QASMSimulator
+from qutritium import QutritCircuit, StatevectorSimulator
 from qutritium.gates import H3, CSUM
 
 # Build a 2-qutrit Bell state circuit
@@ -40,7 +42,7 @@ qc.append(CSUM(), first_qutrit=0, second_qutrit=1)
 qc.measure_all()
 
 # Simulate
-sim = QASMSimulator(qc)
+sim = StatevectorSimulator(qc)
 sim.run(num_shots=1000)
 print(sim.get_counts())
 # {'00': ~333, '11': ~333, '22': ~333}
@@ -59,13 +61,14 @@ print(sim.get_counts())
     |                   - introspect: .draw() .depth() .gate_count() .to_matrix()
     |  hand the circuit to a simulator
     v
-  Simulator             QASMSimulator (statevector)
+  Simulator             StatevectorSimulator (psi - pure states)
     |                   DensityMatrixSimulator (rho - mixed states, noise)
     |                   - optional: .set_noise_model(NoiseModel(...))
     v
   results               .get_counts()  .probabilities()  .return_final_state()
     |
     +--> tomography.reconstruct_state   counts -> reconstructed rho
+    +--> tomography.reconstruct_process counts -> Choi matrix -> Kraus ops
     +--> metrics                        state_fidelity, purity, entropy, ...
 
   SU3Decomposition(U) --> QutritCircuit   decompose any 3x3 unitary into

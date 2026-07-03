@@ -1,4 +1,4 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 """Elementary 3x3 and 9x9 unitary matrices for qutrit circuits.
 
@@ -7,6 +7,7 @@ Pauli-X/Y/Z, cyclic shifts, Hadamard, S/T, single-qutrit parametric
 rotations, and two-qutrit gates (CNOT, CSUM, CPhase, SWAP). All
 functions return ``numpy.ndarray`` with ``dtype=complex``.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -32,33 +33,31 @@ _STATE_2: NDArray[np.complex128] = np.array([[0], [0], [1]], dtype=complex)
 #   Diagonal:                       lambda_3, lambda_8
 # ===========================================================================
 
+
 # ---------------------------------------------------------------------------
 # Symmetric: lambda_1, lambda_4, lambda_6
 # ---------------------------------------------------------------------------
 def lambda_1() -> NDArray[np.complex128]:
     """Gell-Mann lambda_1: off-diagonal swap in {|0>, |1>}."""
     return np.array(
-        [[0, 1, 0],
-         [1, 0, 0],
-         [0, 0, 0]], dtype=complex,
+        [[0, 1, 0], [1, 0, 0], [0, 0, 0]],
+        dtype=complex,
     )
 
 
 def lambda_4() -> NDArray[np.complex128]:
     """Gell-Mann lambda_4: off-diagonal swap in {|0>, |2>}."""
     return np.array(
-        [[0, 0, 1],
-         [0, 0, 0],
-         [1, 0, 0]], dtype=complex,
+        [[0, 0, 1], [0, 0, 0], [1, 0, 0]],
+        dtype=complex,
     )
 
 
 def lambda_6() -> NDArray[np.complex128]:
     """Gell-Mann lambda_6: off-diagonal swap in {|1>, |2>}."""
     return np.array(
-        [[0, 0, 0],
-         [0, 0, 1],
-         [0, 1, 0]], dtype=complex,
+        [[0, 0, 0], [0, 0, 1], [0, 1, 0]],
+        dtype=complex,
     )
 
 
@@ -68,27 +67,24 @@ def lambda_6() -> NDArray[np.complex128]:
 def lambda_2() -> NDArray[np.complex128]:
     """Gell-Mann lambda_2: antisymmetric in {|0>, |1>}."""
     return np.array(
-        [[0, -1j, 0],
-         [1j, 0, 0],
-         [0, 0, 0]], dtype=complex,
+        [[0, -1j, 0], [1j, 0, 0], [0, 0, 0]],
+        dtype=complex,
     )
 
 
 def lambda_5() -> NDArray[np.complex128]:
     """Gell-Mann lambda_5: antisymmetric in {|0>, |2>}."""
     return np.array(
-        [[0, 0, -1j],
-         [0, 0, 0],
-         [1j, 0, 0]], dtype=complex,
+        [[0, 0, -1j], [0, 0, 0], [1j, 0, 0]],
+        dtype=complex,
     )
 
 
 def lambda_7() -> NDArray[np.complex128]:
     """Gell-Mann lambda_7: antisymmetric in {|1>, |2>}."""
     return np.array(
-        [[0, 0, 0],
-         [0, 0, -1j],
-         [0, 1j, 0]], dtype=complex,
+        [[0, 0, 0], [0, 0, -1j], [0, 1j, 0]],
+        dtype=complex,
     )
 
 
@@ -98,24 +94,23 @@ def lambda_7() -> NDArray[np.complex128]:
 def lambda_3() -> NDArray[np.complex128]:
     """Gell-Mann lambda_3: diag(1, -1, 0)."""
     return np.array(
-        [[1, 0, 0],
-         [0, -1, 0],
-         [0, 0, 0]], dtype=complex,
+        [[1, 0, 0], [0, -1, 0], [0, 0, 0]],
+        dtype=complex,
     )
 
 
 def lambda_8() -> NDArray[np.complex128]:
     """Gell-Mann lambda_8: diag(1, 1, -2) / sqrt(3)."""
     return (1 / np.sqrt(3)) * np.array(  # type: ignore[no-any-return]
-        [[1, 0, 0],
-         [0, 1, 0],
-         [0, 0, -2]], dtype=complex,
+        [[1, 0, 0], [0, 1, 0], [0, 0, -2]],
+        dtype=complex,
     )
 
 
 # ===========================================================================
 # Subspace Pauli gates (X, Y, Z embedded in 3x3 with identity on complement)
 # ===========================================================================
+
 
 # ---------------------------------------------------------------------------
 # Pauli-X: x01 (lambda_1 + |2><2|), x02 (lambda_4 + |1><1|),
@@ -124,27 +119,24 @@ def lambda_8() -> NDArray[np.complex128]:
 def x01() -> NDArray[np.complex128]:
     """Pauli-X in {|0>, |1>}. Equivalent to lambda_1 + |2><2|."""
     return np.array(
-        [[0, 1, 0],
-         [1, 0, 0],
-         [0, 0, 1]], dtype=complex,
+        [[0, 1, 0], [1, 0, 0], [0, 0, 1]],
+        dtype=complex,
     )
 
 
 def x02() -> NDArray[np.complex128]:
     """Pauli-X in {|0>, |2>}. Equivalent to lambda_4 + |1><1|."""
     return np.array(
-        [[0, 0, 1],
-         [0, 1, 0],
-         [1, 0, 0]], dtype=complex,
+        [[0, 0, 1], [0, 1, 0], [1, 0, 0]],
+        dtype=complex,
     )
 
 
 def x12() -> NDArray[np.complex128]:
     """Pauli-X in {|1>, |2>}. Equivalent to lambda_6 + |0><0|."""
     return np.array(
-        [[1, 0, 0],
-         [0, 0, 1],
-         [0, 1, 0]], dtype=complex,
+        [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
+        dtype=complex,
     )
 
 
@@ -155,27 +147,24 @@ def x12() -> NDArray[np.complex128]:
 def y01() -> NDArray[np.complex128]:
     """Pauli-Y in {|0>, |1>}. Equivalent to lambda_2 + |2><2|."""
     return np.array(
-        [[0, -1j, 0],
-         [1j, 0, 0],
-         [0, 0, 1]], dtype=complex,
+        [[0, -1j, 0], [1j, 0, 0], [0, 0, 1]],
+        dtype=complex,
     )
 
 
 def y02() -> NDArray[np.complex128]:
     """Pauli-Y in {|0>, |2>}. Equivalent to lambda_5 + |1><1|."""
     return np.array(
-        [[0, 0, -1j],
-         [0, 1, 0],
-         [1j, 0, 0]], dtype=complex,
+        [[0, 0, -1j], [0, 1, 0], [1j, 0, 0]],
+        dtype=complex,
     )
 
 
 def y12() -> NDArray[np.complex128]:
     """Pauli-Y in {|1>, |2>}. Equivalent to lambda_7 + |0><0|."""
     return np.array(
-        [[1, 0, 0],
-         [0, 0, -1j],
-         [0, 1j, 0]], dtype=complex,
+        [[1, 0, 0], [0, 0, -1j], [0, 1j, 0]],
+        dtype=complex,
     )
 
 
@@ -185,9 +174,8 @@ def y12() -> NDArray[np.complex128]:
 def z01() -> NDArray[np.complex128]:
     """Pauli-Z in {|0>, |1>}. Equivalent to lambda_3 + |2><2|."""
     return np.array(
-        [[1, 0, 0],
-         [0, -1, 0],
-         [0, 0, 1]], dtype=complex,
+        [[1, 0, 0], [0, -1, 0], [0, 0, 1]],
+        dtype=complex,
     )
 
 
@@ -199,18 +187,16 @@ def z02() -> NDArray[np.complex128]:
     Kept as separate functions for API symmetry with X and Y families.
     """
     return np.array(
-        [[1, 0, 0],
-         [0, 1, 0],
-         [0, 0, -1]], dtype=complex,
+        [[1, 0, 0], [0, 1, 0], [0, 0, -1]],
+        dtype=complex,
     )
 
 
 def z12() -> NDArray[np.complex128]:
     """Pauli-Z in {|1>, |2>}. diag(1, 1, -1)."""
     return np.array(
-        [[1, 0, 0],
-         [0, 1, 0],
-         [0, 0, -1]], dtype=complex,
+        [[1, 0, 0], [0, 1, 0], [0, 0, -1]],
+        dtype=complex,
     )
 
 
@@ -220,18 +206,16 @@ def z12() -> NDArray[np.complex128]:
 def x_plus() -> NDArray[np.complex128]:
     """Cyclic shift |i> -> |i+1 mod 3>."""
     return np.array(
-        [[0, 0, 1],
-         [1, 0, 0],
-         [0, 1, 0]], dtype=complex,
+        [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
+        dtype=complex,
     )
 
 
 def x_minus() -> NDArray[np.complex128]:
     """Inverse cyclic shift |i> -> |i-1 mod 3>."""
     return np.array(
-        [[0, 1, 0],
-         [0, 0, 1],
-         [1, 0, 0]], dtype=complex,
+        [[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+        dtype=complex,
     )
 
 
@@ -241,6 +225,7 @@ def x_minus() -> NDArray[np.complex128]:
 # Convention: R_axis_ij(theta) = exp(-i * theta/2 * sigma_axis_ij)
 # ===========================================================================
 
+
 # ---------------------------------------------------------------------------
 # Rx rotations
 # ---------------------------------------------------------------------------
@@ -249,9 +234,8 @@ def rx01(theta: float) -> NDArray[np.complex128]:
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
-        [[c, -1j * s, 0],
-         [-1j * s, c, 0],
-         [0, 0, 1]], dtype=complex,
+        [[c, -1j * s, 0], [-1j * s, c, 0], [0, 0, 1]],
+        dtype=complex,
     )
 
 
@@ -260,9 +244,8 @@ def rx02(theta: float) -> NDArray[np.complex128]:
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
-        [[c, 0, -1j * s],
-         [0, 1, 0],
-         [-1j * s, 0, c]], dtype=complex,
+        [[c, 0, -1j * s], [0, 1, 0], [-1j * s, 0, c]],
+        dtype=complex,
     )
 
 
@@ -271,9 +254,8 @@ def rx12(theta: float) -> NDArray[np.complex128]:
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
-        [[1, 0, 0],
-         [0, c, -1j * s],
-         [0, -1j * s, c]], dtype=complex,
+        [[1, 0, 0], [0, c, -1j * s], [0, -1j * s, c]],
+        dtype=complex,
     )
 
 
@@ -285,9 +267,8 @@ def ry01(theta: float) -> NDArray[np.complex128]:
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
-        [[c, -s, 0],
-         [s, c, 0],
-         [0, 0, 1]], dtype=complex,
+        [[c, -s, 0], [s, c, 0], [0, 0, 1]],
+        dtype=complex,
     )
 
 
@@ -296,9 +277,8 @@ def ry02(theta: float) -> NDArray[np.complex128]:
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
-        [[c, 0, -s],
-         [0, 1, 0],
-         [s, 0, c]], dtype=complex,
+        [[c, 0, -s], [0, 1, 0], [s, 0, c]],
+        dtype=complex,
     )
 
 
@@ -307,9 +287,8 @@ def ry12(theta: float) -> NDArray[np.complex128]:
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
-        [[1, 0, 0],
-         [0, c, -s],
-         [0, s, c]], dtype=complex,
+        [[1, 0, 0], [0, c, -s], [0, s, c]],
+        dtype=complex,
     )
 
 
@@ -322,9 +301,8 @@ def rz01(phi: float) -> NDArray[np.complex128]:
     Generator: lambda_3.
     """
     return np.array(
-        [[np.exp(-1j * phi / 2), 0, 0],
-         [0, np.exp(1j * phi / 2), 0],
-         [0, 0, 1]], dtype=complex,
+        [[np.exp(-1j * phi / 2), 0, 0], [0, np.exp(1j * phi / 2), 0], [0, 0, 1]],
+        dtype=complex,
     )
 
 
@@ -334,9 +312,8 @@ def rz02(phi: float) -> NDArray[np.complex128]:
     Generator: diag(1, 0, -1).
     """
     return np.array(
-        [[np.exp(-1j * phi / 2), 0, 0],
-         [0, 1, 0],
-         [0, 0, np.exp(1j * phi / 2)]], dtype=complex,
+        [[np.exp(-1j * phi / 2), 0, 0], [0, 1, 0], [0, 0, np.exp(1j * phi / 2)]],
+        dtype=complex,
     )
 
 
@@ -346,9 +323,8 @@ def rz12(phi: float) -> NDArray[np.complex128]:
     Generator: diag(0, 1, -1).
     """
     return np.array(
-        [[1, 0, 0],
-         [0, np.exp(-1j * phi / 2), 0],
-         [0, 0, np.exp(1j * phi / 2)]], dtype=complex,
+        [[1, 0, 0], [0, np.exp(-1j * phi / 2), 0], [0, 0, np.exp(1j * phi / 2)]],
+        dtype=complex,
     )
 
 
@@ -360,9 +336,12 @@ def g01(theta: float, phi: float) -> NDArray[np.complex128]:
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
-        [[c, -1j * s * np.exp(-1j * phi), 0],
-         [-1j * s * np.exp(1j * phi), c, 0],
-         [0, 0, 1]], dtype=complex,
+        [
+            [c, -1j * s * np.exp(-1j * phi), 0],
+            [-1j * s * np.exp(1j * phi), c, 0],
+            [0, 0, 1],
+        ],
+        dtype=complex,
     )
 
 
@@ -371,9 +350,12 @@ def g02(theta: float, phi: float) -> NDArray[np.complex128]:
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
-        [[c, 0, -1j * s * np.exp(-1j * phi)],
-         [0, 1, 0],
-         [-1j * s * np.exp(1j * phi), 0, c]], dtype=complex,
+        [
+            [c, 0, -1j * s * np.exp(-1j * phi)],
+            [0, 1, 0],
+            [-1j * s * np.exp(1j * phi), 0, c],
+        ],
+        dtype=complex,
     )
 
 
@@ -382,9 +364,12 @@ def g12(theta: float, phi: float) -> NDArray[np.complex128]:
     c = np.cos(theta / 2)
     s = np.sin(theta / 2)
     return np.array(
-        [[1, 0, 0],
-         [0, c, -1j * s * np.exp(-1j * phi)],
-         [0, -1j * s * np.exp(1j * phi), c]], dtype=complex,
+        [
+            [1, 0, 0],
+            [0, c, -1j * s * np.exp(-1j * phi)],
+            [0, -1j * s * np.exp(1j * phi), c],
+        ],
+        dtype=complex,
     )
 
 
@@ -412,9 +397,12 @@ def r12(phi: float, theta: float) -> NDArray[np.complex128]:
 def u_d(phi_1: float, phi_2: float, phi_3: float) -> NDArray[np.complex128]:
     """Diagonal unitary diag(exp(i*phi_1), exp(i*phi_2), exp(i*phi_3))."""
     return np.array(
-        [[np.exp(1j * phi_1), 0, 0],
-         [0, np.exp(1j * phi_2), 0],
-         [0, 0, np.exp(1j * phi_3)]], dtype=complex,
+        [
+            [np.exp(1j * phi_1), 0, 0],
+            [0, np.exp(1j * phi_2), 0],
+            [0, 0, np.exp(1j * phi_3)],
+        ],
+        dtype=complex,
     )
 
 
@@ -424,45 +412,40 @@ def u_d(phi_1: float, phi_2: float, phi_3: float) -> NDArray[np.complex128]:
 def identity() -> NDArray[np.complex128]:
     """3x3 identity (qutrit no-op)."""
     return np.array(
-        [[1, 0, 0],
-         [0, 1, 0],
-         [0, 0, 1]], dtype=complex,
+        [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        dtype=complex,
     )
 
 
 def hdm(omega: complex = OMEGA_DEFAULT) -> NDArray[np.complex128]:
     """Qutrit Hadamard (DFT F_3 / sqrt(3))."""
     return (1 / np.sqrt(3)) * np.array(  # type: ignore[no-any-return]
-        [[1, 1, 1],
-         [1, omega, omega ** 2],
-         [1, omega ** 2, omega]], dtype=complex,
+        [[1, 1, 1], [1, omega, omega ** 2], [1, omega ** 2, omega]],
+        dtype=complex,
     )
 
 
 def u_ft(omega: complex = OMEGA_DEFAULT) -> NDArray[np.complex128]:
     """Fourier-related qutrit gate."""
     return (1 / np.sqrt(3)) * np.array(  # type: ignore[no-any-return]
-        [[omega, 1, np.conj(omega)],
-         [1, 1, 1],
-         [np.conj(omega), 1, omega]], dtype=complex,
+        [[omega, 1, np.conj(omega)], [1, 1, 1], [np.conj(omega), 1, omega]],
+        dtype=complex,
     )
 
 
 def sdg(omega: complex = OMEGA_DEFAULT) -> NDArray[np.complex128]:
     """Qutrit S-gate diag(1, 1, omega). S³ = I."""
     return np.array(
-        [[1, 0, 0],
-         [0, 1, 0],
-         [0, 0, omega]], dtype=complex,
+        [[1, 0, 0], [0, 1, 0], [0, 0, omega]],
+        dtype=complex,
     )
 
 
 def tdg(omega: complex = OMEGA_DEFAULT) -> NDArray[np.complex128]:
     """Qutrit T-gate diag(1, omega^(1/3), omega^(-1/3)). T⁹ = I."""
     return np.array(
-        [[1, 0, 0],
-         [0, np.power(omega, 1 / 3), 0],
-         [0, 0, np.power(omega, -1 / 3)]], dtype=complex,
+        [[1, 0, 0], [0, np.power(omega, 1 / 3), 0], [0, 0, np.power(omega, -1 / 3)]],
+        dtype=complex,
     )
 
 

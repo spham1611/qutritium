@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Gate ABC. All gates have .matrix(), .label, .num_qutrits, .params, .inverse()."""
+
 from __future__ import annotations
 
 import abc
@@ -37,9 +38,7 @@ class Gate(abc.ABC):
             If ``num_qutrits`` is not ``1`` or ``2``.
         """
         if num_qutrits not in (1, 2):
-            raise ValueError(
-                f"num_qutrits must be 1 or 2; got {num_qutrits}."
-            )
+            raise ValueError(f"num_qutrits must be 1 or 2; got {num_qutrits}.")
         self._label: str = label
         self._num_qutrits: int = num_qutrits
         self._params: tuple[float, ...] = tuple(params)
@@ -112,7 +111,8 @@ class _DaggerGate(Gate):
 
     def matrix(self) -> NDArray[np.complex128]:
         return np.asarray(
-            self._original.matrix().conj().T, dtype=np.complex128,
+            self._original.matrix().conj().T,
+            dtype=np.complex128,
         )
 
     def inverse(self) -> Gate:

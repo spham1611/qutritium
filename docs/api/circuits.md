@@ -1,10 +1,19 @@
 # Circuits API Reference
 
-## QutritCircuit
+`QutritCircuit` is an ordered list of gate operations with an optional
+terminal measurement; `Instruction` is the low-level record of one gate
+applied to specific qutrit(s).
 
 ```python
 from qutritium import QutritCircuit
+from qutritium.circuit import Instruction
 ```
+
+---
+
+## QutritCircuit
+
+Pass to `StatevectorSimulator` or `DensityMatrixSimulator` to evaluate.
 
 ### Constructor
 
@@ -12,7 +21,7 @@ from qutritium import QutritCircuit
 QutritCircuit(n_qutrit: int, initial_state: NDArray | None)
 ```
 
-- `n_qutrit` — number of qutrits (≥ 1)
+- `n_qutrit` — number of qutrits (`n_qutrit` ≥ 1)
 - `initial_state` — column vector of shape `(3**n_qutrit, 1)`, or `None` for $|0\cdots0\rangle$
 
 ### Methods
@@ -70,20 +79,49 @@ wrap in `print(qc.draw())` to display).
 ### Operators
 
 - `len(qc)` — number of operations
-- `qc1 + qc2` — concatenate circuits (left must not have measurement)
+- `qc1 + qc2` — concatenate circuits (left must not have a measurement)
 - `iter(qc)` — iterate over operations
+
+---
 
 ## Instruction
 
-Low-level representation of a gate applied to specific qutrit(s). Normally
-created internally by `QutritCircuit.append()`.
-
-```python
-from qutritium.circuit import Instruction
-```
+Normally created internally by `QutritCircuit.append()`; construct directly
+only for lower-level access.
 
 ### Properties
 
 - `.effect_matrix` — full-register matrix ($3^n \times 3^n$)
 - `.type` — gate name string
 - `.gate` — reference to the `Gate` object (if created via `append()`)
+
+---
+
+## Examples
+
+```python
+from qutritium import QutritCircuit
+from qutritium.gates import H3, X01, Rz01
+
+qc = QutritCircuit(2, None)  # 2 qutrits, default |00> initial state
+qc.append(H3(), first_qutrit=0)  # Hadamard on qutrit 0
+qc.append(X01(), first_qutrit=1)  # X in {|0>,|1>} subspace on qutrit 1
+qc.append(Rz01(0.5), first_qutrit=0)  # parametric rotation on qutrit 0
+qc.measure_all()
+
+print(qc.draw())
+print("gate_count:", qc.gate_count())  # 3
+print("depth:", qc.depth())  # 2
+```
+
+Concatenating two circuits and collapsing to a matrix:
+
+```python
+qc1 = QutritCircuit(1, None)
+qc1.append(H3(), first_qutrit=0)
+qc2 = QutritCircuit(1, None)
+qc2.append(X01(), first_qutrit=0)
+
+combined = qc1 + qc2
+combined.to_matrix()  # X01().matrix() @ H3().matrix()
+```

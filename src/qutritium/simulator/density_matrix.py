@@ -1,7 +1,8 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Density-matrix simulator."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -23,7 +24,7 @@ class DensityMatrixSimulator(Simulator):
 
     Evolves the density matrix via ``rho -> U rho U^dag``. Memory scales
     as ``9^n_qutrit``; use only for small registers or mixed states.
-    Otherwise, prefer ``QASMSimulator``.
+    Otherwise, prefer ``StatevectorSimulator``.
     """
 
     name = "density_matrix_simulator"
@@ -48,7 +49,17 @@ class DensityMatrixSimulator(Simulator):
         ----------
         channel : Channel
         qutrit : int | None
+
+        Raises
+        ------
+        ValueError
+            If ``qutrit`` is outside ``[0, n_qutrit)``.
         """
+        if qutrit is not None and not 0 <= qutrit < self.n_qutrit:
+            raise ValueError(
+                f"Channel target qutrit {qutrit} is out of range for a "
+                f"{self.n_qutrit}-qutrit circuit."
+            )
         targets = range(self.n_qutrit) if qutrit is None else (qutrit,)
         for q in targets:
             embedded = [single_matrix_calc(k, q, self.n_qutrit) for k in channel.kraus]
@@ -65,15 +76,20 @@ class DensityMatrixSimulator(Simulator):
         if noise_mod is not None:
             for channel, qutrit in noise_mod.prep_errors:
                 self._apply_channel(channel, qutrit)
-        operations = (self._operation_set[:-1] if self._measurement_flag
-                      else self._operation_set)
+        operations = (
+            self._operation_set[:-1] if self._measurement_flag else self._operation_set
+        )
         # Gate Errors, applying Kraus depends on type of gates
         for operation in operations:
             assert isinstance(operation, Instruction)
             unitary = operation.effect_matrix
             self.state = unitary @ self.state @ unitary.conj().T
             if noise_mod is not None:
-                label = operation.gate.label if operation.gate is not None else operation.type
+                label = (
+                    operation.gate.label
+                    if operation.gate is not None
+                    else operation.type
+                )
                 channel = noise_mod.error_for(label)  # type: ignore[assignment]
                 # Assume the first qutrit has error (in the case of 2-qutrit gate)
                 if channel is not None:
@@ -165,7 +181,8 @@ class DensityMatrixSimulator(Simulator):
         # Trace out qutrits not kept, highest index first so the axis
         # labels of the lower (kept) qutrits stay valid as the tensor shrinks.
         trace_out = sorted(
-            (q for q in range(n) if q not in keep_set), reverse=True,
+            (q for q in range(n) if q not in keep_set),
+            reverse=True,
         )
         for q in trace_out:
             remaining_n = rho.ndim // 2

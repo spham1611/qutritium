@@ -1,9 +1,11 @@
-# MIT License — Copyright (c) 2023-2026 Son Pham, Tien Nguyen, Bao Bach, Charlie
+# MIT License — Copyright (c) 2023-2026 Son Pham
 # See LICENSE.txt for full terms.
 
 """Statevector simulator. Applies gates sequentially, samples Born-rule outcomes."""
+
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -17,7 +19,7 @@ if TYPE_CHECKING:
     from qutritium.channels.noise_model import NoiseModel
 
 
-class QASMSimulator(Simulator):
+class StatevectorSimulator(Simulator):
     """Statevector simulator for a ``QutritCircuit``.
 
     Applies each gate's full-register matrix to the running statevector
@@ -25,10 +27,10 @@ class QASMSimulator(Simulator):
     ``DensityMatrixSimulator``; for mixed states, use that instead.
     """
 
-    name = "qasm_simulator"
+    name = "statevector_simulator"
 
     def __init__(self, circuit: QutritCircuit) -> None:
-        """Initialize a ``QASMSimulator`` instance.
+        """Initialize a ``StatevectorSimulator`` instance.
 
         Parameters
         ----------
@@ -42,7 +44,9 @@ class QASMSimulator(Simulator):
         """Run the simulator."""
         if self._simulation_flag:
             return
-        operations = (self._operation_set[:-1] if self._measurement_flag else self._operation_set)
+        operations = (
+            self._operation_set[:-1] if self._measurement_flag else self._operation_set
+        )
         for operation in operations:
             assert isinstance(operation, Instruction)
             self.state = operation.effect_matrix @ self.state
@@ -84,8 +88,22 @@ class QASMSimulator(Simulator):
         """
         if noise_model.has_kraus_errors:
             raise NotImplementedError(
-                "QASMSimulator can not represent Kraus noise. Use DensityMatrixSimulator instead.")
+                "StatevectorSimulator can not represent Kraus noise. Use DensityMatrixSimulator instead."
+            )
         super().set_noise_model(noise_model)
 
 
-__all__ = ["QASMSimulator"]
+class QASMSimulator(StatevectorSimulator):
+    """Deprecated alias for ``StatevectorSimulator`` (warns on use; removed in v2.0)."""
+
+    def __init__(self, circuit: QutritCircuit) -> None:
+        warnings.warn(
+            "QASMSimulator has been renamed to StatevectorSimulator and will be "
+            "removed in v2.0. Use StatevectorSimulator instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(circuit)
+
+
+__all__ = ["StatevectorSimulator"]
