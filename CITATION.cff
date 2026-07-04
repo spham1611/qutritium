@@ -27,8 +27,8 @@ authors:
 repository-code: "https://github.com/spham1611/qutritium"
 url: "https://github.com/spham1611/qutritium"
 license: MIT
-version: "1.5.1"
-date-released: "2026-07-03"
+version: "1.5.2"
+date-released: "2026-07-04"
 
 keywords:
   - quantum computing

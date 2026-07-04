@@ -17,10 +17,9 @@ from qutritium.metrics import (
     von_neumann_entropy,
 )
 from qutritium.simulator.density_matrix import DensityMatrixSimulator
-from qutritium.simulator.statevector import QASMSimulator as QASMSimulator
 from qutritium.simulator.statevector import StatevectorSimulator
 
-__version__ = "1.5.1"
+__version__ = "1.5.2"
 
 __all__ = [
     "DensityMatrixSimulator",

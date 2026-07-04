@@ -2,6 +2,10 @@
 
 ## [1.5.1] — 2026-07-03
 
+Add JOSS paper with Zenodo archive enable
+
+## [1.5.1] — 2026-07-03
+
 Renamed `QASMSimulator` to `StatevectorSimulator` — the class evolves a
 statevector, and there is no QASM layer (OpenQASM was dropped from the roadmap).
 `QASMSimulator` stays as a deprecated alias that warns on instantiation and will
