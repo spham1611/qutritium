@@ -190,10 +190,10 @@ supported by a Unitary Fund microgrant.
 # AI usage disclosure
 
 Generative AI tools were used during the development of `qutritium`. Anthropic Claude
-(via the Claude Code CLI) and Cursor were used to assist with code review, code testing and debugging,
-drafting and editing documentation, and maintaining the test suite. The scientific and
-software design — including the qutrit gates, circuits, simulators, decomposition, noise model,
-tomography, and other essential API functions — was conceived by the author.
+(via the Claude Code CLI) model Opus 4.6-4.8 and Cursor were used to assist with code review,
+code testing and debugging, drafting and editing documentation, and maintaining the test suite.
+The scientific and software design — including the qutrit gates, circuits, simulators,
+decomposition, noise model, tomography, and other essential API functions — was conceived by the author.
 All AI-assisted code and text were reviewed, tested, and validated by the author, who
 takes full responsibility for their accuracy, originality, and licensing.
 
