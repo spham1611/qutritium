@@ -18,7 +18,7 @@ from qutritium.metrics import (
 )
 from qutritium.simulator.density_matrix import DensityMatrixSimulator
 from qutritium.simulator.statevector import QASMSimulator as QASMSimulator, \
-    StatevectorSimulator  # Deprecated -> remove in ver 2.0.0
+    StatevectorSimulator  # QASM Deprecated -> remove in ver 2.0.0
 
 __version__ = "1.5.2"
 
