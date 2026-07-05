@@ -1,6 +1,7 @@
 <div align="center">
 
 [![Tests](https://github.com/spham1611/qutritium/actions/workflows/test.yml/badge.svg)](https://github.com/spham1611/qutritium/actions)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21201868.svg)](https://doi.org/10.5281/zenodo.21201868)
 [![Unitary Fund](https://img.shields.io/badge/Supported%20By-UNITARY%20FUND-brightgreen.svg?style=for-the-badge)](https://unitary.fund)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE.txt)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-yellow.svg?style=for-the-badge)](https://www.python.org/)

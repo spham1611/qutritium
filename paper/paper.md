@@ -6,7 +6,7 @@ tags:
   - qutrit
   - qudit
   - quantum simulation
-  - SU(3) decomposition
+  - U(3) decomposition
 authors:
   - name: Son Pham
     orcid: 0009-0007-8139-6797

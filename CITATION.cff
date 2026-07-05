@@ -11,7 +11,7 @@ abstract: >-
   Qutritium provides a Python implementation of qutrit (3-level) quantum
   gate definitions, circuit construction, exact statevector and
   density-matrix simulators, Kraus-operator noise channels, fidelity and
-  entropy metrics, single-qutrit state and process tomography, and SU(3)
+  entropy metrics, single-qutrit state and process tomography, and U(3)
   decomposition into native subspace rotations. From v1.0.0
   onward the package is hardware-agnostic (numpy only); earlier
   0.0.x releases shipped Qiskit-pulse-based calibration routines for IBM
