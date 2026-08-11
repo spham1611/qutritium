@@ -21,7 +21,7 @@ bug report includes:
 For usage questions, open an issue with the `question` label (or start a
 [GitHub Discussion](https://github.com/spham1611/qutritium/discussions) if the
 repository has them enabled). You can also reach the maintainer at
-`sph40@duke.edu`.
+`shp40@duke.edu`.
 
 ## Development setup
 

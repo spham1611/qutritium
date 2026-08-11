@@ -3,7 +3,7 @@
 **A hardware-agnostic Python library for qutrit quantum computing.**
 
 Qutritium provides qutrit (three-level quantum system) gate definitions, circuit
-construction, statevector and density-matrix simulation, metrics, and SU(3)
+construction, statevector and density-matrix simulation, metrics, and U(3)
 decomposition. It runs entirely in software — no quantum hardware or cloud
 account required.
 
@@ -21,7 +21,7 @@ account required.
   linear-least-squares reconstruction (optionally projected onto the closest
   physical state), Choi-matrix process reconstruction with Kraus extraction,
   plus density-matrix visualization
-- **SU(3) decomposition** — factor any 3×3 unitary into native rotations
+- **U(3) decomposition** — factor any 3×3 unitary into native rotations
 
 ## Quick Install
 

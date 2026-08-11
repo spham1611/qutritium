@@ -24,25 +24,36 @@ workflow's PyPI action at `https://test.pypi.org/legacy/`.)
 
 ## Cutting a release
 
-1. **Bump the version** in [`pyproject.toml`](pyproject.toml) (`[project].version`)
+1. **Bump the version** in [`pyproject.toml`](pyproject.toml) (`[project].version`),
+   [`src/qutritium/__init__.py`](src/qutritium/__init__.py) (`__version__`),
    and [`CITATION.cff`](CITATION.cff) (`version:` and `date-released:`).
+   All three must match. The workflow fails if the tag disagrees with
+   `pyproject.toml`.
 2. **Update [`CHANGES.md`](CHANGES.md)** with a new section for the version.
-3. Commit on `main`:
+3. Commit on `main`, push, and wait for green CI:
    ```bash
    git commit -am "Release vX.Y.Z"
    git push
    ```
-4. **Tag and push**:
-   ```bash
-   git tag -a vX.Y.Z -m "Release vX.Y.Z"
-   git push --tags
-   ```
+4. **Create a GitHub Release in the web UI** — do NOT tag from the command
+   line. Releases → "Draft a new release" → type `vX.Y.Z` and pick
+   **"Create new tag: vX.Y.Z on publish"**, target `main`. Publishing the
+   Release creates the tag (which triggers the `Release` workflow → PyPI)
+   *and* fires the Release event that triggers Zenodo archiving. A bare
+   `git tag` + `git push --tags` publishes to PyPI but **skips Zenodo** —
+   never release that way.
 5. The `Release` workflow on GitHub Actions will:
     - verify the tag matches `pyproject.toml`'s version,
     - build sdist + wheel,
     - run `twine check`,
-    - upload to PyPI via OIDC (Trusted Publishing).
-6. Confirm the release at <https://pypi.org/project/qutritium/>.
+   - upload to PyPI via OIDC (Trusted Publishing) after the `pypi`
+     environment deployment is approved.
+6. Verify all three outcomes:
+   - the `Release` workflow run is green,
+   - <https://pypi.org/project/qutritium/> shows the new version,
+   - a new Zenodo version record appears under concept DOI
+     [10.5281/zenodo.21201868](https://doi.org/10.5281/zenodo.21201868)
+     with author = Son Pham only.
 
 ## Local dry-run
 

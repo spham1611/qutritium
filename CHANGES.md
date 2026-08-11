@@ -1,6 +1,12 @@
 # Changelog
 
-## [1.5.1] — 2026-07-03
+## [Unreleased]
+
+`Simulator.run()` accepts an optional `seed` argument
+(`run(num_shots, seed=17)`) that makes shot sampling reproducible on both
+simulators.
+
+## [1.5.2] — 2026-07-04
 
 Add JOSS paper with Zenodo archive enable
 
@@ -30,8 +36,8 @@ Added `examples/process_tomography.ipynb`. The test suite is now 380 tests.
 
 Dropped the unused `scipy` runtime dependency — `qutritium` now needs only NumPy.
 
-OpenQASM 3 import/export is deferred to v2.0. Purely additive — no breaking
-changes.
+OpenQASM 3 import/export is deferred to v2.0 (since dropped from the roadmap
+entirely). Purely additive — no breaking changes.
 
 ## [1.4.0] — 2026-06-09
 

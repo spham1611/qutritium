@@ -55,7 +55,7 @@ print(state)  # 3×1 column vector with amplitudes 1/√3
 
 **Two-qutrit gates:** `CSUM`, `CSUMDag`, `CNOT3`, `CPhase`, `CPhaseDag`, `SWAP3`
 
-## SU(3) decomposition
+## U(3) decomposition
 
 Any 3×3 unitary can be decomposed into native rotations:
 

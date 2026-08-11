@@ -18,9 +18,11 @@ Both consume a `QutritCircuit` and expose the same measurement API
 
 ## Shared API (`Simulator` base)
 
-**`run(num_shots: int = 1024)`**
+**`run(num_shots: int = 1024, seed: int | None = None)`**
 
 Evolve the circuit and sample `num_shots` computational-basis outcomes.
+Pass an integer `seed` to make the sampling reproducible; the default
+(`None`).
 Requires a measurement (`measure_all()`); raises `RuntimeError` otherwise and
 `ValueError` for non-positive `num_shots`.
 

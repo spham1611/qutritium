@@ -78,7 +78,7 @@ print("Reduced density matrix (should be I/3):")
 print(np.round(rho_A, 4))
 ```
 
-## 5. SU(3) decomposition
+## 5. U(3) decomposition
 
 Decompose the Hadamard into native rotations:
 

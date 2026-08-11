@@ -84,7 +84,7 @@ class Simulator(ABC):
         """Return Born probabilities"""
         ...
 
-    def run(self, num_shots: int = 1024) -> None:
+    def run(self, num_shots: int = 1024, seed: int | None = None) -> None:
         """Evolve the circuit for num_shots times.
 
         Results stored in ``_measurement_result`` and accessed via
@@ -93,6 +93,8 @@ class Simulator(ABC):
         Parameters
         ----------
         num_shots : int
+        seed : int | None, optional
+            Seed for the shot-sampling random-number generator.
 
         Raises
         ------
@@ -116,7 +118,7 @@ class Simulator(ABC):
             probs = self._noise_model.readout.apply(probs)
         probs = np.clip(probs, 0.0, None)
         probs = probs / np.sum(probs)
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(seed)
         sample = rng.choice(len(probs), size=num_shots, p=probs)
         self._measurement_result = list(
             _index_to_ket_label(int(i), self.n_qutrit) for i in sample

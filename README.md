@@ -42,7 +42,7 @@ sim.run(num_shots=10_000)
 print(sim.get_counts())   # {'00': ~3333, '11': ~3333, '22': ~3333}
 ```
 
-Decompose an arbitrary SU(3) unitary:
+Decompose an arbitrary U(3) unitary:
 
 ```python
 from qutritium import SU3Decomposition
@@ -145,7 +145,7 @@ src/qutritium/
 ├── channels/            # Noise channels, NoiseModel, ReadoutError, SPAM
 ├── metrics/             # Fidelity, trace distance, purity, entropy
 ├── tomography/          # MUB state + process tomography + visualization
-└── decomposition/       # SU(3) → native rotations
+└── decomposition/       # U(3) → native rotations
 ```
 
 Supporting files at repo root:
@@ -175,7 +175,7 @@ library; the original pulse code is preserved under `legacy/`.
 
 ## Author
 
-- **[Son Pham](https://github.com/spham1611)** — Duke University · sph40@duke.edu
+- **[Son Pham](https://github.com/spham1611)** — Duke University · shp40@duke.edu
 
 ## Acknowledgments
 

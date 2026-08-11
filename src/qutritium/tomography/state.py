@@ -125,7 +125,7 @@ def state_tomography_circuits(prep: QutritCircuit) -> list[QutritCircuit]:
     """
     if prep.n_qutrit != 1:
         raise ValueError(
-            f"State tomography is single-qutrit only in v1.4; got {prep.n_qutrit}."
+            f"State tomography is single-qutrit only in this version; got {prep.n_qutrit}."
         )
     if prep.measurement_flag:
         raise ValueError("Prep must not contain a measurement.")

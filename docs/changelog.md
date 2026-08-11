@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `Simulator.run()` accepts an optional `seed` argument
+  (`run(num_shots, seed=17)`)
+
+## [1.5.2] - 2026-07-04
+
+### Added
+
+- JOSS paper draft (`paper/paper.md`, `paper/paper.bib`, figures) and the
+  Zenodo archiving setup (concept DOI 10.5281/zenodo.21201868).
+
 ## [1.5.1] - 2026-07-03
 
 ### Changed
@@ -49,7 +63,8 @@
 
 ### Deferred
 
-- OpenQASM 3 import/export moved to v2.0.
+- OpenQASM 3 import/export moved to v2.0 (since dropped from the roadmap
+  entirely).
 
 ## [1.4.0] - 2026-06-09
 

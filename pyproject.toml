@@ -1,25 +1,25 @@
-# pyproject.toml -- v1.5.1
+# pyproject.toml
 # Single source of truth for build, deps, and tooling configs.
 #
 # Supports Python 3.10 through 3.14 and newest versions of Numpy and Matplotlib
 
 [build-system]
-requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "qutritium"
 version = "1.5.2"
-description = "A hardware-agnostic Python library for qutrit (3-level) quantum computing: gates, circuits, simulation, and SU(3) decomposition."
+description = "A hardware-agnostic Python library for qutrit (3-level) quantum computing: gates, circuits, simulation, and U(3) decomposition."
 readme = "README.md"
 license = { file = "LICENSE.txt" }
 requires-python = ">=3.10"
 keywords = ["quantum", "quantum-computing", "qutrit", "qudit", "su3", "decomposition", "simulator"]
 authors = [
-    { name = "Son Pham", email = "sph40@duke.edu" },
+    { name = "Son Pham", email = "shp40@duke.edu" },
 ]
 maintainers = [
-    { name = "Son Pham", email = "sph40@duke.edu" },
+    { name = "Son Pham", email = "shp40@duke.edu" },
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -137,7 +137,6 @@ addopts = [
 ]
 filterwarnings = [
     "error",
-    "ignore::DeprecationWarning:qiskit.*",
 ]
 
 # ---------------------------------------------------------------------------
