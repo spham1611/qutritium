@@ -6,6 +6,27 @@
 (`run(num_shots, seed=17)`) that makes shot sampling reproducible on both
 simulators.
 
+Fixed `SU3Decomposition` returning a wrong unitary for gates that act inside a
+single two-level subspace. On a pure `{|1>, |2>}` rotation (`Ry12`, `Rx12`,
+`G12`) the angle inversions `arg(-U[2,0])`, `arg(-U[0,2])` and the `U[1,1]`
+residual all have identically vanishing modulus, and `np.angle` returns `-pi`
+for the negative zero that `-0j` produces. The spurious `pi` made
+`reconstruct()`, `to_native()` and `to_circuit()` yield `U . diag(-1, 1, 1)`,
+a relative phase rather than a global one, for roughly half of all rotation
+angles. Every degenerate inversion is now guarded, and `phi_6` is obtained by
+matching row 0 of the rotation product, which unitarity keeps well conditioned.
+
+Decomposition is now exact to double precision. The half angles are recovered
+with `atan2` on pairs of moduli instead of `arccos` of a value rounded to six
+decimals, removing both the 5e-7 truncation and the error amplification of
+`arccos` near its endpoints; over Haar-random inputs the worst reconstruction
+error drops from 1.5e-4 to 4e-14. Branch selection on `|U[2,2]|` uses a
+tolerance instead of exact equality against a rounded value, so rotations
+smaller than about 2e-3 rad are no longer silently discarded.
+
+Known remaining issue: the `|U[2,2]| = 0` (theta_2 = pi) branch is still
+inaccurate for inputs other than permutation-like matrices.
+
 ## [1.5.2] — 2026-07-04
 
 Add JOSS paper with Zenodo archive enable

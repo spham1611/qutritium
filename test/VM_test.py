@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from qutritium import QutritCircuit, StatevectorSimulator, SU3Decomposition
-from qutritium.gates import CSUM, H3, Rx01
+from qutritium.gates import CSUM, G01, G12, H3, Rx01, Rx12, Ry12
 
 
 # ---------------------------------------------------------------------------
@@ -119,3 +119,52 @@ def test_density_matrix_is_hermitian_psd() -> None:
     eigvals = np.linalg.eigvalsh(rho)
     assert np.all(eigvals >= -1e-10)
     assert np.isclose(np.trace(rho).real, 1.0, atol=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# SU(3) decomposition: degenerate (coordinate-singular) inputs
+# ---------------------------------------------------------------------------
+def _reconstruction_error(target: np.ndarray, rebuilt: np.ndarray) -> float:
+    """Largest entrywise error between ``rebuilt`` and ``target``.
+
+    The global phase is unobservable, so it is divided out first.  Unlike
+    ``|tr(U^dag R)| / 3`` this is sensitive to a *relative* phase between
+    blocks, and it is linear rather than quadratic in the error.
+    """
+    overlap = np.trace(target.conj().T @ rebuilt)
+    phase = float(np.angle(overlap)) if np.absolute(overlap) > 1e-12 else 0.0
+    return float(np.max(np.absolute(rebuilt - np.exp(1j * phase) * target)))
+
+
+def _degenerate_cases() -> list[np.ndarray]:
+    """Unitaries that sit on a coordinate singularity of the nine-angle form.
+
+    A pure ``{|1>, |2>}`` rotation has theta1 = theta3 = 0, and ``g01 . g12``
+    has U[2,0] = 0; both make one or more of the angle inversions degenerate.
+    Haar-random matrices never hit these, so the random round-trip tests above
+    cannot see them.
+    """
+    thetas = [0.05, 0.7, 1.4, np.pi / 2, 2.5, 3.0]
+    cases = [g(t).matrix() for t in thetas for g in (Ry12, Rx12)]
+    cases += [G12(t, p).matrix() for t in thetas for p in (0.0, 0.9)]
+    cases += [G01(t, 0.4).matrix() @ G12(t, 1.3).matrix() for t in thetas]
+    return cases
+
+
+@pytest.mark.parametrize("unitary", _degenerate_cases())
+def test_degenerate_decomposition_roundtrip(unitary: np.ndarray) -> None:
+    """Subspace gates must round-trip, not pick up a spurious relative phase."""
+    dec = SU3Decomposition(unitary, qutrit_index=0, n_qutrits=1)
+    assert _reconstruction_error(unitary, dec.reconstruct()) < 1e-9
+    assert _reconstruction_error(unitary, dec.to_circuit().to_matrix()) < 1e-9
+
+
+@pytest.mark.parametrize("seed", [0, 1, 7, 42])
+def test_random_decomposition_is_exact(seed: int) -> None:
+    """Haar-random round-trip, at full double precision rather than ~1e-6."""
+    rng = np.random.default_rng(seed)
+    a = rng.standard_normal((3, 3)) + 1j * rng.standard_normal((3, 3))
+    q, r = np.linalg.qr(a)
+    q = q @ np.diag(np.diag(r) / np.absolute(np.diag(r)))
+    dec = SU3Decomposition(q, qutrit_index=0, n_qutrits=1)
+    assert _reconstruction_error(q, dec.reconstruct()) < 1e-12
